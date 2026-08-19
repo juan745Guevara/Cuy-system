@@ -2,6 +2,7 @@
 
 **Fecha:** 2026-08-19
 **Propósito:** Aprender a usar Azure DevOps desde cero
+**Documento de referencia:** [azure-devops-setup.md](azure-devops-setup.md)
 
 ---
 
@@ -29,8 +30,8 @@ Azure DevOps es una plataforma de Microsoft para gestionar todo el ciclo de vida
 ### Paso 2: Crear el Proyecto
 1. Click en **"New Project"** (esquina superior derecha)
 2. Completa:
-   - **Name:** `Sistema-Gestion-Cuyes`
-   - **Description:** Sistema de gestión zootécnica de cuyes - UNAS
+   - **Name:** `Sistema-Control-Animales`
+   - **Description:** Sistema de control de animales - Facultad de Zootecnia, UNAS
    - **Visibility:** Private (privado)
    - **Work Item Process:** Scrum (recomendado) o Agile
 3. Click en **"Create"**
@@ -57,15 +58,14 @@ Azure DevOps es una plataforma de Microsoft para gestionar todo el ciclo de vida
 
 ## 4. Crear Epics
 
+Los 1acos: [azure-devops-setup.md](azure-devops-setup.md)
+
 1. Ve a **Boards** > **Backlogs**
 2. Selecciona **"Epics"** en el dropdown
 3. Click en **"+"** (esquina superior derecha)
-4. Escribe el nombre: `Epic 1: Gestión de Animales`
+4. Escribe el nombre del Epic (ej: `Epic 1: Acceso y Contexto de Trabajo`)
 5. Presiona **Enter**
-6. Repite para los demás Epics:
-   - `Epic 2: Gestión de Reproducción`
-   - `Epic 3: Inventario y Reportes`
-   - `Epic 4: Seguridad`
+6. Repite para los 13 Epics definidos en el documento de configuración
 
 ---
 
@@ -74,9 +74,9 @@ Azure DevOps es una plataforma de Microsoft para gestionar todo el ciclo de vida
 1. En la vista de Epics, haz click en la flecha **▶** al lado del Epic
 2. Se expandirán las Features
 3. Click en **"+"** para agregar una Feature
-4. Escribe: `F-01: CRUD de Hembras`
+4. Escribe el nombre de la Feature (ej: `F-01: Autenticación`)
 5. Presiona **Enter**
-6. Repite para las demás Features
+6. Repite para las 26 Features definidas en [azure-devops-setup.md](azure-devops-setup.md)
 
 ---
 
@@ -84,9 +84,9 @@ Azure DevOps es una plataforma de Microsoft para gestionar todo el ciclo de vida
 
 1. Expande la Feature haciendo click en la flecha **▶**
 2. Click en **"+"** para agregar un PBI
-3. Escribe: `PBI-01: Registrar hembra`
+3. Escribe el ID y nombre (ej: `NUC-01: Iniciar sesión`)
 4. Presiona **Enter**
-5. Repite para los demás PBIs
+5. Repite para los 65 PBIs definidos en [azure-devops-setup.md](azure-devops-setup.md)
 
 ---
 
@@ -95,7 +95,7 @@ Azure DevOps es una plataforma de Microsoft para gestionar todo el ciclo de vida
 ### Opción 1: Desde el Backlog
 1. Expande el PBI haciendo click en la flecha **▶**
 2. Click en **"+"** para agregar una Task
-3. Escribe: `T-01.1: Crear migración PostgreSQL para tabla hembras`
+3. Escribe el nombre (ej: `T-NUC-01.1: Crear tabla usuarios`)
 4. Presiona **Enter**
 
 ### Opción 2: Desde la vista detallada
@@ -183,12 +183,12 @@ Azure DevOps es una plataforma de Microsoft para gestionar todo el ciclo de vida
 3. Copia la URL
 4. En tu terminal:
    ```bash
-   git clone https://tu-organizacion@dev.azure.com/tu-organizacion/Sistema-Gestion-Cuyes/_git/Sistema-Gestion-Cuyes
+   git clone https://tu-organizacion@dev.azure.com/tu-organizacion/Sistema-Control-Animales/_git/Sistema-Control-Animales
    ```
 
 ### Paso 2: Estructura de carpetas recomendada
 ```
-Sistema-Gestion-Cuyes/
+Sistema-Control-Animales/
 ├── frontend/          # React
 │   ├── src/
 │   │   ├── components/
@@ -216,10 +216,10 @@ Sistema-Gestion-Cuyes/
 1. Ve a **Repos** > **Pull Requests**
 2. Click en **"New Pull Request"**
 3. Selecciona:
-   - **Source branch:** `feature/PBI-01-registrar-hembra`
+   - **Source branch:** `feature/NUC-01-login`
    - **Target branch:** `main` o `develop`
-4. Escribe un título claro: `PBI-01: Registrar hembra reproductora`
-5. En la descripción escribe: `AB#01`
+4. Escribe un título claro: `NUC-01: Iniciar sesión`
+5. En la descripción escribe: `NUC-01` (el ID del PBI)
 6. Click en **"Create"**
 
 ### Revisar y Merge
@@ -252,7 +252,7 @@ Sistema-Gestion-Cuyes/
 ### Crear un Dashboard
 1. Ve a **Dashboards** > **New Dashboard**
 2. Nombre: `Dashboard del Proyecto`
-3. Selecciona team: `Sistema-Gestion-Cuyes Team`
+3. Selecciona team: `Sistema-Control-Animales Team`
 4. Click en **"Create"**
 
 ### Agregar widgets
@@ -270,9 +270,10 @@ Sistema-Gestion-Cuyes/
 ### Crear un Sprint
 1. Ve a **Boards** > **Sprints**
 2. Click en **"New Sprint"**
-3. Nombre: `Sprint 1 - Fundación`
+3. Nombre: `Sprint 1 - Fundación técnica`
 4. Selecciona fechas (2 semanas)
 5. Click en **"Create"**
+6. Repite para los 12 Sprints definidos en [azure-devops-setup.md](azure-devops-setup.md)
 
 ### Asignar PBIs al Sprint
 1. En la vista de Sprints, arrastra PBIs desde el backlog

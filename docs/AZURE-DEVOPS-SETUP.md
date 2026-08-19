@@ -1,7 +1,8 @@
-# Azure DevOps - Configuración del Proyecto Sistema de Control de Animales
+# Azure DevOps - Configuración del Proyecto
 
 **Fecha:** 2026-08-19
 **Propósito:** Estructura completa para crear en Azure DevOps basada en las 65 historias de usuario
+**Documento de referencia:** [historias-de-usuario.md](historias-de-usuario.md) · [backlog.md](backlog.md)
 
 ---
 
