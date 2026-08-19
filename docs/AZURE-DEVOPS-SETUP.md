@@ -56,6 +56,7 @@
 │   │   ├── NUC-21: Registrar peso individual
 │   │   └── NUC-22: Pesaje por lote
 │   └── 📋 Feature F-10: Evolución de Peso
+│       ├── CUY-16: Rangos y controles de peso del cuy
 │       └── NUC-23: Ver evolución del peso
 │
 ├── 🎯 Epic 6: Sanidad
@@ -138,7 +139,7 @@
 | 2 | Gestión de Granjas | 2 | 3 | Entrega 1 |
 | 3 | Ficha de Animal | 2 | 8 | Entrega 1 |
 | 4 | Áreas, Jaulas y Movimientos | 2 | 8 | Entrega 1-2 |
-| 5 | Pesaje | 2 | 3 | Entrega 2 |
+| 5 | Pesaje | 2 | 4 | Entrega 2 |
 | 6 | Sanidad | 2 | 2 | Entrega 2 |
 | 7 | Mortalidad y Ventas | 2 | 7 | Entrega 1-2 |
 | 8 | Alertas | 2 | 5 | Entrega 3 |
@@ -147,13 +148,13 @@
 | 11 | Reproductoras (Hembras) | 2 | 6 | Entrega 1 |
 | 12 | Reproductores (Machos) | 2 | 4 | Entrega 1 |
 | 13 | Reproductores Élite | 2 | 3 | Entrega 3 |
-| **Total** | | **26** | **64** | |
+| **Total** | | **26** | **65** | |
 
 ---
 
 ## 3. Mapeo por Entrega (Backlog Priorizado)
 
-### Entrega 1 — P1: Reemplazar registro en papel (39 PBIs)
+### Entrega 1 — P1: Reemplazar registro en papel (37 PBIs)
 
 | ID | Historia | Epic |
 |----|----------|------|
@@ -195,7 +196,7 @@
 | CUY-23 | Exportar Registro Machos | 9 |
 | CUY-24 | Exportar Inventario mensual | 9 |
 
-### Entrega 2 — P2: Control diario, áreas y varias granjas (21 PBIs)
+### Entrega 2 — P2: Control diario, áreas y varias granjas (20 PBIs)
 
 | ID | Historia | Epic |
 |----|----------|------|
@@ -218,9 +219,9 @@
 | CUY-05 | Correspondencia categoría-área | 10 |
 | CUY-14 | Ver resultados reproductivos del macho | 12 |
 | CUY-15 | Empadre por jaula | 12 |
-| CUY-16 | Rangos y controles de peso del cuy | 13 |
+| CUY-16 | Rangos y controles de peso del cuy | 5 |
 
-### Entrega 3 — P3: Alertas y decisiones de mejoramiento (5 PBIs)
+### Entrega 3 — P3: Alertas y decisiones de mejoramiento (8 PBIs)
 
 | ID | Historia | Epic |
 |----|----------|------|
@@ -253,7 +254,7 @@
 | Sprint | Objetivo | PBIs | Entregable |
 |--------|----------|------|------------|
 | **Sprint 7** | Movimientos y capacidad | NUC-14, NUC-15, NUC-18, NUC-19, NUC-20 | Traslados + control jaulas |
-| **Sprint 8** | Pesaje y sanidad | NUC-21, NUC-22, NUC-23, NUC-24, NUC-25 | Pesos + tratamientos |
+| **Sprint 8** | Pesaje y sanidad | NUC-21, NUC-22, NUC-23, NUC-24, NUC-25, CUY-16 | Pesos + tratamientos |
 | **Sprint 9** | Consolidados | NUC-03, NUC-30, NUC-31, NUC-32, NUC-37, NUC-41 | Dashboard + reportes avanzados |
 
 ### Fase 3: Entrega 3 (Sprints 10-12)
@@ -262,7 +263,7 @@
 |--------|----------|------|------------|
 | **Sprint 10** | Alertas base | NUC-33, NUC-34, NUC-35, CUY-17, CUY-18 | Sistema de alertas |
 | **Sprint 11** | Ranking | CUY-19, CUY-20, CUY-21 | Reproductores élite |
-| **Sprint 12** | Cierre | CUY-05, CUY-14, CUY-15, CUY-16 | Ajustes finales + QA |
+| **Sprint 12** | Cierre | CUY-05, CUY-14, CUY-15 | Ajustes finales + QA |
 
 ---
 
