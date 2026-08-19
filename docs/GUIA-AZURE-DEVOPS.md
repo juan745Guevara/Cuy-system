@@ -58,7 +58,7 @@ Azure DevOps es una plataforma de Microsoft para gestionar todo el ciclo de vida
 
 ## 4. Crear Epics
 
-Los 1acos: [azure-devops-setup.md](azure-devops-setup.md)
+Los 13 Epics están definidos en: [azure-devops-setup.md](azure-devops-setup.md)
 
 1. Ve a **Boards** > **Backlogs**
 2. Selecciona **"Epics"** en el dropdown
@@ -150,7 +150,6 @@ Los 1acos: [azure-devops-setup.md](azure-devops-setup.md)
    - **Acceptance Criteria:** Criterios de aceptación
    - **Priority:** 1 (Alta), 2 (Media), 3 (Baja)
    - **Story Points:** Estimación de esfuerzo
-   - **Tags:** Etiquetas para filtrar
    - **Attachments:** Archivos adjuntos
    - **Links:** Vincular a otros elementos
 
@@ -237,7 +236,6 @@ Sistema-Control-Animales/
 3. Agrega campos como:
    - Priority
    - Story Points
-   - Tags
 
 ### Cambiar colores de tarjetas
 1. ⚙️ > **Card styles**
