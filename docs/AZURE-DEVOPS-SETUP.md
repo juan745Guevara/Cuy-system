@@ -147,7 +147,7 @@
 | 11 | Reproductoras (Hembras) | 2 | 6 | Entrega 1 |
 | 12 | Reproductores (Machos) | 2 | 4 | Entrega 1 |
 | 13 | Reproductores Élite | 2 | 3 | Entrega 3 |
-| **Total** | | **26** | **65** | |
+| **Total** | | **26** | **64** | |
 
 ---
 
