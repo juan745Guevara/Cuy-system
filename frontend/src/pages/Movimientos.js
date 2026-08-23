@@ -7,6 +7,7 @@ const Movimientos = () => {
   const [tab, setTab] = useState('traslado');
   const [animales, setAnimales] = useState([]);
   const [jaulas, setJaulas] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [granjas, setGranjas] = useState([]);
   const [lista, setLista] = useState([]);
   const [sobrecupo, setSobrecupo] = useState([]);
@@ -16,6 +17,7 @@ const Movimientos = () => {
   const [ok, setOk] = useState('');
   const [form, setForm] = useState({
     fecha: new Date().toISOString().slice(0, 10),
+    id_area_destino: '',
     id_jaula_destino: '',
     ids_animales: [],
     id_jaula_origen_completa: '',
@@ -28,9 +30,10 @@ const Movimientos = () => {
 
   const load = useCallback(async () => {
     try {
-      const [a, j, m, sc, fa, g] = await Promise.all([
+      const [a, j, ar, m, sc, fa, g] = await Promise.all([
         api.get('/animales', { params: { estado: 'activo' } }),
         api.get('/jaulas'),
+        api.get('/areas'),
         api.get('/movimientos'),
         api.get('/movimientos/sobrecupo'),
         api.get('/movimientos/fuera-de-area'),
@@ -38,6 +41,7 @@ const Movimientos = () => {
       ]);
       setAnimales(a.data.data || a.data);
       setJaulas(j.data);
+      setAreas(ar.data);
       setLista(m.data);
       setSobrecupo(sc.data);
       setFueraArea(fa.data);
@@ -46,6 +50,10 @@ const Movimientos = () => {
       setError(err.response?.data?.error || 'Error al cargar');
     }
   }, []);
+
+  const jaulasDestino = form.id_area_destino
+    ? jaulas.filter((j) => String(j.id_area) === String(form.id_area_destino))
+    : jaulas;
 
   useEffect(() => {
     load();
@@ -156,6 +164,7 @@ const Movimientos = () => {
 
       {tab === 'traslado' && (
         <form onSubmit={enviarTraslado} style={s.card}>
+          <p style={s.sub}>Elija área y luego jaula de destino (NUC-14)</p>
           <div style={s.row}>
             <input
               style={s.input}
@@ -166,12 +175,30 @@ const Movimientos = () => {
             />
             <select
               style={s.select}
+              value={form.id_area_destino}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  id_area_destino: e.target.value,
+                  id_jaula_destino: '',
+                })
+              }
+            >
+              <option value="">Todas las áreas</option>
+              {areas.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nombre} ({a.proposito})
+                </option>
+              ))}
+            </select>
+            <select
+              style={s.select}
               required
               value={form.id_jaula_destino}
               onChange={(e) => setForm({ ...form, id_jaula_destino: e.target.value })}
             >
               <option value="">Jaula destino</option>
-              {jaulas.map((j) => (
+              {jaulasDestino.map((j) => (
                 <option key={j.id} value={j.id}>
                   {j.area} · {j.codigo} ({j.ocupacion}/{j.capacidad_maxima ?? '∞'})
                 </option>
@@ -185,13 +212,13 @@ const Movimientos = () => {
               <option value="">O mover jaula completa…</option>
               {jaulas.map((j) => (
                 <option key={j.id} value={j.id}>
-                  {j.codigo}
+                  {j.area} · {j.codigo}
                 </option>
               ))}
             </select>
             <input
               style={s.input}
-              placeholder="Motivo"
+              placeholder="Motivo (opcional)"
               value={form.motivo}
               onChange={(e) => setForm({ ...form, motivo: e.target.value })}
             />
