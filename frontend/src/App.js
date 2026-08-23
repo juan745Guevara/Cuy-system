@@ -11,6 +11,8 @@ import Areas from './pages/Areas';
 import Jaulas from './pages/Jaulas';
 import Catalogos from './pages/Catalogos';
 import Empadres from './pages/Empadres';
+import Reproductoras from './pages/Reproductoras';
+import Reproductores from './pages/Reproductores';
 import Partos from './pages/Partos';
 import Destetes from './pages/Destetes';
 import Mortalidad from './pages/Mortalidad';
@@ -41,6 +43,8 @@ function App() {
                 <Route path="jaulas" element={<Jaulas />} />
                 <Route path="catalogos" element={<Catalogos />} />
                 <Route path="empadres" element={<Empadres />} />
+                <Route path="reproductoras" element={<Reproductoras />} />
+                <Route path="reproductores" element={<Reproductores />} />
                 <Route path="partos" element={<Partos />} />
                 <Route path="destetes" element={<Destetes />} />
                 <Route path="mortalidad" element={<Mortalidad />} />

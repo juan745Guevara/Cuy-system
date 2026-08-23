@@ -66,6 +66,8 @@ const Layout = () => {
           <li><Link style={linkStyle(is('/areas'))} to="/areas">Áreas</Link></li>
           <li><Link style={linkStyle(is('/jaulas'))} to="/jaulas">Jaulas</Link></li>
           <li><Link style={linkStyle(is('/catalogos'))} to="/catalogos">Catálogos</Link></li>
+          <li><Link style={linkStyle(is('/reproductoras'))} to="/reproductoras">Reproductoras</Link></li>
+          <li><Link style={linkStyle(is('/reproductores'))} to="/reproductores">Reproductores</Link></li>
           <li><Link style={linkStyle(is('/empadres'))} to="/empadres">Empadres</Link></li>
           <li><Link style={linkStyle(is('/partos'))} to="/partos">Partos</Link></li>
           <li><Link style={linkStyle(is('/destetes'))} to="/destetes">Destetes</Link></li>
