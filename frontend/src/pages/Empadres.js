@@ -120,11 +120,28 @@ const Empadres = () => {
           <select
             style={s.select}
             value={form.id_jaula}
-            onChange={(e) => setForm({ ...form, id_jaula: e.target.value })}
+            onChange={async (e) => {
+              const id = e.target.value;
+              setForm((f) => ({ ...f, id_jaula: id }));
+              setFiltroJaula(id);
+              if (!id) return;
+              try {
+                const { data } = await api.get(`/empadres/jaula/${id}/hembras`);
+                setForm((f) => ({
+                  ...f,
+                  id_jaula: id,
+                  hembras: data.map((h) => h.id),
+                  cantidad_prenadas: String(data.length || ''),
+                }));
+              } catch {
+                /* keep manual selection */
+              }
+            }}
           >
-            <option value="">Jaula empadre</option>
+            <option value="">Jaula empadre (auto-selecciona hembras)</option>
             {jaulas.map((j) => (
               <option key={j.id} value={j.id}>
+                {j.area ? `${j.area} · ` : ''}
                 {j.codigo}
               </option>
             ))}
@@ -203,9 +220,31 @@ const Empadres = () => {
           <h3 style={{ marginTop: 0 }}>Últimos registrados en esta sesión</h3>
           <ul>
             {lista.map((e) => (
-              <li key={e.id}>
+              <li key={e.id} style={{ marginBottom: 8 }}>
                 #{e.id} — {e.fecha_empadre} — hembras: {(e.hembras || []).join(', ')}
-                {e.cantidad_prenadas != null ? ` — preñadas: ${e.cantidad_prenadas}` : ''}
+                {e.cantidad_prenadas != null ? ` — preñadas: ${e.cantidad_prenadas}` : ''}{' '}
+                {e.id_macho && (
+                  <button
+                    type="button"
+                    style={s.btnGhost}
+                    onClick={async () => {
+                      const idJaula = window.prompt(
+                        'ID jaula de retorno del macho (reproductores)'
+                      );
+                      if (!idJaula) return;
+                      try {
+                        await api.post(`/empadres/${e.id}/cerrar`, {
+                          id_jaula_retorno: Number(idJaula),
+                        });
+                        setOk(`Empadre #${e.id} cerrado · macho retornado`);
+                      } catch (err) {
+                        setError(err.response?.data?.error || 'No se pudo cerrar');
+                      }
+                    }}
+                  >
+                    Cerrar y devolver macho (CUY-15)
+                  </button>
+                )}
               </li>
             ))}
           </ul>
