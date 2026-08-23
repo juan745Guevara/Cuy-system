@@ -156,6 +156,8 @@
 
 ### Entrega 1 — P1: Reemplazar registro en papel (37 PBIs)
 
+> **Fuente de verdad de la Fase 1.** Estas 37 HU definen el alcance completo de Entrega 1. Los Sprints 1–6 deben cubrir exactamente esta lista.
+
 | ID | Historia | Epic |
 |----|----------|------|
 | NUC-01 | Iniciar sesión | 1 |
@@ -240,14 +242,18 @@
 
 ### Fase 1: Entrega 1 (Sprints 1-6)
 
+> **Fuente de verdad:** la sección Entrega 1 (arriba) define **37 PBIs**. Esta tabla de sprints suma exactamente esas 37 HU.
+
 | Sprint | Objetivo | PBIs | Entregable |
 |--------|----------|------|------------|
 | **Sprint 1** | Fundación técnica | NUC-01, NUC-02, NUC-06, NUC-07, NUC-08 | Login + Gestión de usuarios |
 | **Sprint 2** | Granjas y estructura | NUC-04, NUC-05, NUC-16, NUC-17, NUC-13 | Granjas, áreas y jaulas |
-| **Sprint 3** | Ficha de animal | NUC-09, NUC-10, NUC-11, NUC-12, CUY-01, CUY-02 | CRUD animales + catálogos |
-| **Sprint 4** | Configuración cuyes | CUY-03, CUY-04, CUY-06, CUY-12 | Ubicación + registro hembras/machos |
+| **Sprint 3** | Ficha de animal | NUC-09, NUC-10, NUC-11, NUC-12, NUC-38, NUC-39, NUC-40, CUY-01, CUY-02 | CRUD animales + catálogos + confiabilidad |
+| **Sprint 4** | Configuración cuyes | CUY-03, CUY-04, CUY-06, CUY-12, CUY-13 | Ubicación + registro hembras/machos |
 | **Sprint 5** | Ciclo reproductivo | CUY-07, CUY-08, CUY-09, CUY-10, CUY-11 | Empadre → parto → destete |
-| **Sprint 6** | Inventario y exportación | NUC-26, NUC-27, NUC-28, NUC-29, CUY-22, CUY-23, CUY-24 | Mortalidad/ventas + Excel |
+| **Sprint 6** | Inventario y exportación | NUC-26, NUC-27, NUC-28, NUC-29, NUC-36, CUY-22, CUY-23, CUY-24 | Mortalidad/ventas + Excel |
+
+**Total Sprints 1–6: 37 PBIs** (= Entrega 1).
 
 ### Fase 2: Entrega 2 (Sprints 7-9)
 
