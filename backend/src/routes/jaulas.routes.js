@@ -34,6 +34,67 @@ router.get(
   })
 );
 
+/** NUC-18 — ocupación por jaula / área / granja + sobrecupo */
+router.get(
+  '/ocupacion',
+  asyncHandler(async (req, res) => {
+    const { rows } = await pool.query(
+      `SELECT a.id AS id_area, a.nombre AS area, a.proposito,
+              j.id AS id_jaula, j.codigo AS jaula, j.capacidad_maxima,
+              COUNT(an.id)::int AS ocupacion
+       FROM areas a
+       LEFT JOIN jaulas j ON j.id_area = a.id AND j.activa = true
+       LEFT JOIN animales an ON an.id_jaula = j.id AND an.estado = 'activo'
+       WHERE a.id_granja = $1 AND a.activa = true
+       GROUP BY a.id, a.nombre, a.proposito, j.id, j.codigo, j.capacidad_maxima
+       ORDER BY a.nombre, j.codigo`,
+      [req.granjaId]
+    );
+
+    const areasMap = {};
+    let ocupacionGranja = 0;
+    let capacidadGranja = 0;
+    const sobrecupo = [];
+
+    for (const r of rows) {
+      if (!areasMap[r.id_area]) {
+        areasMap[r.id_area] = {
+          id: r.id_area,
+          nombre: r.area,
+          proposito: r.proposito,
+          ocupacion: 0,
+          capacidad: 0,
+          jaulas: [],
+        };
+      }
+      if (!r.id_jaula) continue;
+      const item = {
+        id: r.id_jaula,
+        codigo: r.jaula,
+        capacidad_maxima: r.capacidad_maxima,
+        ocupacion: r.ocupacion,
+        excedida: r.capacidad_maxima != null && r.ocupacion > r.capacidad_maxima,
+      };
+      areasMap[r.id_area].jaulas.push(item);
+      areasMap[r.id_area].ocupacion += r.ocupacion;
+      if (r.capacidad_maxima != null) {
+        areasMap[r.id_area].capacidad += r.capacidad_maxima;
+        capacidadGranja += r.capacidad_maxima;
+      }
+      ocupacionGranja += r.ocupacion;
+      if (item.excedida) {
+        sobrecupo.push({ ...item, area: r.area, id_area: r.id_area });
+      }
+    }
+
+    res.json({
+      granja: { ocupacion: ocupacionGranja, capacidad: capacidadGranja || null },
+      areas: Object.values(areasMap),
+      sobrecupo,
+    });
+  })
+);
+
 router.post(
   '/',
   requireRoles('superadmin', 'admin', 'encargado'),
@@ -51,7 +112,6 @@ router.post(
     }
     try {
       const codigoNorm = normalizeCodigo(codigo);
-      // unicidad por granja normalizada
       const dup = await pool.query(
         `SELECT j.id FROM jaulas j
          JOIN areas a ON a.id = j.id_area

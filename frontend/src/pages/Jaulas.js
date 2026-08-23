@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
-/** NUC-13 administrar jaulas · CUY-03 */
+/** NUC-13 administrar jaulas · CUY-03 · NUC-18 capacidad */
 const Jaulas = () => {
   const [jaulas, setJaulas] = useState([]);
   const [areas, setAreas] = useState([]);
+  const [ocupacion, setOcupacion] = useState(null);
   const [idArea, setIdArea] = useState('');
   const [codigo, setCodigo] = useState('');
   const [capacidad, setCapacidad] = useState('');
@@ -17,9 +18,14 @@ const Jaulas = () => {
   const load = useCallback(async () => {
     setError('');
     try {
-      const [j, a] = await Promise.all([api.get('/jaulas'), api.get('/areas')]);
+      const [j, a, o] = await Promise.all([
+        api.get('/jaulas'),
+        api.get('/areas'),
+        api.get('/jaulas/ocupacion'),
+      ]);
       setJaulas(j.data);
       setAreas(a.data);
+      setOcupacion(o.data);
       setIdArea((prev) => prev || (a.data[0] ? String(a.data[0].id) : ''));
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron cargar jaulas');
@@ -104,6 +110,34 @@ const Jaulas = () => {
       <p style={s.sub}>Ubicación física dentro de cada área</p>
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
+
+      {ocupacion && (
+        <div style={s.card}>
+          <h3 style={{ marginTop: 0 }}>Ocupación (NUC-18)</h3>
+          <p>
+            Granja: <strong>{ocupacion.granja?.ocupacion ?? 0}</strong>
+            {ocupacion.granja?.capacidad != null
+              ? ` / ${ocupacion.granja.capacidad} cupos`
+              : ' animales'}
+          </p>
+          {(ocupacion.sobrecupo || []).length > 0 && (
+            <div style={{ ...s.error, marginBottom: '0.75rem' }}>
+              Jaulas sobre capacidad:{' '}
+              {ocupacion.sobrecupo
+                .map((x) => `${x.area}/${x.codigo} (${x.ocupacion}/${x.capacidad_maxima})`)
+                .join(' · ')}
+            </div>
+          )}
+          <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+            {(ocupacion.areas || []).map((a) => (
+              <li key={a.id}>
+                {a.nombre}: {a.ocupacion}
+                {a.capacidad ? ` / ${a.capacidad}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <form onSubmit={crear} style={{ ...s.card, ...s.row }}>
         <select style={s.select} required value={idArea} onChange={(e) => setIdArea(e.target.value)}>

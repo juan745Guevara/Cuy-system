@@ -127,11 +127,27 @@ router.post(
     }
 
     const j = await pool.query(
-      `SELECT j.id FROM jaulas j JOIN areas a ON a.id = j.id_area
+      `SELECT j.id, j.capacidad_maxima,
+              (SELECT COUNT(*)::int FROM animales an
+                WHERE an.id_jaula = j.id AND an.estado = 'activo') AS ocupacion
+       FROM jaulas j JOIN areas a ON a.id = j.id_area
        WHERE j.id = $1 AND a.id_granja = $2 AND j.activa = true`,
       [id_jaula, req.granjaId]
     );
     if (!j.rows[0]) return res.status(400).json({ error: 'Jaula fuera de la granja activa' });
+    const jaula = j.rows[0];
+    if (
+      jaula.capacidad_maxima != null &&
+      jaula.ocupacion + 1 > jaula.capacidad_maxima &&
+      !req.body?.confirmar_capacidad
+    ) {
+      return res.status(409).json({
+        error: 'La jaula supera su capacidad máxima',
+        requiere_confirmacion: 'capacidad',
+        ocupacion_actual: jaula.ocupacion,
+        capacidad_maxima: jaula.capacidad_maxima,
+      });
+    }
 
     const existing = await pool.query(
       `SELECT id, codigo, estado FROM animales WHERE id_granja=$1 AND codigo_norm=$2`,
