@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { PROPOSITOS, normalizeProposito } = require('../utils/propositoArea');
 const {
   authRequired,
   loadUserFarms,
@@ -67,13 +68,23 @@ router.post(
     if (!nombre || !proposito) {
       return res.status(400).json({ error: 'nombre y proposito son obligatorios' });
     }
+    const prop = normalizeProposito(proposito);
+    if (!PROPOSITOS.includes(prop) && prop !== proposito) {
+      // allow "otro" custom already normalized, or unknown mapped
+    }
+    if (!PROPOSITOS.includes(prop)) {
+      return res.status(400).json({
+        error: 'Propósito no válido',
+        propositos: PROPOSITOS,
+      });
+    }
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       const { rows } = await client.query(
         `INSERT INTO areas (id_granja, nombre, proposito)
          VALUES ($1, $2, $3) RETURNING *`,
-        [req.granjaId, nombre, proposito]
+        [req.granjaId, nombre, prop]
       );
       const area = rows[0];
       for (const jid of jaula_ids.map(Number).filter(Boolean)) {

@@ -46,12 +46,12 @@ async function seed() {
     }
 
     const cats = [
-      ['gazapo', 'maternidad'],
-      ['recria', 'recria'],
-      ['reemplazo', 'recria'],
+      ['gazapo', 'gestacion_maternidad'],
+      ['recria', 'recria_hembras'],
+      ['reemplazo', 'recria_hembras'],
       ['reproductora', 'empadre'],
-      ['reproductor', 'machos'],
-      ['descarte', 'engorde'],
+      ['reproductor', 'reproductores_machos'],
+      ['descarte', 'engorde_descarte'],
     ];
     for (const [nombre, proposito] of cats) {
       await client.query(
@@ -83,10 +83,11 @@ async function seed() {
 
     const areasSeed = [
       ['Empadre', 'empadre'],
-      ['Maternidad', 'maternidad'],
-      ['Recría', 'recria'],
-      ['Machos', 'machos'],
-      ['Engorde', 'engorde'],
+      ['Maternidad', 'gestacion_maternidad'],
+      ['Recría hembras', 'recria_hembras'],
+      ['Recría machos', 'recria_machos'],
+      ['Machos', 'reproductores_machos'],
+      ['Engorde', 'engorde_descarte'],
       ['Cuarentena', 'cuarentena'],
     ];
     for (const [nombre, proposito] of areasSeed) {

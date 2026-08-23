@@ -250,6 +250,12 @@ const Movimientos = () => {
               </label>
             ))}
           </div>
+          {(form.confirmar_capacidad || form.confirmar_area) && (
+            <p style={s.sub}>
+              Confirme{form.confirmar_capacidad ? ' capacidad' : ''}
+              {form.confirmar_area ? ' área (indique motivo)' : ''} y reintente.
+            </p>
+          )}
           <button type="submit" style={s.btn}>
             Registrar traslado
           </button>

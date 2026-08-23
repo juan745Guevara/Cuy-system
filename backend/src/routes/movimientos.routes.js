@@ -2,6 +2,10 @@ const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
 const {
+  animalFueraDeArea,
+  normalizeProposito,
+} = require('../utils/propositoArea');
+const {
   authRequired,
   loadUserFarms,
   requireFarmAccess,
@@ -35,7 +39,7 @@ router.post(
   '/traslado',
   canWrite,
   asyncHandler(async (req, res) => {
-    const {
+      const {
       fecha,
       id_jaula_destino,
       motivo,
@@ -110,12 +114,12 @@ router.post(
         });
       }
 
-      const avisosArea = animales.filter((a) => {
-        if (!a.proposito_area) return false;
-        if (destino.proposito === 'machos' && a.sexo === 'H') return true;
-        if (destino.proposito === 'maternidad' && a.sexo === 'M') return true;
-        return a.proposito_area !== destino.proposito;
-      });
+      const avisosArea = animales.filter((a) =>
+        animalFueraDeArea(
+          { sexo: a.sexo, proposito_area: a.proposito_area },
+          destino.proposito
+        )
+      );
       if (avisosArea.length && !confirmar_area) {
         await client.query('ROLLBACK');
         return res.status(409).json({
@@ -123,6 +127,14 @@ router.post(
           requiere_confirmacion: 'area',
           animales: avisosArea.map((a) => a.codigo),
           proposito_area: destino.proposito,
+          proposito_normalizado: normalizeProposito(destino.proposito),
+        });
+      }
+      if (avisosArea.length && confirmar_area && !(motivo || '').trim()) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: 'Indique el motivo al confirmar un animal fuera de área (NUC-19)',
+          campo: 'motivo',
         });
       }
 
@@ -431,7 +443,7 @@ router.get(
   })
 );
 
-// NUC-19
+// NUC-19 + CUY-05
 router.get(
   '/fuera-de-area',
   asyncHandler(async (req, res) => {
@@ -443,12 +455,16 @@ router.get(
        JOIN jaulas j ON j.id = an.id_jaula
        JOIN areas a ON a.id = j.id_area
        WHERE an.id_granja = $1 AND an.estado = 'activo'
-         AND c.proposito_area IS NOT NULL
-         AND c.proposito_area <> a.proposito
        ORDER BY a.nombre, an.codigo`,
       [req.granjaId]
     );
-    res.json(rows);
+    const fuera = rows.filter((r) =>
+      animalFueraDeArea(
+        { sexo: r.sexo, proposito_area: r.proposito_area },
+        r.proposito_actual
+      )
+    );
+    res.json(fuera);
   })
 );
 
