@@ -73,6 +73,11 @@ const Layout = () => {
           <li><Link style={linkStyle(is('/destetes'))} to="/destetes">Destetes</Link></li>
           <li><Link style={linkStyle(is('/mortalidad'))} to="/mortalidad">Mortalidad</Link></li>
           <li><Link style={linkStyle(is('/ventas'))} to="/ventas">Ventas</Link></li>
+          <li><Link style={linkStyle(is('/movimientos'))} to="/movimientos">Movimientos</Link></li>
+          <li><Link style={linkStyle(is('/pesajes'))} to="/pesajes">Pesajes</Link></li>
+          <li><Link style={linkStyle(is('/sanidad'))} to="/sanidad">Sanidad</Link></li>
+          <li><Link style={linkStyle(is('/alertas'))} to="/alertas">Alertas</Link></li>
+          <li><Link style={linkStyle(is('/ranking'))} to="/ranking">Ranking</Link></li>
           <li><Link style={linkStyle(is('/inventario'))} to="/inventario">Inventario</Link></li>
           {admin && (
             <>

@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
     } catch {
@@ -64,13 +64,34 @@ export const AuthProvider = ({ children }) => {
     setGranjaActiva(null);
     localStorage.removeItem('token');
     localStorage.removeItem('granjaId');
-  };
+  }, []);
 
   const seleccionarGranja = (id) => {
     setGranjaActiva(id);
     if (id == null) localStorage.removeItem('granjaId');
     else localStorage.setItem('granjaId', String(id));
   };
+
+  // NUC-01: caducidad por inactividad (30 min)
+  useEffect(() => {
+    if (!token) return undefined;
+    const MAX_IDLE_MS = 30 * 60 * 1000;
+    let timer = setTimeout(() => {
+      logout();
+    }, MAX_IDLE_MS);
+    const bump = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        logout();
+      }, MAX_IDLE_MS);
+    };
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    events.forEach((ev) => window.addEventListener(ev, bump, { passive: true }));
+    return () => {
+      clearTimeout(timer);
+      events.forEach((ev) => window.removeEventListener(ev, bump));
+    };
+  }, [token, logout]);
 
   return (
     <AuthContext.Provider

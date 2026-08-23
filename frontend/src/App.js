@@ -20,6 +20,11 @@ import Ventas from './pages/Ventas';
 import Inventario from './pages/Inventario';
 import Usuarios from './pages/Usuarios';
 import Granjas from './pages/Granjas';
+import Movimientos from './pages/Movimientos';
+import Pesajes from './pages/Pesajes';
+import Sanidad from './pages/Sanidad';
+import Alertas from './pages/Alertas';
+import Ranking from './pages/Ranking';
 
 function RequireGranja() {
   const { granjaActiva } = useAuth();
@@ -49,6 +54,11 @@ function App() {
                 <Route path="destetes" element={<Destetes />} />
                 <Route path="mortalidad" element={<Mortalidad />} />
                 <Route path="ventas" element={<Ventas />} />
+                <Route path="movimientos" element={<Movimientos />} />
+                <Route path="pesajes" element={<Pesajes />} />
+                <Route path="sanidad" element={<Sanidad />} />
+                <Route path="alertas" element={<Alertas />} />
+                <Route path="ranking" element={<Ranking />} />
                 <Route path="inventario" element={<Inventario />} />
                 <Route path="usuarios" element={<Usuarios />} />
                 <Route path="granjas" element={<Granjas />} />

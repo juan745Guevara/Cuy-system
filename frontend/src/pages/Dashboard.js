@@ -4,12 +4,13 @@ import api from '../services/api';
 import { page as s } from '../styles/ui';
 import { useAuth } from '../context/AuthContext';
 
-/** Inicio operativo de la granja activa (datos de inventario Entrega 1). */
+/** NUC-03 panel · NUC-33 alertas en inicio */
 const Dashboard = () => {
   const { granjaActiva, granjas } = useAuth();
   const granja = (granjas || []).find((g) => g.id === granjaActiva);
   const [pob, setPob] = useState(null);
   const [resumen, setResumen] = useState(null);
+  const [alertas, setAlertas] = useState(null);
 
   useEffect(() => {
     const now = new Date();
@@ -18,10 +19,12 @@ const Dashboard = () => {
       api.get('/inventario/resumen-mensual', {
         params: { anio: now.getFullYear(), mes: now.getMonth() + 1 },
       }),
+      api.get('/alertas').catch(() => ({ data: null })),
     ])
-      .then(([p, r]) => {
+      .then(([p, r, a]) => {
         setPob(p.data);
         setResumen(r.data);
+        setAlertas(a.data);
       })
       .catch(() => {});
   }, []);
@@ -39,13 +42,13 @@ const Dashboard = () => {
         {granja ? `${granja.especie} · ${granja.nombre}` : 'Granja activa'}
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
         <div style={card}>
           <h3 style={{ marginTop: 0, color: '#1b4332' }}>Población</h3>
           <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>{pob?.total ?? '—'}</p>
         </div>
         <div style={card}>
-          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Nacimientos del mes</h3>
+          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Nacimientos</h3>
           <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>
             {resumen?.nacimientos ?? '—'}
           </p>
@@ -56,7 +59,31 @@ const Dashboard = () => {
             {resumen == null ? '—' : (resumen.mortalidad ?? 0) + (resumen.ventas ?? 0)}
           </p>
         </div>
+        <div style={card}>
+          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Alertas</h3>
+          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>
+            {alertas?.vencidas?.length ?? '—'}
+          </p>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>
+            {alertas?.proximas?.length ?? 0} próximas
+          </p>
+        </div>
       </div>
+
+      {alertas?.vencidas?.length > 0 && (
+        <div style={{ ...s.card, marginTop: '1rem' }}>
+          <h3 style={{ marginTop: 0 }}>Alertas vencidas</h3>
+          <ul>
+            {alertas.vencidas.slice(0, 5).map((a) => (
+              <li key={a.key}>
+                {a.mensaje} · {a.fecha_prevista}{' '}
+                <Link to={a.ruta || '/alertas'}>Ir</Link>
+              </li>
+            ))}
+          </ul>
+          <Link to="/alertas">Ver todas</Link>
+        </div>
+      )}
 
       <div style={{ ...s.row, marginTop: '1.5rem' }}>
         <Link to="/animales" style={s.btn}>
@@ -64,6 +91,12 @@ const Dashboard = () => {
         </Link>
         <Link to="/empadres" style={s.btnGhost}>
           Empadres
+        </Link>
+        <Link to="/movimientos" style={s.btnGhost}>
+          Movimientos
+        </Link>
+        <Link to="/pesajes" style={s.btnGhost}>
+          Pesajes
         </Link>
         <Link to="/inventario" style={s.btnGhost}>
           Inventario / Excel
