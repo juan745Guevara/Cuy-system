@@ -448,6 +448,19 @@ const Animales = () => {
               ))}
             </ul>
           )}
+          {(detalle.tratamientos || []).length > 0 && (
+            <div>
+              <h4>Tratamientos (NUC-25)</h4>
+              <ul>
+                {detalle.tratamientos.map((t) => (
+                  <li key={t.id}>
+                    {t.tipo} · {t.producto} · {t.estado} · {String(t.fecha_inicio).slice(0, 10)} →{' '}
+                    {String(t.fecha_termino).slice(0, 10)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {detalle.estado === 'activo' && (
             <div style={s.row}>
               <input

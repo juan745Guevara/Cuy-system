@@ -113,10 +113,26 @@ router.get(
        LEFT JOIN granjas go ON go.id = m.id_granja_origen
        LEFT JOIN granjas gd ON gd.id = m.id_granja_destino
        WHERE m.id_animal = $1
+       UNION ALL
+       SELECT 'tratamiento', t.fecha_inicio::text,
+              t.tipo || ': ' || t.producto || ' (' || t.estado || ') hasta ' || t.fecha_termino::text,
+              t.created_at
+       FROM tratamientos t WHERE t.id_animal = $1
+       UNION ALL
+       SELECT 'pesaje', p.fecha::text, p.peso_gramos::text || ' g', p.created_at
+       FROM pesajes p WHERE p.id_animal = $1
        ORDER BY created_at DESC`,
       [rows[0].id]
     );
-    res.json({ ...rows[0], historial: hist.rows });
+    const tratamientos = await pool.query(
+      `SELECT * FROM tratamientos WHERE id_animal = $1 ORDER BY fecha_inicio DESC`,
+      [rows[0].id]
+    );
+    res.json({
+      ...rows[0],
+      historial: hist.rows,
+      tratamientos: tratamientos.rows,
+    });
   })
 );
 
