@@ -27,6 +27,7 @@ app.use('/api/v1/movimientos', require('./routes/movimientos.routes'));
 app.use('/api/v1/tratamientos', require('./routes/tratamientos.routes'));
 app.use('/api/v1/alertas', require('./routes/alertas.routes'));
 app.use('/api/v1/ranking', require('./routes/ranking.routes'));
+app.use('/api/v1/auditoria', require('./routes/auditoria.routes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Sistema de Control de Animales - UNAS' });

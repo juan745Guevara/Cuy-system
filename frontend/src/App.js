@@ -25,6 +25,7 @@ import Pesajes from './pages/Pesajes';
 import Sanidad from './pages/Sanidad';
 import Alertas from './pages/Alertas';
 import Ranking from './pages/Ranking';
+import Auditoria from './pages/Auditoria';
 
 function RequireGranja() {
   const { granjaActiva } = useAuth();
@@ -59,6 +60,7 @@ function App() {
                 <Route path="sanidad" element={<Sanidad />} />
                 <Route path="alertas" element={<Alertas />} />
                 <Route path="ranking" element={<Ranking />} />
+                <Route path="auditoria" element={<Auditoria />} />
                 <Route path="inventario" element={<Inventario />} />
                 <Route path="usuarios" element={<Usuarios />} />
                 <Route path="granjas" element={<Granjas />} />

@@ -35,6 +35,7 @@ const navGroups = [
       { to: '/alertas', label: 'Alertas' },
       { to: '/ranking', label: 'Ranking' },
       { to: '/inventario', label: 'Inventario' },
+      { to: '/auditoria', label: 'Auditoría' },
     ],
   },
 ];
