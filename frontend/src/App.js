@@ -7,8 +7,17 @@ import Login from './pages/Login';
 import SeleccionGranja from './pages/SeleccionGranja';
 import Dashboard from './pages/Dashboard';
 import Animales from './pages/Animales';
+import Areas from './pages/Areas';
+import Jaulas from './pages/Jaulas';
+import Catalogos from './pages/Catalogos';
+import Empadres from './pages/Empadres';
 import Partos from './pages/Partos';
+import Destetes from './pages/Destetes';
+import Mortalidad from './pages/Mortalidad';
+import Ventas from './pages/Ventas';
 import Inventario from './pages/Inventario';
+import Usuarios from './pages/Usuarios';
+import Granjas from './pages/Granjas';
 
 function RequireGranja() {
   const { granjaActiva } = useAuth();
@@ -28,8 +37,17 @@ function App() {
               <Route element={<Layout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="animales" element={<Animales />} />
+                <Route path="areas" element={<Areas />} />
+                <Route path="jaulas" element={<Jaulas />} />
+                <Route path="catalogos" element={<Catalogos />} />
+                <Route path="empadres" element={<Empadres />} />
                 <Route path="partos" element={<Partos />} />
+                <Route path="destetes" element={<Destetes />} />
+                <Route path="mortalidad" element={<Mortalidad />} />
+                <Route path="ventas" element={<Ventas />} />
                 <Route path="inventario" element={<Inventario />} />
+                <Route path="usuarios" element={<Usuarios />} />
+                <Route path="granjas" element={<Granjas />} />
               </Route>
             </Route>
           </Route>
