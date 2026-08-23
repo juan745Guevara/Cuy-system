@@ -1,28 +1,73 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../services/api';
+import { page as s } from '../styles/ui';
+import { useAuth } from '../context/AuthContext';
 
+/** Inicio operativo de la granja activa (datos de inventario Entrega 1). */
 const Dashboard = () => {
+  const { granjaActiva, granjas } = useAuth();
+  const granja = (granjas || []).find((g) => g.id === granjaActiva);
+  const [pob, setPob] = useState(null);
+  const [resumen, setResumen] = useState(null);
+
+  useEffect(() => {
+    const now = new Date();
+    Promise.all([
+      api.get('/inventario/poblacion'),
+      api.get('/inventario/resumen-mensual', {
+        params: { anio: now.getFullYear(), mes: now.getMonth() + 1 },
+      }),
+    ])
+      .then(([p, r]) => {
+        setPob(p.data);
+        setResumen(r.data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const card = {
+    padding: '1.25rem',
+    background: '#fff',
+    border: '1px solid #95d5b2',
+  };
+
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Panel de la granja - NUC-03</p>
-      
-      {/* TODO: Implementar dashboard - NUC-03 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginTop: '20px' }}>
-        <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-          <h3>Población Total</h3>
-          <p style={{ fontSize: '24px', fontWeight: 'bold' }}>0</p>
-          <p>Animales registrados</p>
+    <div style={s.wrap}>
+      <h1 style={s.title}>Inicio</h1>
+      <p style={s.sub}>
+        {granja ? `${granja.especie} · ${granja.nombre}` : 'Granja activa'}
+      </p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+        <div style={card}>
+          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Población</h3>
+          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>{pob?.total ?? '—'}</p>
         </div>
-        <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-          <h3>Nacimientos del Mes</h3>
-          <p style={{ fontSize: '24px', fontWeight: 'bold' }}>0</p>
-          <p>Cuys nacidos</p>
+        <div style={card}>
+          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Nacimientos del mes</h3>
+          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>
+            {resumen?.nacimientos ?? '—'}
+          </p>
         </div>
-        <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-          <h3>Alertas Pendientes</h3>
-          <p style={{ fontSize: '24px', fontWeight: 'bold' }}>0</p>
-          <p>Tareas pendientes</p>
+        <div style={card}>
+          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Bajas del mes</h3>
+          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>
+            {resumen == null ? '—' : (resumen.mortalidad ?? 0) + (resumen.ventas ?? 0)}
+          </p>
         </div>
+      </div>
+
+      <div style={{ ...s.row, marginTop: '1.5rem' }}>
+        <Link to="/animales" style={s.btn}>
+          Animales
+        </Link>
+        <Link to="/empadres" style={s.btnGhost}>
+          Empadres
+        </Link>
+        <Link to="/inventario" style={s.btnGhost}>
+          Inventario / Excel
+        </Link>
       </div>
     </div>
   );
