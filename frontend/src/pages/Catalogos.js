@@ -58,6 +58,34 @@ const Catalogos = () => {
     }
   };
 
+  const desactivarRaza = async (id, nombre) => {
+    setError('');
+    setOk('');
+    try {
+      await api.patch(`/catalogos/razas/${id}/desactivar`);
+      setOk(`Raza "${nombre}" desactivada`);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo desactivar raza');
+    }
+  };
+
+  const desactivarCategoria = async (id, nombre) => {
+    setError('');
+    setOk('');
+    try {
+      await api.patch(`/catalogos/categorias/${id}/desactivar`);
+      setOk(`Categoría "${nombre}" desactivada`);
+      load();
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setError('Endpoint de desactivar categoría no disponible aún');
+      } else {
+        setError(err.response?.data?.error || 'No se pudo desactivar categoría');
+      }
+    }
+  };
+
   return (
     <div style={s.wrap}>
       <h1 style={s.title}>Catálogos del módulo cuyes</h1>
@@ -80,9 +108,24 @@ const Catalogos = () => {
               Agregar
             </button>
           </form>
-          <ul>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
             {razas.map((r) => (
-              <li key={r.id}>{r.nombre}</li>
+              <li
+                key={r.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '0.35rem 0',
+                  borderBottom: '1px solid #E0D3BF',
+                }}
+              >
+                <span>{r.nombre}</span>
+                <button type="button" style={s.btnDanger} onClick={() => desactivarRaza(r.id, r.nombre)}>
+                  Desactivar
+                </button>
+              </li>
             ))}
           </ul>
         </div>
@@ -98,19 +141,40 @@ const Catalogos = () => {
             />
             <select style={s.select} value={proposito} onChange={(e) => setProposito(e.target.value)}>
               <option value="empadre">Empadre</option>
-              <option value="maternidad">Maternidad</option>
-              <option value="recria">Recría</option>
-              <option value="machos">Machos</option>
-              <option value="engorde">Engorde</option>
+              <option value="gestacion_maternidad">Gestación / maternidad</option>
+              <option value="recria_hembras">Recría hembras</option>
+              <option value="recria_machos">Recría machos</option>
+              <option value="reproductores_machos">Reproductores machos</option>
+              <option value="engorde_descarte">Engorde / descarte</option>
+              <option value="cuarentena">Cuarentena</option>
             </select>
             <button type="submit" style={s.btn}>
               Agregar
             </button>
           </form>
-          <ul>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
             {categorias.map((c) => (
-              <li key={c.id}>
-                {c.nombre} {c.proposito_area ? `(${c.proposito_area})` : ''}
+              <li
+                key={c.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '0.35rem 0',
+                  borderBottom: '1px solid #E0D3BF',
+                }}
+              >
+                <span>
+                  {c.nombre} {c.proposito_area ? `(${c.proposito_area})` : ''}
+                </span>
+                <button
+                  type="button"
+                  style={s.btnDanger}
+                  onClick={() => desactivarCategoria(c.id, c.nombre)}
+                >
+                  Desactivar
+                </button>
               </li>
             ))}
           </ul>

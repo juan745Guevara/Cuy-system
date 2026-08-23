@@ -1,6 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
+import { promedioPesos } from '../utils/draftForm';
+
+async function blobErrorMessage(err, fallback) {
+  const data = err.response?.data;
+  if (data instanceof Blob) {
+    try {
+      const text = await data.text();
+      const json = JSON.parse(text);
+      return json.error || json.message || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  return data?.error || data?.message || fallback;
+}
 
 /** CUY-06 alta · CUY-10 resultado de ciclo · CUY-11 ficha */
 const Reproductoras = () => {
@@ -99,6 +114,39 @@ const Reproductoras = () => {
     }
   };
 
+  const exportarHembra = async (animal) => {
+    setError('');
+    try {
+      const params = animal?.id
+        ? { id_animal: animal.id }
+        : animal?.codigo
+          ? { codigo: animal.codigo }
+          : {};
+      const res = await api.get('/reportes/hembras', { responseType: 'blob', params });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `hembra-${animal?.codigo || animal?.id || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(await blobErrorMessage(err, 'No se pudo exportar'));
+    }
+  };
+
+  const fmtPesosParto = (p) => {
+    const m = [p.peso_m1, p.peso_m2, p.peso_m3].filter((x) => x != null);
+    const h = [p.peso_h1, p.peso_h2, p.peso_h3].filter((x) => x != null);
+    const prom = promedioPesos(p.peso_m1, p.peso_m2, p.peso_m3, p.peso_h1, p.peso_h2, p.peso_h3);
+    const parts = [];
+    if (m.length) parts.push(`M: ${m.join(', ')} g`);
+    if (h.length) parts.push(`H: ${h.join(', ')} g`);
+    if (prom != null) parts.push(`prom ${prom} g`);
+    return parts.length ? ` · ${parts.join(' · ')}` : '';
+  };
+
+  const jaulaLabel = (a) => a?.jaula || a?.jaula_codigo || a?.id_jaula || '—';
+
   return (
     <div style={s.wrap}>
       <h1 style={s.title}>Reproductoras</h1>
@@ -181,7 +229,7 @@ const Reproductoras = () => {
             {lista.map((a) => (
               <tr key={a.id}>
                 <td style={s.td}>{a.codigo}</td>
-                <td style={s.td}>{a.jaula_codigo || a.id_jaula || '—'}</td>
+                <td style={s.td}>{jaulaLabel(a)}</td>
                 <td style={s.td}>
                   <button type="button" style={s.btnGhost} onClick={() => verFicha(a.id)}>
                     Ver ficha
@@ -195,17 +243,35 @@ const Reproductoras = () => {
 
       {ficha && (
         <div style={s.card}>
-          <h3 style={{ marginTop: 0 }}>
-            Ficha {ficha.animal?.codigo}
-          </h3>
+          <div style={{ ...s.row, justifyContent: 'space-between' }}>
+            <h3 style={{ marginTop: 0, marginBottom: 0 }}>Ficha {ficha.animal?.codigo}</h3>
+            <button type="button" style={s.btnGhost} onClick={() => exportarHembra(ficha.animal)}>
+              Exportar Excel
+            </button>
+          </div>
           <p style={s.sub}>
-            Nacimiento: {ficha.animal?.fecha_nacimiento || '—'} · Estado: {ficha.animal?.estado}
+            Nacimiento: {ficha.animal?.fecha_nacimiento || '—'} · Estado: {ficha.animal?.estado} ·
+            Jaula: {jaulaLabel(ficha.animal)}
           </p>
+
+          {ficha.indicadores && (
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Indicadores</strong>
+              <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.2rem' }}>
+                {Object.entries(ficha.indicadores).map(([k, v]) => (
+                  <li key={k}>
+                    {k}: {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {(ficha.ciclos || []).length === 0 && <p>Sin ciclos de empadre.</p>}
           {(ficha.ciclos || []).map((c) => (
             <div
               key={`${c.id}-${c.resultado}`}
-              style={{ borderTop: '1px solid #b7e4c7', paddingTop: '0.75rem', marginTop: '0.75rem' }}
+              style={{ borderTop: '1px solid #D4C6B0', paddingTop: '0.75rem', marginTop: '0.75rem' }}
             >
               <p>
                 Empadre #{c.id} — {String(c.fecha_empadre).slice(0, 10)} — resultado:{' '}
@@ -213,11 +279,12 @@ const Reproductoras = () => {
               </p>
               {(c.partos || []).map((p) => (
                 <p key={p.id} style={{ margin: '0.25rem 0' }}>
-                  Parto #{p.id}: {String(p.fecha_parto).slice(0, 10)} · vivos M/H {p.vivos_m}/{p.vivos_h} ·
-                  muertos {p.muertos}
+                  Parto #{p.id}: {String(p.fecha_parto).slice(0, 10)} · vivos M/H {p.vivos_m}/
+                  {p.vivos_h} · muertos {p.muertos}
+                  {fmtPesosParto(p)}
                 </p>
               ))}
-              {!c.resultado && (
+              {(!c.resultado || c.resultado === 'abierto') && (
                 <div style={s.row}>
                   {['vacia', 'aborto', 'murio', 'prenez'].map((r) => (
                     <button

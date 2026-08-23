@@ -80,8 +80,36 @@ router.post(
 router.get(
   '/especies',
   asyncHandler(async (req, res) => {
-    const { rows } = await pool.query(`SELECT * FROM especies WHERE activa = true ORDER BY nombre`);
+    const { rows } = await pool.query(`SELECT * FROM especies WHERE activo = true ORDER BY nombre`);
     res.json(rows);
+  })
+);
+
+router.patch(
+  '/razas/:id/desactivar',
+  requireRoles('superadmin', 'admin'),
+  asyncHandler(async (req, res) => {
+    const idEspecie = await especieDeGranja(req.granjaId);
+    const { rows } = await pool.query(
+      `UPDATE razas SET activa=false WHERE id=$1 AND id_especie=$2 RETURNING *`,
+      [req.params.id, idEspecie]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Raza no encontrada' });
+    res.json(rows[0]);
+  })
+);
+
+router.patch(
+  '/categorias/:id/desactivar',
+  requireRoles('superadmin', 'admin'),
+  asyncHandler(async (req, res) => {
+    const idEspecie = await especieDeGranja(req.granjaId);
+    const { rows } = await pool.query(
+      `UPDATE categorias SET activa=false WHERE id=$1 AND id_especie=$2 RETURNING *`,
+      [req.params.id, idEspecie]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Categoría no encontrada' });
+    res.json(rows[0]);
   })
 );
 

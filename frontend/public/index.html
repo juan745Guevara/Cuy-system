@@ -3,10 +3,44 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sistema de Control de Animales - UNAS</title>
+    <meta name="theme-color" content="#7A1216" />
+    <title>Control de Animales — Facultad de Zootecnia UNAS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+      html, body, #root { min-height: 100%; }
+      body {
+        font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+        background: #F4EDE2;
+        color: #2C181A;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: #7A1216; }
+      button, input, select, textarea { font: inherit; }
+      button, a { transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+      button:hover, a[style*="cursor: pointer"]:hover { filter: brightness(1.03); }
+      button:active { transform: translateY(1px); }
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #A33A3E !important;
+        box-shadow: 0 0 0 3px rgba(122, 18, 22, 0.12);
+      }
+      ::selection { background: #7A1216; color: #FFFBF5; }
+      /* tablas un poco más suaves cuando van dentro de cards */
+      table { border-radius: 14px; overflow: hidden; }
+      th:first-child { border-top-left-radius: 14px; }
+      th:last-child { border-top-right-radius: 14px; }
+      /* scroll del sidebar */
+      nav::-webkit-scrollbar, nav *::-webkit-scrollbar { width: 6px; }
+      nav::-webkit-scrollbar-thumb, nav *::-webkit-scrollbar-thumb {
+        background: rgba(255,252,250,0.25);
+        border-radius: 99px;
+      }
     </style>
   </head>
   <body>

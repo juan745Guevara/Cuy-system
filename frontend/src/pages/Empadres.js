@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
@@ -8,6 +8,7 @@ const Empadres = () => {
   const [hembras, setHembras] = useState([]);
   const [machos, setMachos] = useState([]);
   const [jaulas, setJaulas] = useState([]);
+  const [filtroJaula, setFiltroJaula] = useState('');
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [form, setForm] = useState({
@@ -15,6 +16,7 @@ const Empadres = () => {
     hembras: [],
     id_jaula: '',
     fecha_empadre: new Date().toISOString().slice(0, 10),
+    cantidad_prenadas: '',
     peso_antes: '',
     peso_despues: '',
     notas: '',
@@ -39,6 +41,11 @@ const Empadres = () => {
     load();
   }, [load]);
 
+  const hembrasVisibles = useMemo(() => {
+    if (!filtroJaula) return hembras;
+    return hembras.filter((a) => String(a.id_jaula) === String(filtroJaula));
+  }, [hembras, filtroJaula]);
+
   const toggleHembra = (id) => {
     setForm((f) => ({
       ...f,
@@ -50,12 +57,18 @@ const Empadres = () => {
     e.preventDefault();
     setError('');
     setOk('');
+    const hoy = new Date().toISOString().slice(0, 10);
+    if (form.fecha_empadre > hoy) {
+      setError('La fecha de empadre no puede ser futura');
+      return;
+    }
     try {
       const { data } = await api.post('/empadres', {
         id_macho: form.id_macho ? Number(form.id_macho) : null,
         hembras: form.hembras,
         id_jaula: form.id_jaula ? Number(form.id_jaula) : null,
         fecha_empadre: form.fecha_empadre,
+        cantidad_prenadas: form.cantidad_prenadas !== '' ? Number(form.cantidad_prenadas) : null,
         peso_antes: form.peso_antes ? Number(form.peso_antes) : null,
         peso_despues: form.peso_despues ? Number(form.peso_despues) : null,
         notas: form.notas || null,
@@ -65,6 +78,7 @@ const Empadres = () => {
       setForm({
         ...form,
         hembras: [],
+        cantidad_prenadas: '',
         peso_antes: '',
         peso_despues: '',
         notas: '',
@@ -87,6 +101,7 @@ const Empadres = () => {
             style={s.input}
             type="date"
             required
+            max={new Date().toISOString().slice(0, 10)}
             value={form.fecha_empadre}
             onChange={(e) => setForm({ ...form, fecha_empadre: e.target.value })}
           />
@@ -107,9 +122,31 @@ const Empadres = () => {
             value={form.id_jaula}
             onChange={(e) => setForm({ ...form, id_jaula: e.target.value })}
           >
-            <option value="">Jaula</option>
+            <option value="">Jaula empadre</option>
             {jaulas.map((j) => (
               <option key={j.id} value={j.id}>
+                {j.codigo}
+              </option>
+            ))}
+          </select>
+          <input
+            style={s.input}
+            type="number"
+            min="0"
+            placeholder="Cantidad preñadas"
+            value={form.cantidad_prenadas}
+            onChange={(e) => setForm({ ...form, cantidad_prenadas: e.target.value })}
+          />
+        </div>
+        <div style={s.row}>
+          <select
+            style={s.select}
+            value={filtroJaula}
+            onChange={(e) => setFiltroJaula(e.target.value)}
+          >
+            <option value="">Filtrar hembras por jaula</option>
+            {jaulas.map((j) => (
+              <option key={`f-${j.id}`} value={j.id}>
                 {j.codigo}
               </option>
             ))}
@@ -117,7 +154,10 @@ const Empadres = () => {
         </div>
         <p>Hembras:</p>
         <div style={s.row}>
-          {hembras.map((a) => (
+          {hembrasVisibles.length === 0 && (
+            <span style={{ color: '#7A6358' }}>Sin hembras para el filtro</span>
+          )}
+          {hembrasVisibles.map((a) => (
             <label key={a.id} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
               <input
                 type="checkbox"
@@ -125,6 +165,7 @@ const Empadres = () => {
                 onChange={() => toggleHembra(a.id)}
               />
               {a.codigo}
+              {a.jaula ? ` (${a.jaula})` : ''}
             </label>
           ))}
         </div>
@@ -164,6 +205,7 @@ const Empadres = () => {
             {lista.map((e) => (
               <li key={e.id}>
                 #{e.id} — {e.fecha_empadre} — hembras: {(e.hembras || []).join(', ')}
+                {e.cantidad_prenadas != null ? ` — preñadas: ${e.cantidad_prenadas}` : ''}
               </li>
             ))}
           </ul>

@@ -257,7 +257,7 @@ const Pesajes = () => {
                   style={{
                     width: 18,
                     height: `${(Number(h.peso_gramos) / maxPeso) * 100}%`,
-                    background: '#2d6a4f',
+                    background: '#7A1216',
                     minHeight: 4,
                   }}
                 />

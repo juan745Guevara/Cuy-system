@@ -6,12 +6,14 @@ import { page as s } from '../styles/ui';
 const Ventas = () => {
   const [lista, setLista] = useState([]);
   const [animales, setAnimales] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [razas, setRazas] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [form, setForm] = useState({
     id_animal: '',
     fecha: new Date().toISOString().slice(0, 10),
-    clasificacion: 'venta',
+    clasificacion: '',
     categoria: '',
     cantidad: 1,
     comprador: '',
@@ -20,12 +22,16 @@ const Ventas = () => {
 
   const load = useCallback(async () => {
     try {
-      const [v, a] = await Promise.all([
+      const [v, a, c, r] = await Promise.all([
         api.get('/ventas'),
         api.get('/animales', { params: { estado: 'activo' } }),
+        api.get('/catalogos/categorias'),
+        api.get('/catalogos/razas'),
       ]);
       setLista(v.data);
       setAnimales(a.data.data || a.data);
+      setCategorias(c.data);
+      setRazas(r.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar');
     }
@@ -39,17 +45,33 @@ const Ventas = () => {
     e.preventDefault();
     setError('');
     setOk('');
+    const cantidad = Number(form.cantidad);
+    if (!cantidad || cantidad < 1) {
+      setError('Cantidad mínima: 1');
+      return;
+    }
     try {
       await api.post('/ventas', {
-        ...form,
+        fecha: form.fecha,
         id_animal: form.id_animal ? Number(form.id_animal) : null,
-        cantidad: Number(form.cantidad),
+        clasificacion: form.clasificacion || null,
+        categoria: form.categoria || null,
+        cantidad,
+        comprador: form.comprador || null,
         precio: form.precio ? Number(form.precio) : null,
       });
       setOk('Venta registrada');
+      setForm((f) => ({
+        ...f,
+        id_animal: '',
+        cantidad: 1,
+        comprador: '',
+        precio: '',
+      }));
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo registrar');
+      const data = err.response?.data;
+      setError(data?.error || data?.message || 'No se pudo registrar (revise tope de población)');
     }
   };
 
@@ -88,6 +110,30 @@ const Ventas = () => {
           value={form.cantidad}
           onChange={(e) => setForm({ ...form, cantidad: e.target.value })}
         />
+        <select
+          style={s.select}
+          value={form.categoria}
+          onChange={(e) => setForm({ ...form, categoria: e.target.value })}
+        >
+          <option value="">Categoría</option>
+          {categorias.map((c) => (
+            <option key={c.id} value={c.nombre}>
+              {c.nombre}
+            </option>
+          ))}
+        </select>
+        <select
+          style={s.select}
+          value={form.clasificacion}
+          onChange={(e) => setForm({ ...form, clasificacion: e.target.value })}
+        >
+          <option value="">Clasificación / raza</option>
+          {razas.map((r) => (
+            <option key={r.id} value={r.nombre}>
+              {r.nombre}
+            </option>
+          ))}
+        </select>
         <input
           style={s.input}
           placeholder="Comprador"
@@ -112,6 +158,8 @@ const Ventas = () => {
           <tr>
             <th style={s.th}>Fecha</th>
             <th style={s.th}>Cantidad</th>
+            <th style={s.th}>Categoría</th>
+            <th style={s.th}>Clasificación</th>
             <th style={s.th}>Comprador</th>
             <th style={s.th}>Precio</th>
           </tr>
@@ -121,6 +169,8 @@ const Ventas = () => {
             <tr key={v.id}>
               <td style={s.td}>{String(v.fecha).slice(0, 10)}</td>
               <td style={s.td}>{v.cantidad}</td>
+              <td style={s.td}>{v.categoria || '—'}</td>
+              <td style={s.td}>{v.clasificacion || '—'}</td>
               <td style={s.td}>{v.comprador || '—'}</td>
               <td style={s.td}>{v.precio ?? '—'}</td>
             </tr>

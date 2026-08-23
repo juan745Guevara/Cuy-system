@@ -1,11 +1,29 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { asyncHandler } = require('../utils/helpers');
+const { asyncHandler, isValidDateStr } = require('../utils/helpers');
 const { authRequired, loadUserFarms, requireFarmAccess, requireRoles } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authRequired, loadUserFarms, requireFarmAccess);
 const canWrite = requireRoles('superadmin', 'admin', 'encargado', 'auxiliar');
+
+async function pobCategoria(granjaId, categoria) {
+  if (!categoria) {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM animales WHERE id_granja=$1 AND estado='activo'`,
+      [granjaId]
+    );
+    return rows[0].n;
+  }
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM animales a
+     LEFT JOIN categorias c ON c.id = a.id_categoria
+     WHERE a.id_granja=$1 AND a.estado='activo'
+       AND LOWER(COALESCE(c.nombre,'')) = LOWER($2)`,
+    [granjaId, categoria]
+  );
+  return rows[0].n;
+}
 
 // NUC-26
 router.post(
@@ -15,6 +33,24 @@ router.post(
     const { id_animal, fecha, clasificacion, categoria, cantidad, causa, id_jaula } = req.body || {};
     if (!fecha || !cantidad) {
       return res.status(400).json({ error: 'fecha y cantidad son obligatorios' });
+    }
+    if (!isValidDateStr(fecha)) {
+      return res.status(400).json({ error: 'fecha inválida', campo: 'fecha' });
+    }
+    const cant = Number(cantidad);
+    if (!Number.isFinite(cant) || cant <= 0) {
+      return res.status(400).json({ error: 'cantidad debe ser mayor que cero', campo: 'cantidad' });
+    }
+
+    if (!id_animal) {
+      const disponible = await pobCategoria(req.granjaId, categoria);
+      if (cant > disponible) {
+        return res.status(400).json({
+          error: `cantidad (${cant}) supera la población disponible de la categoría (${disponible})`,
+          campo: 'cantidad',
+          disponible,
+        });
+      }
     }
 
     const client = await pool.connect();
@@ -30,7 +66,7 @@ router.post(
           fecha,
           clasificacion || null,
           categoria || null,
-          cantidad,
+          cant,
           causa || null,
           id_jaula || null,
           req.user.id,

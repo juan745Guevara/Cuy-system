@@ -1,11 +1,21 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { asyncHandler } = require('../utils/helpers');
+const { asyncHandler, isValidDateStr, promedioPesos } = require('../utils/helpers');
 const { authRequired, loadUserFarms, requireFarmAccess, requireRoles } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authRequired, loadUserFarms, requireFarmAccess);
 const canWrite = requireRoles('superadmin', 'admin', 'encargado', 'auxiliar');
+
+async function catId(client, granjaId, nombres) {
+  const { rows } = await client.query(
+    `SELECT c.id, c.nombre FROM categorias c
+     JOIN granjas g ON g.id_especie = c.id_especie
+     WHERE g.id = $1 AND LOWER(c.nombre) = ANY($2::text[]) AND c.activa = true`,
+    [granjaId, nombres.map((n) => n.toLowerCase())]
+  );
+  return rows;
+}
 
 // CUY-09
 router.post(
@@ -24,16 +34,44 @@ router.post(
       peso_h1,
       peso_h2,
       peso_h3,
+      id_jaula_m,
+      id_jaula_h,
     } = req.body || {};
     if (!id_parto || !fecha_destete) {
       return res.status(400).json({ error: 'id_parto y fecha_destete son obligatorios' });
     }
+    if (!isValidDateStr(fecha_destete)) {
+      return res.status(400).json({ error: 'fecha_destete inválida', campo: 'fecha_destete' });
+    }
 
-    const parto = await pool.query(
-      `SELECT * FROM partos WHERE id = $1 AND id_granja = $2`,
-      [id_parto, req.granjaId]
-    );
-    if (!parto.rows[0]) return res.status(404).json({ error: 'Parto no encontrado' });
+    const partoQ = await pool.query(`SELECT * FROM partos WHERE id = $1 AND id_granja = $2`, [
+      id_parto,
+      req.granjaId,
+    ]);
+    if (!partoQ.rows[0]) return res.status(404).json({ error: 'Parto no encontrado' });
+    const parto = partoQ.rows[0];
+    if (fecha_destete <= String(parto.fecha_parto).slice(0, 10)) {
+      return res.status(400).json({
+        error: 'fecha_destete debe ser posterior a la del parto',
+        campo: 'fecha_destete',
+      });
+    }
+
+    const dm = Number(destetados_m) || 0;
+    const dh = Number(destetados_h) || 0;
+    const mu = Number(muertos) || 0;
+    const vivosNac = (parto.vivos_m || 0) + (parto.vivos_h || 0);
+    if (dm + dh > vivosNac) {
+      return res.status(400).json({
+        error: 'tamaño de camada al destete no puede superar crías vivas al nacimiento',
+        campo: 'destetados_m',
+      });
+    }
+    if (dm + dh + mu > vivosNac) {
+      return res.status(400).json({
+        error: 'destetados + muertos no pueden superar vivos al nacimiento',
+      });
+    }
 
     const client = await pool.connect();
     try {
@@ -46,9 +84,9 @@ router.post(
         [
           id_parto,
           fecha_destete,
-          destetados_m,
-          destetados_h,
-          muertos,
+          dm,
+          dh,
+          mu,
           peso_m1 || null,
           peso_m2 || null,
           peso_m3 || null,
@@ -59,28 +97,67 @@ router.post(
         ]
       );
 
-      // gazapos → recría/reemplazo (categoría)
-      const cat = await client.query(
-        `SELECT c.id FROM categorias c
-         JOIN granjas g ON g.id_especie = c.id_especie
-         WHERE g.id = $1 AND LOWER(c.nombre) IN ('recria', 'reemplazo') LIMIT 1`,
-        [req.granjaId]
+      const cats = await catId(client, req.granjaId, ['recria', 'reemplazo']);
+      const idRecria =
+        cats.find((c) => c.nombre.toLowerCase() === 'recria')?.id ||
+        cats.find((c) => c.nombre.toLowerCase() === 'reemplazo')?.id ||
+        null;
+
+      const gazapos = await client.query(
+        `SELECT id, sexo FROM animales
+         WHERE id_parto_origen = $1 AND id_granja = $2 AND estado = 'activo'
+         ORDER BY sexo, id`,
+        [id_parto, req.granjaId]
       );
-      if (cat.rows[0]) {
-        // no cría individual aún; deja traza en particularidad de la madre
+
+      for (const g of gazapos.rows) {
+        const jaulaDest =
+          g.sexo === 'M' ? id_jaula_m || null : id_jaula_h || null;
         await client.query(
-          `INSERT INTO animal_particularidades (id_animal, texto, created_by)
-           VALUES ($1, $2, $3)`,
-          [
-            parto.rows[0].id_hembra,
-            `Destete ${fecha_destete}: ${destetados_m}M + ${destetados_h}H (categoría destino: recría)`,
-            req.user.id,
-          ]
+          `UPDATE animales SET
+             id_categoria = COALESCE($1, id_categoria),
+             id_jaula = COALESCE($2, id_jaula),
+             updated_at = NOW()
+           WHERE id = $3`,
+          [idRecria, jaulaDest, g.id]
         );
       }
 
+      // mortalidad de gazapos no destetados
+      if (mu > 0) {
+        const toKill = gazapos.rows.slice(dm + dh);
+        for (const g of toKill.slice(0, mu)) {
+          await client.query(
+            `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1,
+               motivo_baja = 'Muerto al destete', updated_at = NOW()
+             WHERE id = $2`,
+            [fecha_destete, g.id]
+          );
+        }
+        await client.query(
+          `INSERT INTO mortalidad
+            (id_granja, fecha, clasificacion, categoria, cantidad, causa, created_by)
+           VALUES ($1,$2,$3,'gazapo',$4,'Muertos al destete',$5)`,
+          [req.granjaId, fecha_destete, null, mu, req.user.id]
+        );
+      }
+
+      await client.query(
+        `INSERT INTO animal_particularidades (id_animal, texto, created_by)
+         VALUES ($1, $2, $3)`,
+        [
+          parto.id_hembra,
+          `Destete ${fecha_destete}: ${dm}M + ${dh}H (gazapos → recría)`,
+          req.user.id,
+        ]
+      );
+
       await client.query('COMMIT');
-      res.status(201).json(rows[0]);
+      res.status(201).json({
+        ...rows[0],
+        peso_promedio_destete: promedioPesos(peso_m1, peso_m2, peso_m3, peso_h1, peso_h2, peso_h3),
+        crias_actualizadas: gazapos.rows.length,
+      });
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -102,7 +179,19 @@ router.get(
        ORDER BY d.fecha_destete DESC`,
       [req.granjaId]
     );
-    res.json(rows);
+    res.json(
+      rows.map((d) => ({
+        ...d,
+        peso_promedio_destete: promedioPesos(
+          d.peso_m1,
+          d.peso_m2,
+          d.peso_m3,
+          d.peso_h1,
+          d.peso_h2,
+          d.peso_h3
+        ),
+      }))
+    );
   })
 );
 

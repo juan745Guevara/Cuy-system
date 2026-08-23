@@ -60,8 +60,22 @@ function requireFarmAccess(req, res, next) {
     req.user.rol === 'superadmin' ||
     (req.userFarms || []).some((g) => Number(g.id) === farmId);
   if (!ok) return res.status(403).json({ error: 'Granja fuera de su alcance' });
-  req.granjaId = farmId;
-  next();
+
+  // NUC-04: granja desactivada no admite nuevos registros
+  pool
+    .query(`SELECT activa FROM granjas WHERE id = $1`, [farmId])
+    .then(({ rows }) => {
+      if (!rows[0]) return res.status(404).json({ error: 'Granja no encontrada' });
+      const write = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+      if (write && rows[0].activa === false) {
+        return res.status(403).json({
+          error: 'La granja está desactivada y no admite nuevos registros',
+        });
+      }
+      req.granjaId = farmId;
+      return next();
+    })
+    .catch(next);
 }
 
 module.exports = {

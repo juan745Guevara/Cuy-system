@@ -12,6 +12,7 @@ const Jaulas = () => {
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [ocupantes, setOcupantes] = useState(null);
+  const [edit, setEdit] = useState(null);
 
   const load = useCallback(async () => {
     setError('');
@@ -19,11 +20,11 @@ const Jaulas = () => {
       const [j, a] = await Promise.all([api.get('/jaulas'), api.get('/areas')]);
       setJaulas(j.data);
       setAreas(a.data);
-      if (!idArea && a.data[0]) setIdArea(String(a.data[0].id));
+      setIdArea((prev) => prev || (a.data[0] ? String(a.data[0].id) : ''));
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron cargar jaulas');
     }
-  }, [idArea]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -48,6 +49,39 @@ const Jaulas = () => {
     }
   };
 
+  const guardarEdit = async (e) => {
+    e.preventDefault();
+    if (!edit) return;
+    setError('');
+    setOk('');
+    try {
+      await api.patch(`/jaulas/${edit.id}`, {
+        codigo: edit.codigo,
+        capacidad_maxima: edit.capacidad ? Number(edit.capacidad) : null,
+        id_area: Number(edit.id_area),
+      });
+      setOk(`Jaula ${edit.codigo} actualizada`);
+      setEdit(null);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo actualizar');
+    }
+  };
+
+  const desactivar = async (j) => {
+    setError('');
+    setOk('');
+    try {
+      await api.patch(`/jaulas/${j.id}/desactivar`);
+      setOk(`Jaula ${j.codigo} desactivada`);
+      if (ocupantes?.id === j.id) setOcupantes(null);
+      if (edit?.id === j.id) setEdit(null);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo desactivar');
+    }
+  };
+
   const verAnimales = async (id) => {
     try {
       const { data } = await api.get(`/jaulas/${id}/animales`);
@@ -55,6 +89,13 @@ const Jaulas = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron listar animales');
     }
+  };
+
+  const ocupLabel = (j) => {
+    const occ = j.ocupacion ?? 0;
+    const cap = j.capacidad_maxima ?? j.capacidad ?? null;
+    if (cap != null) return `${occ} / ${cap}`;
+    return String(occ);
   };
 
   return (
@@ -93,6 +134,44 @@ const Jaulas = () => {
         </button>
       </form>
 
+      {edit && (
+        <form onSubmit={guardarEdit} style={{ ...s.card, ...s.row }}>
+          <strong>Editar jaula #{edit.id}</strong>
+          <select
+            style={s.select}
+            required
+            value={edit.id_area}
+            onChange={(e) => setEdit({ ...edit, id_area: e.target.value })}
+          >
+            {areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nombre}
+              </option>
+            ))}
+          </select>
+          <input
+            style={s.input}
+            required
+            value={edit.codigo}
+            onChange={(e) => setEdit({ ...edit, codigo: e.target.value })}
+          />
+          <input
+            style={s.input}
+            type="number"
+            min="1"
+            placeholder="Capacidad"
+            value={edit.capacidad}
+            onChange={(e) => setEdit({ ...edit, capacidad: e.target.value })}
+          />
+          <button type="submit" style={s.btn}>
+            Guardar
+          </button>
+          <button type="button" style={s.btnGhost} onClick={() => setEdit(null)}>
+            Cancelar
+          </button>
+        </form>
+      )}
+
       <table style={s.table}>
         <thead>
           <tr>
@@ -101,20 +180,41 @@ const Jaulas = () => {
             <th style={s.th}>Propósito</th>
             <th style={s.th}>Ocupación</th>
             <th style={s.th}>Capacidad</th>
-            <th style={s.th}></th>
+            <th style={s.th}>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {jaulas.map((j) => (
             <tr key={j.id}>
               <td style={s.td}>{j.codigo}</td>
-              <td style={s.td}>{j.area}</td>
-              <td style={s.td}>{j.proposito}</td>
-              <td style={s.td}>{j.ocupacion}</td>
-              <td style={s.td}>{j.capacidad_maxima ?? '—'}</td>
+              <td style={s.td}>{j.area || j.nombre_area || '—'}</td>
+              <td style={s.td}>{j.proposito || '—'}</td>
+              <td style={s.td}>{ocupLabel(j)}</td>
+              <td style={s.td}>{j.capacidad_maxima ?? j.capacidad ?? '—'}</td>
               <td style={s.td}>
-                <button type="button" style={s.btnGhost} onClick={() => verAnimales(j.id)}>
+                <button
+                  type="button"
+                  style={{ ...s.btnGhost, marginRight: 6 }}
+                  onClick={() => verAnimales(j.id)}
+                >
                   Ver animales
+                </button>
+                <button
+                  type="button"
+                  style={{ ...s.btnGhost, marginRight: 6 }}
+                  onClick={() =>
+                    setEdit({
+                      id: j.id,
+                      codigo: j.codigo,
+                      id_area: String(j.id_area),
+                      capacidad: j.capacidad_maxima != null ? String(j.capacidad_maxima) : '',
+                    })
+                  }
+                >
+                  Editar
+                </button>
+                <button type="button" style={s.btnDanger} onClick={() => desactivar(j)}>
+                  Desactivar
                 </button>
               </td>
             </tr>

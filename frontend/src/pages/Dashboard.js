@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { page as s } from '../styles/ui';
+import { page as s, theme } from '../styles/ui';
 import { useAuth } from '../context/AuthContext';
 
 /** NUC-03 panel · NUC-33 alertas en inicio */
@@ -29,78 +29,163 @@ const Dashboard = () => {
       .catch(() => {});
   }, []);
 
-  const card = {
-    padding: '1.25rem',
-    background: '#fff',
-    border: '1px solid #95d5b2',
-  };
+  const metrics = [
+    { label: 'Población', value: pob?.total ?? '—', hint: 'Animales activos' },
+    { label: 'Nacimientos', value: resumen?.nacimientos ?? '—', hint: 'Mes en curso' },
+    {
+      label: 'Bajas del mes',
+      value: resumen == null ? '—' : (resumen.mortalidad ?? 0) + (resumen.ventas ?? 0),
+      hint: 'Mortalidad + ventas',
+    },
+    {
+      label: 'Alertas',
+      value: alertas?.vencidas?.length ?? '—',
+      hint: `${alertas?.proximas?.length ?? 0} próximas`,
+    },
+  ];
 
   return (
     <div style={s.wrap}>
-      <h1 style={s.title}>Inicio</h1>
-      <p style={s.sub}>
-        {granja ? `${granja.especie} · ${granja.nombre}` : 'Granja activa'}
-      </p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-        <div style={card}>
-          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Población</h3>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>{pob?.total ?? '—'}</p>
-        </div>
-        <div style={card}>
-          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Nacimientos</h3>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>
-            {resumen?.nacimientos ?? '—'}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          flexWrap: 'wrap',
+          alignItems: 'flex-end',
+          marginBottom: '1.5rem',
+        }}
+      >
+        <div>
+          <p
+            style={{
+              margin: '0 0 0.35rem',
+              color: theme.maroon,
+              fontSize: '0.78rem',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+            }}
+          >
+            Panel de la granja
           </p>
-        </div>
-        <div style={card}>
-          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Bajas del mes</h3>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>
-            {resumen == null ? '—' : (resumen.mortalidad ?? 0) + (resumen.ventas ?? 0)}
-          </p>
-        </div>
-        <div style={card}>
-          <h3 style={{ marginTop: 0, color: '#1b4332' }}>Alertas</h3>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 700 }}>
-            {alertas?.vencidas?.length ?? '—'}
-          </p>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>
-            {alertas?.proximas?.length ?? 0} próximas
+          <h1 style={{ ...s.title, marginBottom: 4 }}>Inicio</h1>
+          <p style={{ ...s.sub, marginBottom: 0 }}>
+            {granja ? `${granja.especie} · ${granja.nombre}` : 'Granja activa'}
           </p>
         </div>
       </div>
 
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '1rem',
+        }}
+      >
+        {metrics.map((m) => (
+          <div
+            key={m.label}
+            style={{
+              padding: '1.35rem 1.3rem',
+              background: `linear-gradient(160deg, ${theme.creamSoft} 0%, #F7F0E6 100%)`,
+              border: `1px solid ${theme.border}`,
+              borderRadius: theme.radius,
+              boxShadow: theme.shadowSoft,
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: -18,
+                right: -18,
+                width: 72,
+                height: 72,
+                borderRadius: '50%',
+                background: 'rgba(122,18,22,0.06)',
+              }}
+            />
+            <div
+              style={{
+                fontSize: '0.82rem',
+                color: theme.muted,
+                fontWeight: 650,
+                marginBottom: 6,
+              }}
+            >
+              {m.label}
+            </div>
+            <div
+              style={{
+                fontSize: '2.15rem',
+                margin: 0,
+                fontWeight: 700,
+                color: theme.maroonDeep,
+                fontFamily: theme.fontDisplay,
+                letterSpacing: '-0.03em',
+                lineHeight: 1,
+              }}
+            >
+              {m.value}
+            </div>
+            <div style={{ marginTop: 8, fontSize: '0.82rem', color: theme.muted }}>{m.hint}</div>
+          </div>
+        ))}
+      </div>
+
       {alertas?.vencidas?.length > 0 && (
-        <div style={{ ...s.card, marginTop: '1rem' }}>
-          <h3 style={{ marginTop: 0 }}>Alertas vencidas</h3>
-          <ul>
+        <div style={{ ...s.card, marginTop: '1.25rem', borderRadius: theme.radius }}>
+          <h3 style={{ marginTop: 0, color: theme.maroonDeep, fontFamily: theme.fontDisplay }}>
+            Alertas vencidas
+          </h3>
+          <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.1rem' }}>
             {alertas.vencidas.slice(0, 5).map((a) => (
-              <li key={a.key}>
+              <li key={a.key} style={{ marginBottom: 6 }}>
                 {a.mensaje} · {a.fecha_prevista}{' '}
-                <Link to={a.ruta || '/alertas'}>Ir</Link>
+                <Link to={a.ruta || '/alertas'} style={{ color: theme.maroon, fontWeight: 650 }}>
+                  Ir
+                </Link>
               </li>
             ))}
           </ul>
-          <Link to="/alertas">Ver todas</Link>
+          <Link to="/alertas" style={{ color: theme.maroon, fontWeight: 700 }}>
+            Ver todas →
+          </Link>
         </div>
       )}
 
-      <div style={{ ...s.row, marginTop: '1.5rem' }}>
-        <Link to="/animales" style={s.btn}>
-          Animales
-        </Link>
-        <Link to="/empadres" style={s.btnGhost}>
-          Empadres
-        </Link>
-        <Link to="/movimientos" style={s.btnGhost}>
-          Movimientos
-        </Link>
-        <Link to="/pesajes" style={s.btnGhost}>
-          Pesajes
-        </Link>
-        <Link to="/inventario" style={s.btnGhost}>
-          Inventario / Excel
-        </Link>
+      <div style={{ marginTop: '1.5rem' }}>
+        <p
+          style={{
+            margin: '0 0 0.75rem',
+            color: theme.muted,
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Accesos rápidos
+        </p>
+        <div style={s.row}>
+          <Link to="/animales" style={s.btn}>
+            Animales
+          </Link>
+          <Link to="/empadres" style={s.btnGhost}>
+            Empadres
+          </Link>
+          <Link to="/movimientos" style={s.btnGhost}>
+            Movimientos
+          </Link>
+          <Link to="/pesajes" style={s.btnGhost}>
+            Pesajes
+          </Link>
+          <Link to="/inventario" style={s.btnGhost}>
+            Inventario / Excel
+          </Link>
+        </div>
       </div>
     </div>
   );

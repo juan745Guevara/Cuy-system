@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { theme } from '../styles/ui';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -25,6 +26,19 @@ const Login = () => {
     }
   };
 
+  const field = {
+    width: '100%',
+    padding: '0.8rem 1rem',
+    marginBottom: '1rem',
+    border: `1px solid ${theme.border}`,
+    borderRadius: theme.radiusSm,
+    background: '#FFFEFB',
+    color: theme.ink,
+    fontFamily: theme.fontBody,
+    boxSizing: 'border-box',
+    boxShadow: 'inset 0 1px 2px rgba(79,12,16,0.04)',
+  };
+
   return (
     <div
       style={{
@@ -32,74 +46,111 @@ const Login = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: 'linear-gradient(160deg, #1b4332 0%, #40916c 55%, #d8f3dc 100%)',
-        fontFamily: 'Georgia, "Times New Roman", serif',
+        padding: '1.5rem',
+        background: `
+          radial-gradient(ellipse 70% 55% at 15% 15%, rgba(163,58,62,0.16), transparent 55%),
+          radial-gradient(ellipse 60% 45% at 85% 85%, rgba(122,18,22,0.12), transparent 50%),
+          linear-gradient(155deg, #F8F2E8 0%, ${theme.cream} 50%, #E8DFD0 100%)
+        `,
+        fontFamily: theme.fontBody,
       }}
     >
       <form
         onSubmit={handleSubmit}
         style={{
           width: '100%',
-          maxWidth: 380,
-          padding: '2rem',
-          background: 'rgba(255,255,255,0.95)',
-          borderRadius: 4,
-          boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+          maxWidth: 430,
+          padding: '2.4rem 2.1rem 2.1rem',
+          background: 'rgba(255,252,250,0.92)',
+          borderRadius: theme.radiusLg,
+          border: `1px solid ${theme.border}`,
+          boxShadow: '0 28px 60px rgba(79,12,16,0.14)',
+          backdropFilter: 'blur(10px)',
         }}
       >
-        <p style={{ margin: 0, color: '#1b4332', fontSize: '0.85rem', letterSpacing: '0.08em' }}>
-          FACULTAD DE ZOOTECNIA — UNAS
-        </p>
-        <h1 style={{ margin: '0.4rem 0 1.5rem', color: '#081c15', fontSize: '1.75rem' }}>
-          Control de Animales
-        </h1>
+        <div style={{ textAlign: 'center', marginBottom: '1.6rem' }}>
+          <img
+            src="/logo-fz.png?v=3"
+            alt="Facultad de Zootecnia — UNAS"
+            style={{
+              width: 118,
+              height: 118,
+              objectFit: 'contain',
+              marginBottom: '1rem',
+              background: theme.cream,
+              borderRadius: '50%',
+              padding: 6,
+              border: `3px solid ${theme.maroon}`,
+              display: 'inline-block',
+              boxShadow: '0 14px 28px rgba(122,18,22,0.18)',
+            }}
+          />
+          <p
+            style={{
+              margin: 0,
+              color: theme.maroon,
+              fontSize: '0.76rem',
+              letterSpacing: '0.14em',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+            }}
+          >
+            Facultad de Zootecnia · UNAS
+          </p>
+          <h1
+            style={{
+              margin: '0.5rem 0 0',
+              color: theme.maroonDeep,
+              fontSize: '1.85rem',
+              fontFamily: theme.fontDisplay,
+              fontWeight: 650,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Control de Animales
+          </h1>
+          <p style={{ margin: '0.45rem 0 0', color: theme.muted, fontSize: '0.98rem' }}>
+            Registro productivo de la unidad
+          </p>
+        </div>
 
         {error && (
           <div
             style={{
               marginBottom: '1rem',
-              padding: '0.75rem',
-              background: '#fff0f0',
-              color: '#9b2226',
-              borderLeft: '3px solid #9b2226',
+              padding: '0.85rem 1rem',
+              background: theme.errorBg,
+              color: theme.danger,
+              borderRadius: theme.radiusSm,
+              border: '1px solid rgba(155,28,31,0.15)',
             }}
           >
             {error}
           </div>
         )}
 
-        <label style={{ display: 'block', marginBottom: 4, color: '#1b4332' }}>Email</label>
+        <label style={{ display: 'block', marginBottom: 6, color: theme.maroonDeep, fontWeight: 650 }}>
+          Email
+        </label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="username"
-          style={{
-            width: '100%',
-            padding: '0.65rem',
-            marginBottom: '1rem',
-            border: '1px solid #95d5b2',
-            borderRadius: 2,
-            boxSizing: 'border-box',
-          }}
+          style={field}
         />
 
-        <label style={{ display: 'block', marginBottom: 4, color: '#1b4332' }}>Contraseña</label>
+        <label style={{ display: 'block', marginBottom: 6, color: theme.maroonDeep, fontWeight: 650 }}>
+          Contraseña
+        </label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          style={{
-            width: '100%',
-            padding: '0.65rem',
-            marginBottom: '1.25rem',
-            border: '1px solid #95d5b2',
-            borderRadius: 2,
-            boxSizing: 'border-box',
-          }}
+          style={field}
         />
 
         <button
@@ -107,13 +158,18 @@ const Login = () => {
           disabled={submitting}
           style={{
             width: '100%',
-            padding: '0.75rem',
-            background: '#1b4332',
-            color: '#fff',
+            padding: '0.9rem',
+            marginTop: '0.35rem',
+            background: `linear-gradient(180deg, ${theme.maroonSoft} 0%, ${theme.maroon} 100%)`,
+            color: theme.creamSoft,
             border: 'none',
-            borderRadius: 2,
+            borderRadius: theme.radiusSm,
             cursor: submitting ? 'wait' : 'pointer',
-            fontSize: '1rem',
+            fontSize: '1.02rem',
+            fontWeight: 700,
+            fontFamily: theme.fontBody,
+            letterSpacing: '0.02em',
+            boxShadow: '0 12px 24px rgba(122,18,22,0.25)',
           }}
         >
           {submitting ? 'Entrando…' : 'Iniciar sesión'}

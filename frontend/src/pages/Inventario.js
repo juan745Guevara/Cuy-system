@@ -2,6 +2,20 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
+async function blobErrorMessage(err, fallback) {
+  const data = err.response?.data;
+  if (data instanceof Blob) {
+    try {
+      const text = await data.text();
+      const json = JSON.parse(text);
+      return json.error || json.message || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  return data?.error || data?.message || fallback;
+}
+
 /** NUC-28/29/31/32 · NUC-36/CUY-22..24 Excel */
 const Inventario = () => {
   const now = new Date();
@@ -36,11 +50,16 @@ const Inventario = () => {
   }, [load]);
 
   const descargar = async (path, filename) => {
+    setError('');
     try {
       const res = await api.get(path, {
         responseType: 'blob',
         params: path.includes('inventario-mensual') ? { anio, mes } : undefined,
       });
+      if (res.status === 204 || (res.data && res.data.size === 0)) {
+        setError('No hay datos para exportar');
+        return;
+      }
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url;
@@ -48,8 +67,93 @@ const Inventario = () => {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo exportar');
+      const status = err.response?.status;
+      const msg = await blobErrorMessage(err, 'No se pudo exportar');
+      if (status === 409 || status === 400) {
+        setError(msg || 'No hay datos suficientes para generar el reporte');
+      } else {
+        setError(msg);
+      }
     }
+  };
+
+  const matriz =
+    poblacion?.matriz ||
+    poblacion?.por_raza ||
+    (Array.isArray(poblacion?.matriz_raza_categoria) ? poblacion.matriz_raza_categoria : null);
+
+  const renderMatriz = () => {
+    if (!matriz) return null;
+
+    // Formato filas: [{ raza, categoria, cantidad }] o { [raza]: { [cat]: n } }
+    if (Array.isArray(matriz)) {
+      const razas = [...new Set(matriz.map((r) => r.raza || r.nombre_raza || '—'))];
+      const cats = [...new Set(matriz.map((r) => r.categoria || r.nombre_categoria || '—'))];
+      const lookup = {};
+      matriz.forEach((r) => {
+        const rz = r.raza || r.nombre_raza || '—';
+        const ct = r.categoria || r.nombre_categoria || '—';
+        lookup[`${rz}||${ct}`] = r.cantidad ?? r.n ?? 0;
+      });
+      return (
+        <table style={s.table}>
+          <thead>
+            <tr>
+              <th style={s.th}>Raza \\ Categoría</th>
+              {cats.map((c) => (
+                <th key={c} style={s.th}>
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {razas.map((rz) => (
+              <tr key={rz}>
+                <td style={s.td}>{rz}</td>
+                {cats.map((ct) => (
+                  <td key={ct} style={s.td}>
+                    {lookup[`${rz}||${ct}`] ?? 0}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    if (typeof matriz === 'object') {
+      const razas = Object.keys(matriz);
+      const cats = [...new Set(razas.flatMap((rz) => Object.keys(matriz[rz] || {})))];
+      return (
+        <table style={s.table}>
+          <thead>
+            <tr>
+              <th style={s.th}>Raza \\ Categoría</th>
+              {cats.map((c) => (
+                <th key={c} style={s.th}>
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {razas.map((rz) => (
+              <tr key={rz}>
+                <td style={s.td}>{rz}</td>
+                {cats.map((ct) => (
+                  <td key={ct} style={s.td}>
+                    {matriz[rz]?.[ct] ?? 0}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+    return null;
   };
 
   return (
@@ -81,24 +185,31 @@ const Inventario = () => {
       {poblacion && (
         <div style={s.card}>
           <h3 style={{ marginTop: 0 }}>Población actual: {poblacion.total}</h3>
-          <table style={s.table}>
-            <thead>
-              <tr>
-                <th style={s.th}>Categoría</th>
-                <th style={s.th}>Sexo</th>
-                <th style={s.th}>Cantidad</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(poblacion.por_categoria || []).map((r, i) => (
-                <tr key={i}>
-                  <td style={s.td}>{r.categoria}</td>
-                  <td style={s.td}>{r.sexo}</td>
-                  <td style={s.td}>{r.cantidad}</td>
+          {matriz ? (
+            <>
+              <p style={{ color: '#7A6358', marginTop: 0 }}>Matriz raza × categoría</p>
+              {renderMatriz()}
+            </>
+          ) : (
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={s.th}>Categoría</th>
+                  <th style={s.th}>Sexo</th>
+                  <th style={s.th}>Cantidad</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(poblacion.por_categoria || []).map((r, i) => (
+                  <tr key={i}>
+                    <td style={s.td}>{r.categoria}</td>
+                    <td style={s.td}>{r.sexo}</td>
+                    <td style={s.td}>{r.cantidad}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
@@ -107,10 +218,36 @@ const Inventario = () => {
           <h3 style={{ marginTop: 0 }}>
             Resumen {resumen.mes}/{resumen.anio}
           </h3>
-          <p>Nacimientos: {resumen.nacimientos}</p>
-          <p>Mortalidad: {resumen.mortalidad}</p>
-          <p>Ventas: {resumen.ventas}</p>
-          <p>Población actual: {resumen.poblacion_actual}</p>
+          <p>Población inicial: {resumen.poblacion_inicial ?? '—'}</p>
+          <p>Nacimientos: {resumen.nacimientos ?? '—'}</p>
+          <p>Mortalidad: {resumen.mortalidad ?? '—'}</p>
+          <p>Ventas: {resumen.ventas ?? '—'}</p>
+          <p>Transferencias in: {resumen.transferencias_in ?? '—'}</p>
+          <p>Transferencias out: {resumen.transferencias_out ?? '—'}</p>
+          <p>
+            Población final:{' '}
+            {resumen.poblacion_final ?? resumen.poblacion_actual ?? '—'}
+          </p>
+          {resumen.desglose_categorias && (
+            <>
+              <p style={{ marginBottom: 4 }}>
+                <strong>Desglose por categoría</strong>
+              </p>
+              <ul>
+                {(Array.isArray(resumen.desglose_categorias)
+                  ? resumen.desglose_categorias
+                  : Object.entries(resumen.desglose_categorias).map(([k, v]) => ({
+                      categoria: k,
+                      cantidad: v,
+                    }))
+                ).map((d, i) => (
+                  <li key={i}>
+                    {d.categoria || d.nombre}: {d.cantidad ?? d.n ?? '—'}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
 

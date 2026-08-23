@@ -1,13 +1,55 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { theme } from '../styles/ui';
+
+const navGroups = [
+  {
+    label: 'General',
+    items: [
+      { to: '/', label: 'Inicio', exact: true },
+      { to: '/animales', label: 'Animales' },
+      { to: '/areas', label: 'Áreas' },
+      { to: '/jaulas', label: 'Jaulas' },
+      { to: '/catalogos', label: 'Catálogos' },
+    ],
+  },
+  {
+    label: 'Ciclo productivo',
+    items: [
+      { to: '/reproductoras', label: 'Reproductoras' },
+      { to: '/reproductores', label: 'Reproductores' },
+      { to: '/empadres', label: 'Empadres' },
+      { to: '/partos', label: 'Partos' },
+      { to: '/destetes', label: 'Destetes' },
+    ],
+  },
+  {
+    label: 'Operación',
+    items: [
+      { to: '/mortalidad', label: 'Mortalidad' },
+      { to: '/ventas', label: 'Ventas' },
+      { to: '/movimientos', label: 'Movimientos' },
+      { to: '/pesajes', label: 'Pesajes' },
+      { to: '/sanidad', label: 'Sanidad' },
+      { to: '/alertas', label: 'Alertas' },
+      { to: '/ranking', label: 'Ranking' },
+      { to: '/inventario', label: 'Inventario' },
+    ],
+  },
+];
 
 const linkStyle = (active) => ({
   display: 'block',
-  padding: '0.35rem 0',
-  color: active ? '#081c15' : '#1b4332',
-  fontWeight: active ? 700 : 400,
+  padding: '0.55rem 0.9rem',
+  marginBottom: 4,
+  borderRadius: theme.radiusSm,
+  color: active ? theme.maroonDeep : 'rgba(255,248,240,0.88)',
+  background: active ? theme.creamSoft : 'transparent',
+  fontWeight: active ? 700 : 500,
   textDecoration: 'none',
+  boxShadow: active ? '0 6px 14px rgba(0,0,0,0.12)' : 'none',
+  transition: 'background 160ms ease, color 160ms ease, transform 160ms ease',
 });
 
 const Layout = () => {
@@ -22,26 +64,86 @@ const Layout = () => {
     navigate('/login');
   };
 
-  const is = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`);
+  const is = (path, exact) =>
+    exact
+      ? location.pathname === path
+      : location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Georgia, serif' }}>
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        fontFamily: theme.fontBody,
+        color: theme.ink,
+        background: theme.cream,
+      }}
+    >
       <nav
         style={{
-          width: 250,
-          background: '#d8f3dc',
-          padding: '1.25rem',
-          borderRight: '1px solid #95d5b2',
+          width: 260,
+          flexShrink: 0,
+          background: `linear-gradient(180deg, ${theme.maroonDeep} 0%, ${theme.maroon} 70%, #8E1F24 100%)`,
+          padding: '1.15rem 0.9rem 1rem',
+          color: theme.creamSoft,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          borderRight: `1px solid ${theme.maroonDeep}`,
         }}
       >
-        <h2 style={{ marginTop: 0, color: '#1b4332', fontSize: '1.15rem' }}>Control Animales</h2>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.1rem', padding: '0.2rem 0.35rem' }}>
+          <img
+            src="/logo-fz.png?v=3"
+            alt="Facultad de Zootecnia"
+            style={{
+              width: 58,
+              height: 58,
+              objectFit: 'contain',
+              background: theme.cream,
+              borderRadius: '50%',
+              padding: 3,
+              border: `2px solid ${theme.creamSoft}`,
+              display: 'block',
+              boxShadow: '0 8px 18px rgba(0,0,0,0.2)',
+            }}
+          />
+          <div>
+            <div
+              style={{
+                fontFamily: theme.fontDisplay,
+                fontSize: '1.05rem',
+                lineHeight: 1.15,
+                color: theme.creamSoft,
+              }}
+            >
+              Control Animales
+            </div>
+            <div style={{ fontSize: '0.72rem', opacity: 0.8, letterSpacing: '0.06em', marginTop: 2 }}>
+              FZ · UNAS
+            </div>
+          </div>
+        </div>
+
         {granja && (
-          <p style={{ fontSize: '0.9rem', color: '#081c15' }}>
-            <strong>{granja.especie}</strong>
-            <br />
-            {granja.nombre}
-          </p>
+          <div
+            style={{
+              fontSize: '0.84rem',
+              margin: '0 0 0.7rem',
+              padding: '0.7rem 0.85rem',
+              background: 'rgba(255,252,250,0.1)',
+              borderRadius: theme.radiusSm,
+              border: '1px solid rgba(245,239,227,0.22)',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <strong style={{ display: 'block', marginBottom: 2 }}>{granja.especie}</strong>
+            <span style={{ opacity: 0.9 }}>{granja.nombre}</span>
+          </div>
         )}
+
         <button
           type="button"
           onClick={() => {
@@ -50,59 +152,122 @@ const Layout = () => {
             navigate('/seleccionar-granja');
           }}
           style={{
-            marginBottom: '1rem',
+            marginBottom: '0.9rem',
             fontSize: '0.8rem',
-            background: 'transparent',
-            border: '1px solid #1b4332',
-            padding: '0.35rem 0.5rem',
+            background: 'rgba(255,252,250,0.08)',
+            border: '1px solid rgba(245,239,227,0.35)',
+            color: theme.creamSoft,
+            padding: '0.45rem 0.85rem',
             cursor: 'pointer',
+            borderRadius: theme.radiusSm,
+            alignSelf: 'flex-start',
+            fontWeight: 600,
           }}
         >
           Cambiar granja
         </button>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          <li><Link style={linkStyle(is('/') && location.pathname === '/')} to="/">Inicio</Link></li>
-          <li><Link style={linkStyle(is('/animales'))} to="/animales">Animales</Link></li>
-          <li><Link style={linkStyle(is('/areas'))} to="/areas">Áreas</Link></li>
-          <li><Link style={linkStyle(is('/jaulas'))} to="/jaulas">Jaulas</Link></li>
-          <li><Link style={linkStyle(is('/catalogos'))} to="/catalogos">Catálogos</Link></li>
-          <li><Link style={linkStyle(is('/reproductoras'))} to="/reproductoras">Reproductoras</Link></li>
-          <li><Link style={linkStyle(is('/reproductores'))} to="/reproductores">Reproductores</Link></li>
-          <li><Link style={linkStyle(is('/empadres'))} to="/empadres">Empadres</Link></li>
-          <li><Link style={linkStyle(is('/partos'))} to="/partos">Partos</Link></li>
-          <li><Link style={linkStyle(is('/destetes'))} to="/destetes">Destetes</Link></li>
-          <li><Link style={linkStyle(is('/mortalidad'))} to="/mortalidad">Mortalidad</Link></li>
-          <li><Link style={linkStyle(is('/ventas'))} to="/ventas">Ventas</Link></li>
-          <li><Link style={linkStyle(is('/movimientos'))} to="/movimientos">Movimientos</Link></li>
-          <li><Link style={linkStyle(is('/pesajes'))} to="/pesajes">Pesajes</Link></li>
-          <li><Link style={linkStyle(is('/sanidad'))} to="/sanidad">Sanidad</Link></li>
-          <li><Link style={linkStyle(is('/alertas'))} to="/alertas">Alertas</Link></li>
-          <li><Link style={linkStyle(is('/ranking'))} to="/ranking">Ranking</Link></li>
-          <li><Link style={linkStyle(is('/inventario'))} to="/inventario">Inventario</Link></li>
+
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 2 }}>
+          {navGroups.map((group) => (
+            <div key={group.label} style={{ marginBottom: '0.85rem' }}>
+              <div
+                style={{
+                  fontSize: '0.68rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  opacity: 0.55,
+                  margin: '0.35rem 0.75rem 0.35rem',
+                  fontWeight: 700,
+                }}
+              >
+                {group.label}
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {group.items.map((item) => (
+                  <li key={item.to}>
+                    <Link style={linkStyle(is(item.to, item.exact))} to={item.to}>
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
           {admin && (
-            <>
-              <li><Link style={linkStyle(is('/usuarios'))} to="/usuarios">Usuarios</Link></li>
-              <li><Link style={linkStyle(is('/granjas'))} to="/granjas">Granjas</Link></li>
-            </>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <div
+                style={{
+                  fontSize: '0.68rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  opacity: 0.55,
+                  margin: '0.35rem 0.75rem 0.35rem',
+                  fontWeight: 700,
+                }}
+              >
+                Administración
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li>
+                  <Link style={linkStyle(is('/usuarios'))} to="/usuarios">
+                    Usuarios
+                  </Link>
+                </li>
+                <li>
+                  <Link style={linkStyle(is('/granjas'))} to="/granjas">
+                    Granjas
+                  </Link>
+                </li>
+              </ul>
+            </div>
           )}
-        </ul>
-        <p style={{ fontSize: '0.85rem', marginTop: '1.5rem' }}>{user?.nombre} · {user?.rol}</p>
-        <button
-          type="button"
-          onClick={handleLogout}
+        </div>
+
+        <div
           style={{
-            background: '#1b4332',
-            color: '#fff',
-            border: 'none',
-            padding: '0.45rem 0.75rem',
-            cursor: 'pointer',
+            marginTop: '0.75rem',
+            borderTop: '1px solid rgba(245,239,227,0.2)',
+            paddingTop: '0.9rem',
           }}
         >
-          Cerrar sesión
-        </button>
+          <p style={{ fontSize: '0.84rem', margin: '0 0 0.65rem', opacity: 0.92, padding: '0 0.35rem' }}>
+            {user?.nombre}
+            <br />
+            <span style={{ opacity: 0.7, fontSize: '0.78rem' }}>{user?.rol}</span>
+          </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={{
+              background: theme.creamSoft,
+              color: theme.maroonDeep,
+              border: 'none',
+              padding: '0.6rem 0.9rem',
+              cursor: 'pointer',
+              borderRadius: theme.radiusSm,
+              fontWeight: 700,
+              width: '100%',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </nav>
 
-      <main style={{ flex: 1, padding: '1.5rem', background: '#f8fff9' }}>
+      <main
+        style={{
+          flex: 1,
+          padding: '1.5rem 1.75rem 2rem',
+          background: `
+            radial-gradient(700px 360px at 100% 0%, rgba(122,18,22,0.06), transparent 55%),
+            ${theme.cream}
+          `,
+          overflow: 'auto',
+          minWidth: 0,
+          minHeight: '100vh',
+        }}
+      >
         <Outlet />
       </main>
     </div>

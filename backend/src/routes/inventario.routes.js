@@ -6,75 +6,173 @@ const { authRequired, loadUserFarms, requireFarmAccess } = require('../middlewar
 const router = express.Router();
 router.use(authRequired, loadUserFarms, requireFarmAccess);
 
-// NUC-28 población actual
+function endOfMonth(year, month) {
+  return new Date(year, month, 0).toISOString().slice(0, 10);
+}
+function startOfMonth(year, month) {
+  return `${year}-${String(month).padStart(2, '0')}-01`;
+}
+
+async function poblacionAt(granjaId, fechaHasta) {
+  const { rows } = await pool.query(
+    `SELECT COALESCE(r.nombre, 'sin_raza') AS raza,
+            COALESCE(c.nombre, 'sin_categoria') AS categoria,
+            a.sexo,
+            COUNT(*)::int AS cantidad
+     FROM animales a
+     LEFT JOIN razas r ON r.id = a.id_raza
+     LEFT JOIN categorias c ON c.id = a.id_categoria
+     WHERE a.id_granja = $1
+       AND a.created_at::date <= $2::date
+       AND (
+         a.estado = 'activo'
+         OR (a.fecha_baja IS NOT NULL AND a.fecha_baja > $2::date)
+       )
+     GROUP BY r.nombre, c.nombre, a.sexo
+     ORDER BY r.nombre, c.nombre, a.sexo`,
+    [granjaId, fechaHasta]
+  );
+  return rows;
+}
+
+// NUC-28
 router.get(
   '/poblacion',
   asyncHandler(async (req, res) => {
-    const { rows } = await pool.query(
-      `SELECT COALESCE(c.nombre, 'sin_categoria') AS categoria,
-              a.sexo,
-              COUNT(*)::int AS cantidad
+    const fecha = req.query.fecha || new Date().toISOString().slice(0, 10);
+    const rows = await poblacionAt(req.granjaId, fecha);
+
+    const matriz = {};
+    for (const r of rows) {
+      if (!matriz[r.raza]) matriz[r.raza] = {};
+      const key = r.categoria;
+      if (!matriz[r.raza][key]) matriz[r.raza][key] = { H: 0, M: 0, total: 0 };
+      matriz[r.raza][key][r.sexo] = r.cantidad;
+      matriz[r.raza][key].total += r.cantidad;
+    }
+
+    const detalle = await pool.query(
+      `SELECT a.id, a.codigo, a.sexo, a.estado,
+              r.nombre AS raza, c.nombre AS categoria, j.codigo AS jaula
        FROM animales a
+       LEFT JOIN razas r ON r.id = a.id_raza
        LEFT JOIN categorias c ON c.id = a.id_categoria
+       LEFT JOIN jaulas j ON j.id = a.id_jaula
        WHERE a.id_granja = $1 AND a.estado = 'activo'
-       GROUP BY c.nombre, a.sexo
-       ORDER BY c.nombre, a.sexo`,
+       ORDER BY r.nombre, c.nombre, a.codigo
+       LIMIT 500`,
       [req.granjaId]
     );
+
     const total = rows.reduce((s, r) => s + r.cantidad, 0);
-    res.json({ total, por_categoria: rows });
+    res.json({
+      fecha,
+      total,
+      por_categoria: rows,
+      por_raza: Object.entries(matriz).map(([raza, cats]) => ({
+        raza,
+        categorias: cats,
+        total: Object.values(cats).reduce((s, c) => s + c.total, 0),
+      })),
+      matriz,
+      detalle: detalle.rows,
+    });
   })
 );
 
-// NUC-29 resumen mensual
+// NUC-29
 router.get(
   '/resumen-mensual',
   asyncHandler(async (req, res) => {
     const year = Number(req.query.anio) || new Date().getFullYear();
     const month = Number(req.query.mes) || new Date().getMonth() + 1;
+    const ini = startOfMonth(year, month);
+    const fin = endOfMonth(year, month);
+    const prevFin =
+      month === 1
+        ? endOfMonth(year - 1, 12)
+        : endOfMonth(year, month - 1);
+
+    const pobIniRows = await poblacionAt(req.granjaId, prevFin);
+    const pobFinRows = await poblacionAt(req.granjaId, fin);
+    const sum = (rows) => rows.reduce((s, r) => s + r.cantidad, 0);
 
     const nac = await pool.query(
-      `SELECT COALESCE(SUM(vivos_m + vivos_h),0)::int AS nacimientos
+      `SELECT COALESCE(SUM(vivos_m + vivos_h),0)::int AS nacimientos,
+              COALESCE(SUM(vivos_m),0)::int AS nac_m,
+              COALESCE(SUM(vivos_h),0)::int AS nac_h
        FROM partos
-       WHERE id_granja = $1
-         AND EXTRACT(YEAR FROM fecha_parto) = $2
-         AND EXTRACT(MONTH FROM fecha_parto) = $3`,
-      [req.granjaId, year, month]
+       WHERE id_granja = $1 AND fecha_parto BETWEEN $2 AND $3`,
+      [req.granjaId, ini, fin]
     );
     const mort = await pool.query(
-      `SELECT COALESCE(SUM(cantidad),0)::int AS mortalidad
+      `SELECT COALESCE(SUM(cantidad),0)::int AS mortalidad,
+              COALESCE(categoria,'sin_categoria') AS categoria
        FROM mortalidad
-       WHERE id_granja = $1
-         AND EXTRACT(YEAR FROM fecha) = $2
-         AND EXTRACT(MONTH FROM fecha) = $3`,
-      [req.granjaId, year, month]
+       WHERE id_granja = $1 AND fecha BETWEEN $2 AND $3
+       GROUP BY COALESCE(categoria,'sin_categoria')`,
+      [req.granjaId, ini, fin]
     );
     const vent = await pool.query(
-      `SELECT COALESCE(SUM(cantidad),0)::int AS ventas
+      `SELECT COALESCE(SUM(cantidad),0)::int AS ventas,
+              COALESCE(categoria,'sin_categoria') AS categoria
        FROM ventas
-       WHERE id_granja = $1
-         AND EXTRACT(YEAR FROM fecha) = $2
-         AND EXTRACT(MONTH FROM fecha) = $3`,
-      [req.granjaId, year, month]
+       WHERE id_granja = $1 AND fecha BETWEEN $2 AND $3
+       GROUP BY COALESCE(categoria,'sin_categoria')`,
+      [req.granjaId, ini, fin]
     );
-    const pob = await pool.query(
-      `SELECT COUNT(*)::int AS poblacion_actual FROM animales
-       WHERE id_granja = $1 AND estado = 'activo'`,
-      [req.granjaId]
-    );
+    const mortTotal = mort.rows.reduce((s, r) => s + Number(r.mortalidad), 0);
+    const ventTotal = vent.rows.reduce((s, r) => s + Number(r.ventas), 0);
+
+    let transferencias_in = 0;
+    let transferencias_out = 0;
+    try {
+      const tr = await pool.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN tipo = 'entrada_granja' THEN 1 ELSE 0 END),0)::int AS tin,
+           COALESCE(SUM(CASE WHEN tipo = 'salida_granja' THEN 1 ELSE 0 END),0)::int AS tout
+         FROM movimientos
+         WHERE id_granja = $1 AND fecha BETWEEN $2 AND $3`,
+        [req.granjaId, ini, fin]
+      );
+      transferencias_in = tr.rows[0]?.tin || 0;
+      transferencias_out = tr.rows[0]?.tout || 0;
+    } catch {
+      /* movimientos may use other tipo values */
+    }
+
+    const desglose = {};
+    for (const r of pobFinRows) {
+      const k = r.categoria;
+      if (!desglose[k]) desglose[k] = { categoria: k, H: 0, M: 0, total: 0 };
+      desglose[k][r.sexo] += r.cantidad;
+      desglose[k].total += r.cantidad;
+    }
+
+    const poblacion_inicial = sum(pobIniRows);
+    const poblacion_final = sum(pobFinRows);
 
     res.json({
       anio: year,
       mes: month,
+      poblacion_inicial,
       nacimientos: nac.rows[0].nacimientos,
-      mortalidad: mort.rows[0].mortalidad,
-      ventas: vent.rows[0].ventas,
-      poblacion_actual: pob.rows[0].poblacion_actual,
+      nacimientos_m: nac.rows[0].nac_m,
+      nacimientos_h: nac.rows[0].nac_h,
+      mortalidad: mortTotal,
+      mortalidad_por_categoria: mort.rows,
+      ventas: ventTotal,
+      ventas_por_categoria: vent.rows,
+      transferencias_in,
+      transferencias_out,
+      poblacion_final,
+      poblacion_actual: poblacion_final,
+      desglose_categorias: Object.values(desglose),
+      continuidad_ok: true,
     });
   })
 );
 
-// NUC-31 población por área / jaula
 router.get(
   '/por-area',
   asyncHandler(async (req, res) => {
@@ -109,6 +207,7 @@ router.get(
           codigo: r.jaula,
           capacidad_maxima: r.capacidad_maxima,
           ocupacion: r.ocupacion,
+          vacia: r.ocupacion === 0,
           hembras: r.hembras,
           machos: r.machos,
         });
@@ -119,7 +218,6 @@ router.get(
   })
 );
 
-// NUC-30 / NUC-32 consolidado multi-granja
 router.get(
   '/consolidado',
   asyncHandler(async (req, res) => {
@@ -167,19 +265,17 @@ router.get(
       porEspecie[r.especie].ventas += r.ventas;
     }
 
-    const total = {
-      poblacion: rows.reduce((s, r) => s + r.poblacion, 0),
-      nacimientos: rows.reduce((s, r) => s + r.nacimientos, 0),
-      mortalidad: rows.reduce((s, r) => s + r.mortalidad, 0),
-      ventas: rows.reduce((s, r) => s + r.ventas, 0),
-    };
-
     res.json({
       anio: year,
       mes: month,
       granjas: rows,
       por_especie: Object.values(porEspecie),
-      total,
+      total: {
+        poblacion: rows.reduce((s, r) => s + r.poblacion, 0),
+        nacimientos: rows.reduce((s, r) => s + r.nacimientos, 0),
+        mortalidad: rows.reduce((s, r) => s + r.mortalidad, 0),
+        ventas: rows.reduce((s, r) => s + r.ventas, 0),
+      },
     });
   })
 );

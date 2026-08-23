@@ -2,12 +2,24 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
+const PROPOSITOS = [
+  { value: 'empadre', label: 'Empadre' },
+  { value: 'gestacion_maternidad', label: 'Gestación / maternidad' },
+  { value: 'recria_hembras', label: 'Recría hembras' },
+  { value: 'recria_machos', label: 'Recría machos' },
+  { value: 'reproductores_machos', label: 'Reproductores machos' },
+  { value: 'engorde_descarte', label: 'Engorde / descarte' },
+  { value: 'cuarentena', label: 'Cuarentena' },
+  { value: 'otro', label: 'Otro' },
+];
+
 /** NUC-16 definir áreas · NUC-17 ver granja por áreas · CUY-04 */
 const Areas = () => {
   const [areas, setAreas] = useState([]);
   const [resumen, setResumen] = useState([]);
   const [nombre, setNombre] = useState('');
   const [proposito, setProposito] = useState('empadre');
+  const [propositoOtro, setPropositoOtro] = useState('');
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
 
@@ -30,20 +42,35 @@ const Areas = () => {
     e.preventDefault();
     setError('');
     setOk('');
+    const prop =
+      proposito === 'otro' ? (propositoOtro.trim() || 'otro') : proposito;
     try {
-      await api.post('/areas', { nombre, proposito });
+      await api.post('/areas', { nombre, proposito: prop });
       setOk(`Área "${nombre}" creada`);
       setNombre('');
+      setPropositoOtro('');
       load();
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo crear el área');
     }
   };
 
+  const desactivar = async (id, nom) => {
+    setError('');
+    setOk('');
+    try {
+      await api.patch(`/areas/${id}/desactivar`);
+      setOk(`Área "${nom}" desactivada`);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo desactivar el área');
+    }
+  };
+
   return (
     <div style={s.wrap}>
       <h1 style={s.title}>Áreas de la granja</h1>
-      <p style={s.sub}>Organización espacial y ocupación por área</p>
+      <p style={s.sub}>Organización espacial y ocupación por área (CUY-04)</p>
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
 
@@ -56,13 +83,21 @@ const Areas = () => {
           onChange={(e) => setNombre(e.target.value)}
         />
         <select style={s.select} value={proposito} onChange={(e) => setProposito(e.target.value)}>
-          <option value="empadre">Empadre</option>
-          <option value="maternidad">Maternidad</option>
-          <option value="recria">Recría</option>
-          <option value="machos">Machos</option>
-          <option value="engorde">Engorde</option>
-          <option value="cuarentena">Cuarentena</option>
+          {PROPOSITOS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
         </select>
+        {proposito === 'otro' && (
+          <input
+            style={s.input}
+            required
+            placeholder="Propósito personalizado"
+            value={propositoOtro}
+            onChange={(e) => setPropositoOtro(e.target.value)}
+          />
+        )}
         <button type="submit" style={s.btn}>
           Crear área
         </button>
@@ -75,6 +110,8 @@ const Areas = () => {
             <th style={s.th}>Propósito</th>
             <th style={s.th}>Jaulas</th>
             <th style={s.th}>Animales</th>
+            <th style={s.th}>Estado</th>
+            <th style={s.th} />
           </tr>
         </thead>
         <tbody>
@@ -84,24 +121,46 @@ const Areas = () => {
               <td style={s.td}>{a.proposito}</td>
               <td style={s.td}>{a.jaulas}</td>
               <td style={s.td}>{a.animales}</td>
+              <td style={s.td}>{a.activa === false ? 'Inactiva' : 'Activa'}</td>
+              <td style={s.td}>
+                {a.activa !== false && (
+                  <button type="button" style={s.btnDanger} onClick={() => desactivar(a.id, a.nombre)}>
+                    Desactivar
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <h2 style={{ marginTop: '2rem', color: '#1b4332' }}>Vista por áreas</h2>
+      <h2 style={{ marginTop: '2rem', color: '#7A1216' }}>Vista por áreas</h2>
       {resumen.map((a) => (
         <div key={a.id} style={s.card}>
           <strong>
             {a.nombre} ({a.proposito})
           </strong>
-          <ul>
-            {(a.jaulas || []).map((j) => (
-              <li key={j.id}>
-                Jaula {j.codigo}: {j.ocupacion}
-                {j.capacidad_maxima != null ? ` / ${j.capacidad_maxima}` : ''} animales
-              </li>
-            ))}
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0.75rem 0 0' }}>
+            {(a.jaulas || []).map((j) => {
+              const vacia = Number(j.ocupacion) === 0;
+              return (
+                <li
+                  key={j.id}
+                  style={{
+                    padding: '0.45rem 0.7rem',
+                    marginBottom: 6,
+                    borderRadius: 8,
+                    background: vacia ? '#EFE8DA' : '#FFFCFA',
+                    border: `1px solid ${vacia ? '#C4B59A' : '#E0D3BF'}`,
+                    color: vacia ? '#7A6358' : '#2C181A',
+                  }}
+                >
+                  Jaula {j.codigo}:{' '}
+                  <strong>{vacia ? 'vacía' : `${j.ocupacion} ocupada(s)`}</strong>
+                  {j.capacidad_maxima != null ? ` / ${j.capacidad_maxima}` : ''}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}

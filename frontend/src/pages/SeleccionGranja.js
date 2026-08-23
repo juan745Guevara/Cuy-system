@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { theme } from '../styles/ui';
 
 /** NUC-02: elegir especie y luego granja activa. */
 const SeleccionGranja = () => {
@@ -17,9 +18,7 @@ const SeleccionGranja = () => {
     return Array.from(map.values());
   }, [granjas]);
 
-  const [especieId, setEspecieId] = useState(
-    especies.length === 1 ? especies[0].id : ''
-  );
+  const [especieId, setEspecieId] = useState(especies.length === 1 ? especies[0].id : '');
 
   const granjasFiltradas = useMemo(
     () => (granjas || []).filter((g) => !especieId || g.id_especie === Number(especieId)),
@@ -37,11 +36,48 @@ const SeleccionGranja = () => {
     navigate('/');
   };
 
+  const field = {
+    width: '100%',
+    padding: '0.8rem 1rem',
+    marginBottom: '1rem',
+    border: `1px solid ${theme.border}`,
+    borderRadius: theme.radiusSm,
+    background: '#FFFEFB',
+    color: theme.ink,
+    fontFamily: theme.fontBody,
+  };
+
   if (!granjas?.length) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div
+        style={{
+          padding: '2rem',
+          textAlign: 'center',
+          minHeight: '100vh',
+          background: theme.cream,
+          fontFamily: theme.fontBody,
+          color: theme.ink,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <p>No tiene granjas asignadas. Contacte al administrador.</p>
-        <button type="button" onClick={() => logout()}>
+        <button
+          type="button"
+          onClick={() => logout()}
+          style={{
+            marginTop: '1rem',
+            padding: '0.65rem 1.2rem',
+            background: theme.maroon,
+            color: theme.creamSoft,
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: theme.radiusSm,
+            fontWeight: 700,
+          }}
+        >
           Cerrar sesión
         </button>
       </div>
@@ -55,26 +91,62 @@ const SeleccionGranja = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f0f7f4',
-        fontFamily: 'Georgia, serif',
+        padding: '1.5rem',
+        background: `
+          radial-gradient(ellipse 65% 50% at 20% 20%, rgba(163,58,62,0.12), transparent 55%),
+          linear-gradient(165deg, #F8F2E8 0%, ${theme.creamDeep} 100%)
+        `,
+        fontFamily: theme.fontBody,
       }}
     >
       <form
         onSubmit={handleContinue}
         style={{
-          background: '#fff',
-          padding: '2rem',
+          background: 'rgba(255,252,250,0.95)',
+          padding: '2.1rem',
           width: '100%',
-          maxWidth: 420,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          maxWidth: 460,
+          boxShadow: theme.shadow,
+          border: `1px solid ${theme.border}`,
+          borderRadius: theme.radiusLg,
         }}
       >
-        <h1 style={{ marginTop: 0, color: '#1b4332' }}>Contexto de trabajo</h1>
-        <p style={{ color: '#52796f' }}>
-          Elija primero la especie y luego la granja donde va a registrar.
-        </p>
+        <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'center', marginBottom: '1.35rem' }}>
+          <img
+            src="/logo-fz.png?v=3"
+            alt="Facultad de Zootecnia"
+            style={{
+              width: 56,
+              height: 56,
+              objectFit: 'contain',
+              background: theme.cream,
+              borderRadius: '50%',
+              padding: 3,
+              border: `2px solid ${theme.maroon}`,
+              display: 'block',
+            }}
+          />
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                color: theme.maroonDeep,
+                fontFamily: theme.fontDisplay,
+                fontSize: '1.5rem',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Contexto de trabajo
+            </h1>
+            <p style={{ margin: '0.25rem 0 0', color: theme.muted, fontSize: '0.92rem' }}>
+              Elija especie y granja para registrar
+            </p>
+          </div>
+        </div>
 
-        <label style={{ display: 'block', marginBottom: 4 }}>Especie</label>
+        <label style={{ display: 'block', marginBottom: 6, color: theme.maroonDeep, fontWeight: 650 }}>
+          Especie
+        </label>
         <select
           value={especieId}
           onChange={(e) => {
@@ -82,7 +154,7 @@ const SeleccionGranja = () => {
             setGranjaId('');
           }}
           required
-          style={{ width: '100%', padding: '0.6rem', marginBottom: '1rem' }}
+          style={field}
         >
           <option value="">— Seleccione —</option>
           {especies.map((e) => (
@@ -92,13 +164,15 @@ const SeleccionGranja = () => {
           ))}
         </select>
 
-        <label style={{ display: 'block', marginBottom: 4 }}>Granja</label>
+        <label style={{ display: 'block', marginBottom: 6, color: theme.maroonDeep, fontWeight: 650 }}>
+          Granja
+        </label>
         <select
           value={granjaId}
           onChange={(e) => setGranjaId(e.target.value)}
           required
           disabled={!especieId}
-          style={{ width: '100%', padding: '0.6rem', marginBottom: '1.25rem' }}
+          style={field}
         >
           <option value="">— Seleccione —</option>
           {granjasFiltradas.map((g) => (
@@ -113,11 +187,18 @@ const SeleccionGranja = () => {
           disabled={!granjaId}
           style={{
             width: '100%',
-            padding: '0.75rem',
-            background: '#1b4332',
-            color: '#fff',
+            padding: '0.85rem',
+            marginTop: '0.25rem',
+            background: granjaId
+              ? `linear-gradient(180deg, ${theme.maroonSoft} 0%, ${theme.maroon} 100%)`
+              : theme.creamDeep,
+            color: granjaId ? theme.creamSoft : theme.muted,
             border: 'none',
+            borderRadius: theme.radiusSm,
             cursor: granjaId ? 'pointer' : 'not-allowed',
+            fontWeight: 700,
+            fontFamily: theme.fontBody,
+            boxShadow: granjaId ? '0 10px 22px rgba(122,18,22,0.22)' : 'none',
           }}
         >
           Continuar

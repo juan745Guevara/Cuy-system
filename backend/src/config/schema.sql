@@ -113,6 +113,8 @@ CREATE TABLE IF NOT EXISTS empadres (
   fecha_empadre DATE NOT NULL,
   peso_antes NUMERIC(10,2),
   peso_despues NUMERIC(10,2),
+  cantidad_hembras INTEGER,
+  cantidad_prenadas INTEGER,
   notas TEXT,
   created_by INTEGER REFERENCES usuarios(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -280,3 +282,14 @@ CREATE INDEX IF NOT EXISTS idx_animales_granja_estado ON animales(id_granja, est
 CREATE INDEX IF NOT EXISTS idx_movimientos_animal ON movimientos(id_animal);
 CREATE INDEX IF NOT EXISTS idx_pesajes_animal ON pesajes(id_animal);
 CREATE INDEX IF NOT EXISTS idx_tratamientos_granja ON tratamientos(id_granja, estado);
+
+-- Columnas / FKs idempotentes para DBs ya creadas
+DO $$ BEGIN
+  ALTER TABLE animales ADD COLUMN IF NOT EXISTS id_parto_origen INTEGER REFERENCES partos(id);
+EXCEPTION WHEN others THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE empadres ADD COLUMN IF NOT EXISTS cantidad_hembras INTEGER;
+  ALTER TABLE empadres ADD COLUMN IF NOT EXISTS cantidad_prenadas INTEGER;
+EXCEPTION WHEN others THEN NULL;
+END $$;
