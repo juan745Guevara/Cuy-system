@@ -11,6 +11,8 @@ const Dashboard = () => {
   const [pob, setPob] = useState(null);
   const [resumen, setResumen] = useState(null);
   const [alertas, setAlertas] = useState(null);
+  const [ocupacion, setOcupacion] = useState(null);
+  const [porArea, setPorArea] = useState([]);
 
   useEffect(() => {
     const now = new Date();
@@ -20,11 +22,15 @@ const Dashboard = () => {
         params: { anio: now.getFullYear(), mes: now.getMonth() + 1 },
       }),
       api.get('/alertas').catch(() => ({ data: null })),
+      api.get('/jaulas/ocupacion').catch(() => ({ data: null })),
+      api.get('/inventario/por-area').catch(() => ({ data: [] })),
     ])
-      .then(([p, r, a]) => {
+      .then(([p, r, a, o, pa]) => {
         setPob(p.data);
         setResumen(r.data);
         setAlertas(a.data);
+        setOcupacion(o.data);
+        setPorArea(pa.data || []);
       })
       .catch(() => {});
   }, []);
@@ -43,6 +49,9 @@ const Dashboard = () => {
       hint: `${alertas?.proximas?.length ?? 0} próximas`,
     },
   ];
+
+  const sobrecupo = ocupacion?.sobrecupo || [];
+  const porCategoria = pob?.por_categoria || [];
 
   return (
     <div style={s.wrap}>
@@ -134,6 +143,64 @@ const Dashboard = () => {
           </div>
         ))}
       </div>
+
+      {sobrecupo.length > 0 && (
+        <div style={{ ...s.card, marginTop: '1.25rem', borderRadius: theme.radius }}>
+          <h3 style={{ marginTop: 0, color: theme.maroonDeep, fontFamily: theme.fontDisplay }}>
+            Jaulas sobre capacidad (NUC-18)
+          </h3>
+          <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+            {sobrecupo.map((j) => (
+              <li key={j.id}>
+                {j.area} · {j.codigo}: {j.ocupacion}/{j.capacidad_maxima}
+              </li>
+            ))}
+          </ul>
+          <Link to="/jaulas" style={{ color: theme.maroon, fontWeight: 700 }}>
+            Ver jaulas →
+          </Link>
+        </div>
+      )}
+
+      {(porCategoria.length > 0 || porArea.length > 0) && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '1rem',
+            marginTop: '1.25rem',
+          }}
+        >
+          {porCategoria.length > 0 && (
+            <div style={{ ...s.card, borderRadius: theme.radius, margin: 0 }}>
+              <h3 style={{ marginTop: 0, fontFamily: theme.fontDisplay }}>Por categoría</h3>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                {porCategoria.slice(0, 8).map((c, i) => (
+                  <li key={i}>
+                    {c.categoria || c.nombre}: {c.cantidad ?? c.total ?? 0}
+                    {c.sexo ? ` (${c.sexo})` : ''}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {porArea.length > 0 && (
+            <div style={{ ...s.card, borderRadius: theme.radius, margin: 0 }}>
+              <h3 style={{ marginTop: 0, fontFamily: theme.fontDisplay }}>Ocupación por área</h3>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                {porArea.map((a) => (
+                  <li key={a.id}>
+                    {a.nombre}: {a.total} animales · {a.jaulas?.length || 0} jaulas
+                  </li>
+                ))}
+              </ul>
+              <Link to="/inventario" style={{ color: theme.maroon, fontWeight: 700 }}>
+                Ver inventario →
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {alertas?.vencidas?.length > 0 && (
         <div style={{ ...s.card, marginTop: '1.25rem', borderRadius: theme.radius }}>
