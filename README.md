@@ -1,116 +1,89 @@
 # Sistema de Control de Animales
 
-**Facultad de Zootecnia — UNAS**
+Sistema web para la **Facultad de Zootecnia (UNAS)**, diseñado para reemplazar el registro en papel y automatizar el reporte en Excel de las unidades de crianza.
 
-Demo skeleton para aplicar las historias de usuario.
+El proyecto está planteado como un sistema **modular por especie**:
+- **Núcleo común** (acceso, granjas, áreas, jaulas, inventario, trazabilidad, reportes)
+- **Módulos por especie** (primero: **cuyes**; luego: conejos, chanchos, etc.)
 
----
+## Estado actual
 
-## Estructura
+Esta etapa está centrada en **ingeniería de requisitos**.  
+La base funcional son **65 historias de usuario**:
+
+- **41 historias NUC** (núcleo)
+- **24 historias CUY** (módulo cuyes)
+
+Documento fuente: `docs/historias-de-usuario.md`.
+
+## Modelo funcional acordado
+
+- Jerarquía operativa: **especie → granja → área → jaula → animal**
+- Cada granja maneja **una sola especie**
+- Flujo de trabajo al ingresar: **especie → granja**
+- Soporte **multigranja** con alcance por granja para cada usuario
+- Transferencias permitidas solo entre granjas de la misma especie
+
+## Significado de prefijos
+
+- `NUC-xx`: historia del **núcleo**, reutilizable para cualquier especie
+- `CUY-xx`: historia **específica de cuyes**
+
+La numeración está organizada por épicas para facilitar lectura y trazabilidad.
+
+## Resumen de historias por épica
+
+### Núcleo (41)
+- **N1 Acceso y contexto:** `NUC-01` a `NUC-08`
+- **N2 Ficha de animal:** `NUC-09` a `NUC-12`
+- **N3 Áreas, jaulas y movimientos:** `NUC-13` a `NUC-20`
+- **N4 Pesaje:** `NUC-21` a `NUC-23`
+- **N5 Sanidad:** `NUC-24` a `NUC-25`
+- **N6 Mortalidad y ventas:** `NUC-26` a `NUC-27`
+- **N7 Inventario:** `NUC-28` a `NUC-32`
+- **N8 Alertas:** `NUC-33` a `NUC-35`
+- **N9 Reportes:** `NUC-36` a `NUC-37`
+- **N10 Confiabilidad:** `NUC-38` a `NUC-41`
+
+### Módulo Cuyes (24)
+- **C1 Configuración:** `CUY-01` a `CUY-05`
+- **C2 Reproductoras:** `CUY-06` a `CUY-11`
+- **C3 Reproductores:** `CUY-12` a `CUY-15`
+- **C4 Pesos y alertas:** `CUY-16` a `CUY-18`
+- **C5 Reproductores élite:** `CUY-19` a `CUY-21`
+- **C6 Exportación Excel:** `CUY-22` a `CUY-24`
+
+## Orden recomendado de implementación
+
+1. **Entrega 1 (P1):** reemplazar el registro en papel y generar Excel oficial
+2. **Entrega 2 (P2):** control operativo diario (movimientos, pesos, sanidad, consolidados)
+3. **Entrega 3 (P3):** alertas avanzadas y apoyo a decisiones de mejoramiento
+
+Detalle: `docs/backlog.md`.
+
+## Estructura del repositorio
 
 ```
 Cuy-system/
-├── backend/                 # Node.js + Express
-│   ├── src/
-│   │   ├── config/          # Database, migraciones
-│   │   ├── controllers/     # Lógica de negocio
-│   │   ├── middleware/       # Auth, validaciones
-│   │   ├── models/          # Consultas SQL
-│   │   ├── routes/          # Endpoints API
-│   │   └── utils/           # Helpers
-│   ├── package.json
-│   └── .env.example
-├── frontend/                # React
-│   ├── src/
-│   │   ├── components/      # Componentes reutilizables
-│   │   ├── context/         # Estado global (Auth)
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── pages/           # Pantallas
-│   │   └── services/        # Axios, API calls
-│   └── package.json
-├── database/
-│   └── schema.sql           # Esquema PostgreSQL
-└── docs/                    # Documentación
+├── backend/         # Node.js + Express (API)
+├── frontend/        # React (interfaz web)
+├── database/        # Esquema PostgreSQL
+└── docs/            # Requisitos y documentos funcionales
 ```
 
----
+## Stack objetivo
 
-## Stack
+- **Frontend:** React
+- **Backend:** Node.js
+- **Base de datos:** PostgreSQL
+- **Despliegue:** Docker
 
-- **Frontend:** React + React Router + Axios
-- **Backend:** Node.js + Express + PostgreSQL
-- **Auth:** JWT (pendiente de implementar)
+## Documentación clave
 
----
+- `docs/vision.md` — visión, alcance y criterios de éxito
+- `docs/actores.md` — roles, permisos y alcance por granja
+- `docs/historias-de-usuario.md` — las 65 historias completas
+- `docs/backlog.md` — priorización por entregas
+- `docs/modulos-futuros.md` — guía para agregar nuevas especies
 
-## Estado de la Demo
-
-| Archivo | Estado | HU |
-|---------|--------|-----|
-| `schema.sql` | ✅ Estructura completa | Todas |
-| `auth.routes.js` | 🔲 Stub | NUC-01 |
-| `usuarios.routes.js` | 🔲 Stub | NUC-06, NUC-07 |
-| `granjas.routes.js` | 🔲 Stub | NUC-04 |
-| `areas.routes.js` | 🔲 Stub | NUC-16 |
-| `jaulas.routes.js` | 🔲 Stub | NUC-13 |
-| `animales.routes.js` | 🔲 Stub | NUC-09, NUC-10, NUC-11, NUC-12 |
-| `empadres.routes.js` | 🔲 Stub | CUY-07, CUY-13 |
-| `partos.routes.js` | 🔲 Stub | CUY-08 |
-| `destetes.routes.js` | 🔲 Stub | CUY-09 |
-| `pesajes.routes.js` | 🔲 Stub | NUC-21, NUC-22, NUC-23 |
-| `mortalidad.routes.js` | 🔲 Stub | NUC-26 |
-| `ventas.routes.js` | 🔲 Stub | NUC-27 |
-| `movimientos.routes.js` | 🔲 Stub | NUC-14, NUC-20 |
-| `inventario.routes.js` | 🔲 Stub | NUC-28, NUC-29, NUC-30, NUC-31 |
-| `reportes.routes.js` | 🔲 Stub | NUC-36, CUY-22, CUY-23, CUY-24 |
-| `Login.js` | 🔲 Stub | NUC-01 |
-| `Dashboard.js` | 🔲 Stub | NUC-03 |
-| `Animales.js` | 🔲 Stub | NUC-09, NUC-10, NUC-11, NUC-12 |
-| `Partos.js` | 🔲 Stub | CUY-07, CUY-08, CUY-09 |
-| `Inventario.js` | 🔲 Stub | NUC-26, NUC-27, NUC-28, NUC-29 |
-
----
-
-## Para Empezar
-
-### 1. Backend
-
-```bash
-cd backend
-cp .env.example .env    # Configurar credenciales de PostgreSQL
-npm install
-npm run dev
-```
-
-### 2. Frontend
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
-### 3. Base de Datos
-
-```bash
-# Crear la base de datos
-psql -U postgres -c "CREATE DATABASE cuy_system;"
-
-# Ejecutar el esquema
-psql -U postgres -d cuy_system -f database/schema.sql
-```
-
----
-
-## Cómo Usar esta Demo
-
-1. Revisa `docs/historias-de-usuario.md` para ver las 65 HU
-2. Empieza por la **Entrega 1** (ver `docs/backlog.md`)
-3. Implementa cada HU siguiendo el orden del backlog
-4. Cada archivo tiene un comentario `TODO` indicando qué implementar
-
----
-
-## Documentación
-
-Ver `docs/README.md` para la guía completa.
+También existe una versión equivalente en `docs/requisitos/` como respaldo de organización.
