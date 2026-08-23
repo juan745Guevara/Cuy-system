@@ -27,12 +27,15 @@ app.use('/api/v1/movimientos', require('./routes/movimientos.routes'));
 app.use('/api/v1/inventario', require('./routes/inventario.routes'));
 app.use('/api/v1/reportes', require('./routes/reportes.routes'));
 
-// Ruta de prueba
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Sistema de Control de Animales - UNAS' });
 });
 
-// Iniciar servidor
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status || 500).json({ error: err.message || 'Error interno' });
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
