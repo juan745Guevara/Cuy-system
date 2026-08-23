@@ -310,7 +310,10 @@ const Inventario = () => {
       )}
 
       <div style={s.card}>
-        <h3 style={{ marginTop: 0 }}>Exportar Excel</h3>
+        <h3 style={{ marginTop: 0 }}>Exportar Excel (NUC-36/37 · CUY-22..24)</h3>
+        <p style={{ color: '#7A6358', marginTop: 0 }}>
+          Alcance: granja activa · periodo {mes}/{anio}
+        </p>
         <div style={s.row}>
           <button
             type="button"
@@ -334,6 +337,18 @@ const Inventario = () => {
             }
           >
             Inventario mensual (CUY-24 / NUC-36)
+          </button>
+          <button
+            type="button"
+            style={s.btnGhost}
+            onClick={() =>
+              descargar(
+                `/reportes/animales?anio=${anio}&mes=${mes}`,
+                `animales-${anio}-${mes}.xlsx`
+              )
+            }
+          >
+            Listado animales (NUC-37)
           </button>
         </div>
       </div>

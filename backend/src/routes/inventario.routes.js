@@ -221,6 +221,25 @@ router.get(
 );
 
 router.get(
+  '/por-categoria-area',
+  asyncHandler(async (req, res) => {
+    const { rows } = await pool.query(
+      `SELECT COALESCE(c.nombre, 'sin_categoria') AS categoria,
+              ar.nombre AS area, a.sexo, COUNT(*)::int AS cantidad
+       FROM animales a
+       LEFT JOIN categorias c ON c.id = a.id_categoria
+       LEFT JOIN jaulas j ON j.id = a.id_jaula
+       LEFT JOIN areas ar ON ar.id = j.id_area
+       WHERE a.id_granja = $1 AND a.estado = 'activo'
+       GROUP BY c.nombre, ar.nombre, a.sexo
+       ORDER BY ar.nombre, c.nombre, a.sexo`,
+      [req.granjaId]
+    );
+    res.json(rows);
+  })
+);
+
+router.get(
   '/consolidado',
   asyncHandler(async (req, res) => {
     const year = Number(req.query.anio) || new Date().getFullYear();
