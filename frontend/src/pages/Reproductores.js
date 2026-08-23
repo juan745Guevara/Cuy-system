@@ -10,6 +10,7 @@ const Reproductores = () => {
   const [lista, setLista] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  const [detalle, setDetalle] = useState(null);
   const [form, setForm] = useState({
     codigo: '',
     id_raza: '',
@@ -41,6 +42,16 @@ const Reproductores = () => {
       setError(err.response?.data?.error || 'Error al cargar');
     }
   }, []);
+
+  const verResultados = async (id) => {
+    setError('');
+    try {
+      const { data } = await api.get(`/empadres/reproductores/${id}`);
+      setDetalle(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo cargar ficha del macho');
+    }
+  };
 
   useEffect(() => {
     load();
@@ -147,6 +158,7 @@ const Reproductores = () => {
             <th style={s.th}>Código</th>
             <th style={s.th}>Nacimiento</th>
             <th style={s.th}>Jaula</th>
+            <th style={s.th}></th>
           </tr>
         </thead>
         <tbody>
@@ -155,10 +167,59 @@ const Reproductores = () => {
               <td style={s.td}>{a.codigo}</td>
               <td style={s.td}>{a.fecha_nacimiento || '—'}</td>
               <td style={s.td}>{a.jaula_codigo || a.id_jaula || '—'}</td>
+              <td style={s.td}>
+                <button type="button" style={s.btnGhost} onClick={() => verResultados(a.id)}>
+                  Resultados (CUY-14)
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {detalle && (
+        <div style={s.card}>
+          <h3 style={{ marginTop: 0 }}>
+            Ficha reproductiva · {detalle.animal?.codigo}
+          </h3>
+          <p style={s.sub}>
+            Empadres: {detalle.indicadores?.empadres ?? 0} · Preñez:{' '}
+            {detalle.indicadores?.porcentaje_prenez != null
+              ? `${detalle.indicadores.porcentaje_prenez}%`
+              : '—'}{' '}
+            · Promedio camada: {detalle.indicadores?.promedio_camada ?? '—'}
+          </p>
+          <table style={s.table}>
+            <thead>
+              <tr>
+                <th style={s.th}>Fecha</th>
+                <th style={s.th}>Jaula</th>
+                <th style={s.th}>Hembras</th>
+                <th style={s.th}>Preñadas</th>
+                <th style={s.th}>Partos (camada M/H)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(detalle.empadres || []).map((e) => (
+                <tr key={e.id}>
+                  <td style={s.td}>{String(e.fecha_empadre).slice(0, 10)}</td>
+                  <td style={s.td}>{e.jaula || '—'}</td>
+                  <td style={s.td}>{e.total_hembras}</td>
+                  <td style={s.td}>{e.prenadas}</td>
+                  <td style={s.td}>
+                    {(Array.isArray(e.partos) ? e.partos : [])
+                      .map(
+                        (p) =>
+                          `${p.hembra_codigo}: ${p.tamano_camada} (${p.vivos_m}M/${p.vivos_h}H)`
+                      )
+                      .join(' · ') || '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

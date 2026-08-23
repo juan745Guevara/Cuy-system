@@ -333,4 +333,155 @@ router.get(
   })
 );
 
+router.get(
+  '/jaula/:id/hembras',
+  asyncHandler(async (req, res) => {
+    const { rows } = await pool.query(
+      `SELECT an.id, an.codigo, an.sexo, j.codigo AS jaula, ar.nombre AS area, ar.proposito
+       FROM animales an
+       JOIN jaulas j ON j.id = an.id_jaula
+       JOIN areas ar ON ar.id = j.id_area
+       WHERE j.id = $1 AND an.id_granja = $2 AND an.estado = 'activo' AND an.sexo = 'H'
+       ORDER BY an.codigo`,
+      [req.params.id, req.granjaId]
+    );
+    res.json(rows);
+  })
+);
+
+router.get(
+  '/reproductores/:id',
+  asyncHandler(async (req, res) => {
+    const { rows: machos } = await pool.query(
+      `SELECT * FROM animales WHERE id = $1 AND id_granja = $2 AND sexo = 'M'`,
+      [req.params.id, req.granjaId]
+    );
+    if (!machos[0]) return res.status(404).json({ error: 'Macho no encontrado' });
+
+    const ciclos = await pool.query(
+      `SELECT e.id, e.fecha_empadre, e.cantidad_hembras, e.cantidad_prenadas, e.id_jaula,
+              j.codigo AS jaula,
+              (SELECT COUNT(*)::int FROM empadre_hembras eh
+                WHERE eh.id_empadre = e.id AND eh.resultado = 'prenez') AS prenadas,
+              (SELECT COUNT(*)::int FROM empadre_hembras eh WHERE eh.id_empadre = e.id) AS total_hembras,
+              COALESCE((
+                SELECT json_agg(json_build_object(
+                  'id_parto', p.id,
+                  'id_hembra', p.id_hembra,
+                  'hembra_codigo', ah.codigo,
+                  'fecha_parto', p.fecha_parto,
+                  'vivos_m', p.vivos_m,
+                  'vivos_h', p.vivos_h,
+                  'tamano_camada', COALESCE(p.vivos_m,0)+COALESCE(p.vivos_h,0)
+                ) ORDER BY p.fecha_parto)
+                FROM partos p
+                JOIN animales ah ON ah.id = p.id_hembra
+                WHERE p.id_empadre = e.id
+              ), '[]'::json) AS partos
+       FROM empadres e
+       LEFT JOIN jaulas j ON j.id = e.id_jaula
+       WHERE e.id_macho = $1 AND e.id_granja = $2
+       ORDER BY e.fecha_empadre DESC`,
+      [req.params.id, req.granjaId]
+    );
+
+    let totalEmpadres = ciclos.rows.length;
+    let totalPrenadas = 0;
+    let totalHembras = 0;
+    let sumCamada = 0;
+    let nPartos = 0;
+    for (const c of ciclos.rows) {
+      totalPrenadas += Number(c.prenadas) || 0;
+      totalHembras += Number(c.total_hembras) || 0;
+      const partos = Array.isArray(c.partos) ? c.partos : [];
+      for (const p of partos) {
+        sumCamada += Number(p.tamano_camada) || 0;
+        nPartos += 1;
+      }
+    }
+
+    res.json({
+      animal: machos[0],
+      empadres: ciclos.rows,
+      indicadores: {
+        empadres: totalEmpadres,
+        porcentaje_prenez:
+          totalHembras > 0 ? Math.round((totalPrenadas / totalHembras) * 1000) / 10 : null,
+        promedio_camada: nPartos > 0 ? Math.round((sumCamada / nPartos) * 100) / 100 : null,
+        partos: nPartos,
+      },
+    });
+  })
+);
+
+router.post(
+  '/:id/cerrar',
+  canWrite,
+  asyncHandler(async (req, res) => {
+    const { id_jaula_retorno } = req.body || {};
+    const { rows } = await pool.query(
+      `SELECT * FROM empadres WHERE id = $1 AND id_granja = $2`,
+      [req.params.id, req.granjaId]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Empadre no encontrado' });
+    const emp = rows[0];
+    if (!emp.id_macho) {
+      return res.status(400).json({ error: 'El empadre no tiene macho asignado' });
+    }
+    if (!id_jaula_retorno) {
+      return res.status(400).json({ error: 'id_jaula_retorno es obligatorio' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const jaula = await client.query(
+        `SELECT j.id FROM jaulas j
+         JOIN areas a ON a.id = j.id_area
+         WHERE j.id = $1 AND a.id_granja = $2 AND j.activa = true`,
+        [id_jaula_retorno, req.granjaId]
+      );
+      if (!jaula.rows[0]) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Jaula de retorno inválida' });
+      }
+      const macho = await client.query(
+        `SELECT id, id_jaula FROM animales WHERE id = $1 AND id_granja = $2`,
+        [emp.id_macho, req.granjaId]
+      );
+      await client.query(
+        `UPDATE animales SET id_jaula = $1, updated_at = NOW() WHERE id = $2`,
+        [id_jaula_retorno, emp.id_macho]
+      );
+      await client.query(
+        `INSERT INTO movimientos
+          (tipo, id_animal, id_granja_origen, id_granja_destino,
+           id_jaula_origen, id_jaula_destino, fecha, motivo, created_by)
+         VALUES ('traslado',$1,$2,$2,$3,$4,$5,$6,$7)`,
+        [
+          emp.id_macho,
+          req.granjaId,
+          macho.rows[0]?.id_jaula || null,
+          id_jaula_retorno,
+          todayISO(),
+          `Retorno macho tras empadre #${emp.id}`,
+          req.user.id,
+        ]
+      );
+      await client.query(
+        `UPDATE empadres SET notas = COALESCE(notas,'') || ' [cerrado]', updated_at = NOW()
+         WHERE id = $1`,
+        [emp.id]
+      );
+      await client.query('COMMIT');
+      res.json({ ok: true, id_empadre: emp.id, id_jaula_retorno });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  })
+);
+
 module.exports = router;
