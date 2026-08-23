@@ -24,6 +24,9 @@ app.use('/api/v1/inventario', require('./routes/inventario.routes'));
 app.use('/api/v1/reportes', require('./routes/reportes.routes'));
 app.use('/api/v1/pesajes', require('./routes/pesajes.routes'));
 app.use('/api/v1/movimientos', require('./routes/movimientos.routes'));
+app.use('/api/v1/tratamientos', require('./routes/tratamientos.routes'));
+app.use('/api/v1/alertas', require('./routes/alertas.routes'));
+app.use('/api/v1/ranking', require('./routes/ranking.routes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Sistema de Control de Animales - UNAS' });

@@ -193,5 +193,90 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Entrega 2/3: movimientos, pesajes, sanidad, alertas, ranking
+CREATE TABLE IF NOT EXISTS movimientos (
+  id SERIAL PRIMARY KEY,
+  tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('traslado','transferencia')),
+  id_animal INTEGER NOT NULL REFERENCES animales(id),
+  id_granja_origen INTEGER REFERENCES granjas(id),
+  id_granja_destino INTEGER REFERENCES granjas(id),
+  id_jaula_origen INTEGER REFERENCES jaulas(id),
+  id_jaula_destino INTEGER REFERENCES jaulas(id),
+  fecha DATE NOT NULL,
+  motivo TEXT,
+  excedio_capacidad BOOLEAN DEFAULT false,
+  aviso_area BOOLEAN DEFAULT false,
+  created_by INTEGER REFERENCES usuarios(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS pesajes (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id),
+  id_animal INTEGER NOT NULL REFERENCES animales(id),
+  fecha DATE NOT NULL,
+  peso_gramos NUMERIC(10,2) NOT NULL CHECK (peso_gramos > 0),
+  fuera_rango BOOLEAN DEFAULT false,
+  created_by INTEGER REFERENCES usuarios(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS tratamientos (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id),
+  id_animal INTEGER REFERENCES animales(id),
+  id_jaula INTEGER REFERENCES jaulas(id),
+  id_area INTEGER REFERENCES areas(id),
+  tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('preventivo','curativo')),
+  producto VARCHAR(150) NOT NULL,
+  dosis VARCHAR(100),
+  via VARCHAR(50),
+  fecha_inicio DATE NOT NULL,
+  duracion_dias INTEGER NOT NULL CHECK (duracion_dias > 0),
+  fecha_termino DATE NOT NULL,
+  diagnostico TEXT,
+  responsable VARCHAR(100),
+  estado VARCHAR(20) DEFAULT 'en_curso' CHECK (estado IN ('en_curso','terminado')),
+  motivo_cierre TEXT,
+  created_by INTEGER REFERENCES usuarios(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS alerta_config (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id) ON DELETE CASCADE,
+  tipo VARCHAR(50) NOT NULL,
+  dias INTEGER NOT NULL DEFAULT 0,
+  activo BOOLEAN DEFAULT true,
+  UNIQUE(id_granja, tipo)
+);
+
+CREATE TABLE IF NOT EXISTS alertas_descarte (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id),
+  tipo VARCHAR(50) NOT NULL,
+  id_animal INTEGER,
+  id_referencia INTEGER,
+  motivo TEXT,
+  created_by INTEGER REFERENCES usuarios(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ranking_config (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL UNIQUE REFERENCES granjas(id) ON DELETE CASCADE,
+  peso_partos NUMERIC(6,2) DEFAULT 20,
+  peso_camada NUMERIC(6,2) DEFAULT 25,
+  peso_destete NUMERIC(6,2) DEFAULT 20,
+  peso_mortalidad NUMERIC(6,2) DEFAULT 15,
+  peso_peso_nac NUMERIC(6,2) DEFAULT 10,
+  peso_peso_dest NUMERIC(6,2) DEFAULT 10,
+  peso_prenez_macho NUMERIC(6,2) DEFAULT 30,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_animales_codigo_norm ON animales(codigo_norm);
 CREATE INDEX IF NOT EXISTS idx_animales_granja_estado ON animales(id_granja, estado);
+CREATE INDEX IF NOT EXISTS idx_movimientos_animal ON movimientos(id_animal);
+CREATE INDEX IF NOT EXISTS idx_pesajes_animal ON pesajes(id_animal);
+CREATE INDEX IF NOT EXISTS idx_tratamientos_granja ON tratamientos(id_granja, estado);
