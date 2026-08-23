@@ -8,6 +8,8 @@ const Pesajes = () => {
   const [animales, setAnimales] = useState([]);
   const [jaulas, setJaulas] = useState([]);
   const [historial, setHistorial] = useState([]);
+  const [promedio, setPromedio] = useState([]);
+  const [rangos, setRangos] = useState(null);
   const [loteAnimales, setLoteAnimales] = useState([]);
   const [pesosLote, setPesosLote] = useState({});
   const [error, setError] = useState('');
@@ -22,12 +24,14 @@ const Pesajes = () => {
 
   const load = useCallback(async () => {
     try {
-      const [a, j] = await Promise.all([
+      const [a, j, r] = await Promise.all([
         api.get('/animales', { params: { estado: 'activo' } }),
         api.get('/jaulas'),
+        api.get('/pesajes/rangos').catch(() => ({ data: null })),
       ]);
       setAnimales(a.data.data || a.data);
       setJaulas(j.data);
+      setRangos(r.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar');
     }
@@ -105,12 +109,30 @@ const Pesajes = () => {
     try {
       const { data } = await api.get(`/pesajes/animal/${form.id_animal}`);
       setHistorial(data);
+      setPromedio([]);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar evolución');
     }
   };
 
-  const maxPeso = Math.max(...historial.map((h) => Number(h.peso_gramos) || 0), 1);
+  const verPromedio = async () => {
+    if (!form.id_jaula) return;
+    try {
+      const { data } = await api.get('/pesajes/promedio', {
+        params: { id_jaula: form.id_jaula },
+      });
+      setPromedio(data);
+      setHistorial([]);
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo cargar promedio');
+    }
+  };
+
+  const maxPeso = Math.max(
+    ...historial.map((h) => Number(h.peso_gramos) || 0),
+    ...promedio.map((p) => Number(p.promedio) || 0),
+    1
+  );
 
   return (
     <div style={s.wrap}>
@@ -134,6 +156,11 @@ const Pesajes = () => {
 
       {tab === 'individual' && (
         <form onSubmit={registrar} style={{ ...s.card, ...s.row }}>
+          {rangos?.especie && (
+            <p style={{ ...s.sub, width: '100%', marginBottom: 0 }}>
+              Unidad: gramos · especie {rangos.especie.min}-{rangos.especie.max} g (CUY-16)
+            </p>
+          )}
           <input
             style={s.input}
             type="date"
@@ -247,16 +274,39 @@ const Pesajes = () => {
             <button type="button" style={s.btn} onClick={verEvolucion}>
               Ver evolución
             </button>
+            <select
+              style={s.select}
+              value={form.id_jaula}
+              onChange={(e) => setForm({ ...form, id_jaula: e.target.value })}
+            >
+              <option value="">Jaula (promedio)</option>
+              {jaulas.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.area} · {j.codigo}
+                </option>
+              ))}
+            </select>
+            <button type="button" style={s.btnGhost} onClick={verPromedio}>
+              Promedio grupo
+            </button>
           </div>
-          {historial.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120, margin: '1rem 0' }}>
-              {historial.map((h) => (
+          {(historial.length > 0 || promedio.length > 0) && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 6,
+                height: 120,
+                margin: '1rem 0',
+              }}
+            >
+              {(historial.length ? historial : promedio).map((h, i) => (
                 <div
-                  key={h.id}
-                  title={`${h.fecha}: ${h.peso_gramos}g`}
+                  key={h.id || `${h.fecha}-${i}`}
+                  title={`${h.fecha}: ${h.peso_gramos ?? h.promedio}g`}
                   style={{
                     width: 18,
-                    height: `${(Number(h.peso_gramos) / maxPeso) * 100}%`,
+                    height: `${(Number(h.peso_gramos ?? h.promedio) / maxPeso) * 100}%`,
                     background: '#7A1216',
                     minHeight: 4,
                   }}
@@ -264,24 +314,46 @@ const Pesajes = () => {
               ))}
             </div>
           )}
-          <table style={s.table}>
-            <thead>
-              <tr>
-                <th style={s.th}>Fecha</th>
-                <th style={s.th}>Peso (g)</th>
-                <th style={s.th}>Ganancia</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historial.map((h) => (
-                <tr key={h.id}>
-                  <td style={s.td}>{String(h.fecha).slice(0, 10)}</td>
-                  <td style={s.td}>{h.peso_gramos}</td>
-                  <td style={s.td}>{h.ganancia_gramos ?? '—'}</td>
+          {historial.length > 0 && (
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={s.th}>Fecha</th>
+                  <th style={s.th}>Peso (g)</th>
+                  <th style={s.th}>Ganancia</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {historial.map((h) => (
+                  <tr key={h.id}>
+                    <td style={s.td}>{String(h.fecha).slice(0, 10)}</td>
+                    <td style={s.td}>{h.peso_gramos}</td>
+                    <td style={s.td}>{h.ganancia_gramos ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {promedio.length > 0 && (
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={s.th}>Fecha</th>
+                  <th style={s.th}>Promedio (g)</th>
+                  <th style={s.th}>N</th>
+                </tr>
+              </thead>
+              <tbody>
+                {promedio.map((p) => (
+                  <tr key={p.fecha}>
+                    <td style={s.td}>{String(p.fecha).slice(0, 10)}</td>
+                    <td style={s.td}>{p.promedio}</td>
+                    <td style={s.td}>{p.n}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>

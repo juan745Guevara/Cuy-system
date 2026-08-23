@@ -12,7 +12,7 @@ const router = express.Router();
 router.use(authRequired, loadUserFarms, requireFarmAccess);
 const canWrite = requireRoles('superadmin', 'admin', 'encargado', 'auxiliar', 'supervisor');
 
-const RANGOS = {
+const RANGOS_DEFAULT = {
   gazapo: { min: 50, max: 250 },
   destete: { min: 150, max: 450 },
   recria: { min: 300, max: 900 },
@@ -20,6 +20,11 @@ const RANGOS = {
   reproductor: { min: 800, max: 1800 },
   default: { min: 50, max: 2000 },
 };
+
+/** Límites absolutos de la especie (rechazo duro NUC-21) */
+const ESPECIE_ABS = { min: 20, max: 3000 };
+
+let RANGOS = { ...RANGOS_DEFAULT };
 
 function rangoPara(nombre) {
   if (!nombre) return RANGOS.default;
@@ -42,13 +47,22 @@ async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, c
     err.status = 400;
     throw err;
   }
-  if (Number(peso) <= 0) {
+  const pesoNum = Number(peso);
+  if (!(pesoNum > 0)) {
     const err = new Error('El peso debe ser mayor que cero');
     err.status = 400;
     throw err;
   }
   if (fecha > hoyISO()) {
     const err = new Error('La fecha no puede ser futura');
+    err.status = 400;
+    throw err;
+  }
+  // NUC-21: rechazo duro fuera del rango válido de la especie
+  if (pesoNum < ESPECIE_ABS.min || pesoNum > ESPECIE_ABS.max) {
+    const err = new Error(
+      `Peso inválido para la especie (${ESPECIE_ABS.min}-${ESPECIE_ABS.max} g)`
+    );
     err.status = 400;
     throw err;
   }
@@ -67,7 +81,7 @@ async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, c
   }
 
   const rango = rangoPara(animal.categoria);
-  const fuera = Number(peso) < rango.min || Number(peso) > rango.max;
+  const fuera = pesoNum < rango.min || pesoNum > rango.max;
   if (fuera && !confirmar) {
     const err = new Error(
       `Peso fuera del rango esperado (${rango.min}-${rango.max} g) para ${animal.categoria || 'la categoría'}`
@@ -80,7 +94,7 @@ async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, c
   const inserted = await client.query(
     `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-    [granjaId, animalId, fecha, peso, fuera, userId]
+    [granjaId, animalId, fecha, pesoNum, fuera, userId]
   );
   return inserted.rows[0];
 }
@@ -188,12 +202,42 @@ router.get(
       params.push(Number(req.query.id_jaula));
       sql += ` AND a.id_jaula = $${params.length}`;
     }
+    if (req.query.id_area) {
+      params.push(Number(req.query.id_area));
+      sql += ` AND EXISTS (
+        SELECT 1 FROM jaulas j WHERE j.id = a.id_jaula AND j.id_area = $${params.length}
+      )`;
+    }
     sql += ' GROUP BY p.fecha ORDER BY p.fecha';
     const { rows } = await pool.query(sql, params);
     res.json(rows);
   })
 );
 
-router.get('/rangos', asyncHandler(async (_req, res) => res.json(RANGOS)));
+router.get('/rangos', asyncHandler(async (_req, res) => {
+  res.json({ categorias: RANGOS, especie: ESPECIE_ABS });
+}));
+
+// CUY-16 — rangos configurables por la unidad
+router.put(
+  '/rangos',
+  requireRoles('superadmin', 'admin', 'encargado'),
+  asyncHandler(async (req, res) => {
+    const body = req.body || {};
+    const next = { ...RANGOS };
+    for (const key of Object.keys(RANGOS_DEFAULT)) {
+      if (body[key]?.min != null && body[key]?.max != null) {
+        const min = Number(body[key].min);
+        const max = Number(body[key].max);
+        if (!(min > 0) || !(max > min)) {
+          return res.status(400).json({ error: `Rango inválido para ${key}` });
+        }
+        next[key] = { min, max };
+      }
+    }
+    RANGOS = next;
+    res.json({ categorias: RANGOS, especie: ESPECIE_ABS });
+  })
+);
 
 module.exports = router;
