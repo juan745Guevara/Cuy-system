@@ -1,16 +1,70 @@
 const express = require('express');
+const { pool } = require('../config/database');
+const { asyncHandler } = require('../utils/helpers');
+const { authRequired, loadUserFarms, requireFarmAccess, requireRoles } = require('../middleware/auth');
+
 const router = express.Router();
+router.use(authRequired, loadUserFarms, requireFarmAccess);
+const canWrite = requireRoles('superadmin', 'admin', 'encargado', 'auxiliar');
 
-// NUC-27: Registrar venta
-router.post('/', async (req, res) => {
-  // TODO: Implementar registro de venta
-  res.json({ message: 'Endpoint no implementado - NUC-27' });
-});
+// NUC-27
+router.post(
+  '/',
+  canWrite,
+  asyncHandler(async (req, res) => {
+    const { id_animal, fecha, clasificacion, categoria, cantidad, comprador, precio } =
+      req.body || {};
+    if (!fecha || !cantidad) {
+      return res.status(400).json({ error: 'fecha y cantidad son obligatorios' });
+    }
 
-// NUC-27: Ver ventas de una granja
-router.get('/granja/:id_granja', async (req, res) => {
-  // TODO: Implementar listado de ventas
-  res.json({ message: 'Endpoint no implementado - NUC-27' });
-});
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(
+        `INSERT INTO ventas
+          (id_granja, id_animal, fecha, clasificacion, categoria, cantidad, comprador, precio, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+        [
+          req.granjaId,
+          id_animal || null,
+          fecha,
+          clasificacion || null,
+          categoria || null,
+          cantidad,
+          comprador || null,
+          precio || null,
+          req.user.id,
+        ]
+      );
+      if (id_animal) {
+        await client.query(
+          `UPDATE animales SET estado = 'baja_venta', fecha_baja = $1,
+             motivo_baja = 'Venta', updated_at = NOW()
+           WHERE id = $2 AND id_granja = $3`,
+          [fecha, id_animal, req.granjaId]
+        );
+      }
+      await client.query('COMMIT');
+      res.status(201).json(rows[0]);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  })
+);
+
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    const { rows } = await pool.query(
+      `SELECT * FROM ventas WHERE id_granja = $1 ORDER BY fecha DESC`,
+      [req.granjaId]
+    );
+    res.json(rows);
+  })
+);
 
 module.exports = router;
