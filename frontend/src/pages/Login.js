@@ -15,8 +15,9 @@ const Login = () => {
     setError('');
     setSubmitting(true);
     try {
-      await login(email, password);
-      navigate('/');
+      const data = await login(email, password);
+      if (data.granjas?.length === 1) navigate('/');
+      else navigate('/seleccionar-granja');
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo iniciar sesión');
     } finally {

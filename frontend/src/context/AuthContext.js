@@ -17,9 +17,13 @@ export const AuthProvider = ({ children }) => {
     setToken(data.token);
     setUser(data.user);
     setGranjas(data.granjas || []);
+    // NUC-02: si solo hay una especie/granja, se selecciona sola
     if (data.granjas?.length === 1) {
       localStorage.setItem('granjaId', String(data.granjas[0].id));
       setGranjaActiva(data.granjas[0].id);
+    } else {
+      localStorage.removeItem('granjaId');
+      setGranjaActiva(null);
     }
   }, []);
 
@@ -64,7 +68,8 @@ export const AuthProvider = ({ children }) => {
 
   const seleccionarGranja = (id) => {
     setGranjaActiva(id);
-    localStorage.setItem('granjaId', String(id));
+    if (id == null) localStorage.removeItem('granjaId');
+    else localStorage.setItem('granjaId', String(id));
   };
 
   return (
