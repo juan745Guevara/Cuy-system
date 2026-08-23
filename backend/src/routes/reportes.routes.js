@@ -430,4 +430,53 @@ router.get(
   })
 );
 
+// NUC-37 — listado de animales con alcance (granja activa + periodo informativo)
+router.get(
+  '/animales',
+  asyncHandler(async (req, res) => {
+    const year = Number(req.query.anio) || new Date().getFullYear();
+    const month = Number(req.query.mes) || new Date().getMonth() + 1;
+    const idArea = req.query.id_area ? Number(req.query.id_area) : null;
+    const params = [req.granjaId];
+    let sql = `
+      SELECT a.codigo, a.sexo, a.estado, a.fecha_nacimiento,
+             r.nombre AS raza, c.nombre AS categoria,
+             j.codigo AS jaula, ar.nombre AS area
+      FROM animales a
+      LEFT JOIN razas r ON r.id = a.id_raza
+      LEFT JOIN categorias c ON c.id = a.id_categoria
+      LEFT JOIN jaulas j ON j.id = a.id_jaula
+      LEFT JOIN areas ar ON ar.id = j.id_area
+      WHERE a.id_granja = $1 AND a.estado = 'activo'`;
+    if (idArea) {
+      params.push(idArea);
+      sql += ` AND ar.id = $${params.length}`;
+    }
+    sql += ' ORDER BY ar.nombre, j.codigo, a.codigo';
+    const { rows } = await pool.query(sql, params);
+    if (!rows.length) {
+      return res.status(400).json({ error: 'No hay animales para exportar en el alcance elegido' });
+    }
+
+    await workbookResponse(res, `animales-${year}-${month}.xlsx`, async (wb) => {
+      const ws = wb.addWorksheet('Animales');
+      headerUnidad(ws, `Listado de animales — ${month}/${year}`);
+      ws.addRow([]);
+      ws.addRow(['Código', 'Sexo', 'Raza', 'Categoría', 'Área', 'Jaula', 'Nacimiento', 'Estado']);
+      for (const r of rows) {
+        ws.addRow([
+          r.codigo,
+          r.sexo,
+          r.raza,
+          r.categoria,
+          r.area,
+          r.jaula,
+          r.fecha_nacimiento,
+          r.estado,
+        ]);
+      }
+    });
+  })
+);
+
 module.exports = router;
