@@ -1,10 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
-const {
-  animalFueraDeArea,
-  normalizeProposito,
-} = require('../utils/propositoArea');
+const { animalFueraDeArea, normalizeProposito } = require('../utils/propositoArea');
 const {
   authRequired,
   loadUserFarms,
@@ -15,6 +12,7 @@ const {
 const router = express.Router();
 router.use(authRequired, loadUserFarms, requireFarmAccess);
 const canWrite = requireRoles('superadmin', 'admin', 'encargado', 'auxiliar', 'supervisor');
+const canTransfer = requireRoles('superadmin', 'admin', 'supervisor');
 
 async function getJaula(client, idJaula, idGranja) {
   const { rows } = await client.query(
@@ -39,7 +37,7 @@ router.post(
   '/traslado',
   canWrite,
   asyncHandler(async (req, res) => {
-      const {
+    const {
       fecha,
       id_jaula_destino,
       motivo,
@@ -181,15 +179,66 @@ router.post(
 );
 
 // NUC-20
+router.get(
+  '/jaulas-destino/:id_granja',
+  canTransfer,
+  asyncHandler(async (req, res) => {
+    const idDest = Number(req.params.id_granja);
+    const enAlcance =
+      req.user.rol === 'superadmin' ||
+      (req.userFarms || []).some((g) => Number(g.id) === idDest);
+    if (!enAlcance) {
+      return res.status(403).json({ error: 'Sin alcance en la granja destino' });
+    }
+    const origen = await pool.query(`SELECT id_especie FROM granjas WHERE id = $1`, [
+      req.granjaId,
+    ]);
+    const dest = await pool.query(
+      `SELECT id_especie FROM granjas WHERE id = $1 AND activa = true`,
+      [idDest]
+    );
+    if (!origen.rows[0] || !dest.rows[0]) {
+      return res.status(400).json({ error: 'Granja inválida' });
+    }
+    if (origen.rows[0].id_especie !== dest.rows[0].id_especie) {
+      return res.status(400).json({ error: 'La granja destino es de otra especie' });
+    }
+    const { rows } = await pool.query(
+      `SELECT j.id, j.codigo, j.capacidad_maxima, a.nombre AS area, a.proposito,
+              (SELECT COUNT(*)::int FROM animales an
+                WHERE an.id_jaula = j.id AND an.estado = 'activo') AS ocupacion
+       FROM jaulas j
+       JOIN areas a ON a.id = j.id_area
+       WHERE a.id_granja = $1 AND j.activa = true
+       ORDER BY a.nombre, j.codigo`,
+      [idDest]
+    );
+    res.json(rows);
+  })
+);
+
 router.post(
   '/transferencia',
-  requireRoles('superadmin', 'admin', 'supervisor'),
+  canTransfer,
   asyncHandler(async (req, res) => {
-    const { fecha, id_granja_destino, id_jaula_destino, ids_animales, motivo } = req.body || {};
+    const {
+      fecha,
+      id_granja_destino,
+      id_jaula_destino,
+      ids_animales,
+      motivo,
+      confirmar_capacidad,
+    } = req.body || {};
     if (!fecha || !id_granja_destino || !id_jaula_destino || !ids_animales?.length) {
       return res.status(400).json({
         error: 'fecha, id_granja_destino, id_jaula_destino e ids_animales son obligatorios',
       });
+    }
+    if (!(motivo || '').trim()) {
+      return res.status(400).json({ error: 'El motivo de transferencia es obligatorio' });
+    }
+    if (fecha > hoyISO()) {
+      return res.status(400).json({ error: 'La fecha no puede ser futura' });
     }
 
     const enAlcance =
@@ -238,6 +287,10 @@ router.post(
       }
 
       for (const a of animales) {
+        if (a.fecha_nacimiento && fecha < String(a.fecha_nacimiento).slice(0, 10)) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: `Fecha anterior al nacimiento de ${a.codigo}` });
+        }
         const clash = await client.query(
           `SELECT id FROM animales WHERE id_granja = $1 AND codigo_norm = $2 AND id <> $3`,
           [id_granja_destino, a.codigo_norm, a.id]
@@ -251,13 +304,28 @@ router.post(
         }
       }
 
+      const nuevaOcupacion = jaulaDest.ocupacion + animales.length;
+      const excedio =
+        jaulaDest.capacidad_maxima != null && nuevaOcupacion > jaulaDest.capacidad_maxima;
+      if (excedio && !confirmar_capacidad) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          error: 'La jaula destino supera su capacidad',
+          requiere_confirmacion: 'capacidad',
+          ocupacion_actual: jaulaDest.ocupacion,
+          capacidad_maxima: jaulaDest.capacidad_maxima,
+          a_mover: animales.length,
+        });
+      }
+
       const creados = [];
       for (const a of animales) {
         const { rows } = await client.query(
           `INSERT INTO movimientos
             (tipo, id_animal, id_granja_origen, id_granja_destino,
-             id_jaula_origen, id_jaula_destino, fecha, motivo, created_by)
-           VALUES ('transferencia',$1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+             id_jaula_origen, id_jaula_destino, fecha, motivo,
+             excedio_capacidad, created_by)
+           VALUES ('transferencia',$1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
           [
             a.id,
             req.granjaId,
@@ -265,7 +333,8 @@ router.post(
             a.id_jaula,
             id_jaula_destino,
             fecha,
-            motivo || null,
+            motivo.trim(),
+            excedio,
             req.user.id,
           ]
         );
@@ -277,7 +346,11 @@ router.post(
       }
 
       await client.query('COMMIT');
-      res.status(201).json({ transferidos: creados.length, movimientos: creados });
+      res.status(201).json({
+        transferidos: creados.length,
+        excedio_capacidad: excedio,
+        movimientos: creados,
+      });
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -328,24 +401,19 @@ router.get(
       return res.status(404).json({ error: 'Jaula no encontrada' });
     }
 
-    // Ocupación "hoy": animales activos en la jaula
     const actuales = await pool.query(
       `SELECT an.id, an.codigo, an.sexo, an.estado, c.nombre AS categoria
        FROM animales an
        LEFT JOIN categorias c ON c.id = an.id_categoria
-       JOIN jaulas j ON j.id = an.id_jaula
-       JOIN areas a ON a.id = j.id_area
-       WHERE j.id = $1 AND a.id_granja = $2 AND an.estado = 'activo'
+       WHERE an.id_jaula = $1 AND an.id_granja = $2 AND an.estado = 'activo'
        ORDER BY an.codigo`,
       [idJaula, req.granjaId]
     );
 
-    // Ocupación a una fecha: última jaula conocida por animal vía movimientos ≤ fecha
-    // + animales sin movimientos creados/asignados ≤ fecha que siguen en esta jaula
     const enFecha = await pool.query(
       `WITH ultimos AS (
          SELECT DISTINCT ON (m.id_animal)
-                m.id_animal, m.id_jaula_destino, m.fecha
+                m.id_animal, m.id_jaula_destino
          FROM movimientos m
          WHERE m.fecha <= $2::date
            AND (m.id_granja_origen = $3 OR m.id_granja_destino = $3)
@@ -356,22 +424,15 @@ router.get(
        LEFT JOIN categorias c ON c.id = an.id_categoria
        LEFT JOIN ultimos u ON u.id_animal = an.id
        WHERE (
-           (u.id_jaula_destino = $1)
+           u.id_jaula_destino = $1
            OR (
              u.id_animal IS NULL
              AND an.id_jaula = $1
+             AND an.id_granja = $3
              AND COALESCE(an.fecha_nacimiento, an.created_at::date) <= $2::date
            )
          )
          AND (an.estado = 'activo' OR COALESCE(an.fecha_baja, '9999-12-31'::date) > $2::date)
-         AND (
-           EXISTS (
-             SELECT 1 FROM movimientos mx
-             WHERE mx.id_animal = an.id
-               AND (mx.id_granja_origen = $3 OR mx.id_granja_destino = $3)
-           )
-           OR an.id_granja = $3
-         )
        ORDER BY an.codigo`,
       [idJaula, fecha, req.granjaId]
     );
@@ -458,13 +519,14 @@ router.get(
        ORDER BY a.nombre, an.codigo`,
       [req.granjaId]
     );
-    const fuera = rows.filter((r) =>
-      animalFueraDeArea(
-        { sexo: r.sexo, proposito_area: r.proposito_area },
-        r.proposito_actual
+    res.json(
+      rows.filter((r) =>
+        animalFueraDeArea(
+          { sexo: r.sexo, proposito_area: r.proposito_area },
+          r.proposito_actual
+        )
       )
     );
-    res.json(fuera);
   })
 );
 

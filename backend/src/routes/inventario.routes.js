@@ -129,16 +129,18 @@ router.get(
     try {
       const tr = await pool.query(
         `SELECT
-           COALESCE(SUM(CASE WHEN tipo = 'entrada_granja' THEN 1 ELSE 0 END),0)::int AS tin,
-           COALESCE(SUM(CASE WHEN tipo = 'salida_granja' THEN 1 ELSE 0 END),0)::int AS tout
+           COALESCE(SUM(CASE WHEN tipo = 'transferencia' AND id_granja_destino = $1 THEN 1 ELSE 0 END),0)::int AS tin,
+           COALESCE(SUM(CASE WHEN tipo = 'transferencia' AND id_granja_origen = $1 THEN 1 ELSE 0 END),0)::int AS tout
          FROM movimientos
-         WHERE id_granja = $1 AND fecha BETWEEN $2 AND $3`,
+         WHERE tipo = 'transferencia'
+           AND fecha BETWEEN $2 AND $3
+           AND (id_granja_origen = $1 OR id_granja_destino = $1)`,
         [req.granjaId, ini, fin]
       );
       transferencias_in = tr.rows[0]?.tin || 0;
       transferencias_out = tr.rows[0]?.tout || 0;
     } catch {
-      /* movimientos may use other tipo values */
+      /* tabla movimientos puede no existir en entornos viejos */
     }
 
     const desglose = {};

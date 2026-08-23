@@ -5,15 +5,16 @@ import { page as s } from '../styles/ui';
 /** NUC-14 traslado · NUC-15 historial · NUC-18/19 avisos · NUC-20 transferencia */
 const Movimientos = () => {
   const [tab, setTab] = useState('traslado');
-  const [animales, setAnimales] = useState([]);
-  const [jaulas, setJaulas] = useState([]);
+  const [animals, setAnimals] = useState([]);
+  const [cages, setCages] = useState([]);
   const [areas, setAreas] = useState([]);
-  const [granjas, setGranjas] = useState([]);
-  const [lista, setLista] = useState([]);
-  const [sobrecupo, setSobrecupo] = useState([]);
-  const [fueraArea, setFueraArea] = useState([]);
-  const [historial, setHistorial] = useState([]);
-  const [ocupJaula, setOcupJaula] = useState(null);
+  const [farms, setFarms] = useState([]);
+  const [recent, setRecent] = useState([]);
+  const [overCap, setOverCap] = useState([]);
+  const [outOfArea, setOutOfArea] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [cageOccupancy, setCageOccupancy] = useState(null);
+  const [destCages, setDestCages] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [form, setForm] = useState({
@@ -42,25 +43,25 @@ const Movimientos = () => {
         api.get('/movimientos/fuera-de-area'),
         api.get('/granjas').catch(() => ({ data: [] })),
       ]);
-      setAnimales(a.data.data || a.data);
-      setJaulas(j.data);
+      setAnimals(a.data.data || a.data);
+      setCages(j.data);
       setAreas(ar.data);
-      setLista(m.data);
-      setSobrecupo(sc.data);
-      setFueraArea(fa.data);
-      setGranjas(g.data.data || g.data || []);
+      setRecent(m.data);
+      setOverCap(sc.data);
+      setOutOfArea(fa.data);
+      setFarms(g.data.data || g.data || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar');
     }
   }, []);
 
-  const jaulasDestino = form.id_area_destino
-    ? jaulas.filter((j) => String(j.id_area) === String(form.id_area_destino))
-    : jaulas;
-
   useEffect(() => {
     load();
   }, [load]);
+
+  const cagesForDest = form.id_area_destino
+    ? cages.filter((j) => String(j.id_area) === String(form.id_area_destino))
+    : cages;
 
   const toggleAnimal = (id) => {
     setForm((f) => ({
@@ -71,7 +72,21 @@ const Movimientos = () => {
     }));
   };
 
-  const enviarTraslado = async (e) => {
+  const applyConfirm = (d) => {
+    if (d?.requiere_confirmacion === 'capacidad') {
+      setForm((f) => ({ ...f, confirmar_capacidad: true }));
+      setError(`${d.error}. Confirme capacidad y reintente.`);
+      return true;
+    }
+    if (d?.requiere_confirmacion === 'area') {
+      setForm((f) => ({ ...f, confirmar_area: true }));
+      setError(`${d.error}. Indique motivo, confirme área y reintente.`);
+      return true;
+    }
+    return false;
+  };
+
+  const submitTraslado = async (e) => {
     e.preventDefault();
     setError('');
     setOk('');
@@ -97,21 +112,12 @@ const Movimientos = () => {
       load();
     } catch (err) {
       const d = err.response?.data;
-      if (err.response?.status === 409 && d?.requiere_confirmacion) {
-        setError(`${d.error}. Confirme y reintente.`);
-        if (d.requiere_confirmacion === 'capacidad') {
-          setForm((f) => ({ ...f, confirmar_capacidad: true }));
-        }
-        if (d.requiere_confirmacion === 'area') {
-          setForm((f) => ({ ...f, confirmar_area: true }));
-        }
-      } else {
-        setError(d?.error || 'No se pudo trasladar');
-      }
+      if (err.response?.status === 409 && applyConfirm(d)) return;
+      setError(d?.error || 'No se pudo trasladar');
     }
   };
 
-  const enviarTransferencia = async (e) => {
+  const submitTransferencia = async (e) => {
     e.preventDefault();
     setError('');
     setOk('');
@@ -121,36 +127,64 @@ const Movimientos = () => {
         id_granja_destino: Number(form.id_granja_destino),
         id_jaula_destino: Number(form.id_jaula_destino),
         ids_animales: form.ids_animales,
-        motivo: form.motivo || null,
+        motivo: form.motivo,
+        confirmar_capacidad: form.confirmar_capacidad,
       });
       setOk(`Transferidos: ${data.transferidos}`);
+      setForm((f) => ({
+        ...f,
+        ids_animales: [],
+        confirmar_capacidad: false,
+        motivo: '',
+      }));
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo transferir');
+      const d = err.response?.data;
+      if (err.response?.status === 409 && applyConfirm(d)) return;
+      setError(d?.error || 'No se pudo transferir');
     }
   };
 
-  const verHistorial = async () => {
+  const onDestFarm = async (id) => {
+    setForm((f) => ({
+      ...f,
+      id_granja_destino: id,
+      id_jaula_destino: '',
+      confirmar_capacidad: false,
+    }));
+    setDestCages([]);
+    if (!id) return;
+    try {
+      const { data } = await api.get(`/movimientos/jaulas-destino/${id}`);
+      setDestCages(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudieron cargar jaulas destino');
+    }
+  };
+
+  const loadHistory = async () => {
     if (!form.id_animal_hist) return;
     try {
       const { data } = await api.get(`/movimientos/animal/${form.id_animal_hist}`);
-      setHistorial(data);
+      setHistory(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar historial');
     }
   };
 
-  const verOcupacionJaula = async () => {
+  const loadCageOccupancy = async () => {
     if (!form.id_jaula_hist) return;
     try {
       const { data } = await api.get(`/movimientos/jaula/${form.id_jaula_hist}`, {
         params: { fecha: form.fecha_jaula },
       });
-      setOcupJaula(data);
+      setCageOccupancy(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar ocupación');
     }
   };
+
+  const activeFarm = localStorage.getItem('granjaId') || '';
 
   return (
     <div style={s.wrap}>
@@ -178,7 +212,7 @@ const Movimientos = () => {
       </div>
 
       {tab === 'traslado' && (
-        <form onSubmit={enviarTraslado} style={s.card}>
+        <form onSubmit={submitTraslado} style={s.card}>
           <p style={s.sub}>Elija área y luego jaula de destino (NUC-14)</p>
           <div style={s.row}>
             <input
@@ -213,7 +247,7 @@ const Movimientos = () => {
               onChange={(e) => setForm({ ...form, id_jaula_destino: e.target.value })}
             >
               <option value="">Jaula destino</option>
-              {jaulasDestino.map((j) => (
+              {cagesForDest.map((j) => (
                 <option key={j.id} value={j.id}>
                   {j.area} · {j.codigo} ({j.ocupacion}/{j.capacidad_maxima ?? '∞'})
                 </option>
@@ -225,7 +259,7 @@ const Movimientos = () => {
               onChange={(e) => setForm({ ...form, id_jaula_origen_completa: e.target.value })}
             >
               <option value="">O mover jaula completa…</option>
-              {jaulas.map((j) => (
+              {cages.map((j) => (
                 <option key={j.id} value={j.id}>
                   {j.area} · {j.codigo}
                 </option>
@@ -233,13 +267,13 @@ const Movimientos = () => {
             </select>
             <input
               style={s.input}
-              placeholder="Motivo (opcional)"
+              placeholder={form.confirmar_area ? 'Motivo (obligatorio)' : 'Motivo (opcional)'}
               value={form.motivo}
               onChange={(e) => setForm({ ...form, motivo: e.target.value })}
             />
           </div>
           <div style={{ maxHeight: 180, overflow: 'auto', marginBottom: '0.75rem' }}>
-            {animales.map((a) => (
+            {animals.map((a) => (
               <label key={a.id} style={{ display: 'block', fontSize: '0.9rem' }}>
                 <input
                   type="checkbox"
@@ -263,7 +297,8 @@ const Movimientos = () => {
       )}
 
       {tab === 'transferencia' && (
-        <form onSubmit={enviarTransferencia} style={s.card}>
+        <form onSubmit={submitTransferencia} style={s.card}>
+          <p style={s.sub}>Misma especie · supervisor/admin (NUC-20)</p>
           <div style={s.row}>
             <input
               style={s.input}
@@ -276,26 +311,40 @@ const Movimientos = () => {
               style={s.select}
               required
               value={form.id_granja_destino}
-              onChange={(e) => setForm({ ...form, id_granja_destino: e.target.value })}
+              onChange={(e) => onDestFarm(e.target.value)}
             >
               <option value="">Granja destino</option>
-              {granjas.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.especie || ''} · {g.nombre}
+              {farms
+                .filter((g) => String(g.id) !== String(activeFarm))
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.especie || ''} · {g.nombre}
+                  </option>
+                ))}
+            </select>
+            <select
+              style={s.select}
+              required
+              value={form.id_jaula_destino}
+              onChange={(e) => setForm({ ...form, id_jaula_destino: e.target.value })}
+            >
+              <option value="">Jaula destino</option>
+              {destCages.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.area} · {j.codigo} ({j.ocupacion}/{j.capacidad_maxima ?? '∞'})
                 </option>
               ))}
             </select>
             <input
               style={s.input}
-              type="number"
               required
-              placeholder="ID jaula destino"
-              value={form.id_jaula_destino}
-              onChange={(e) => setForm({ ...form, id_jaula_destino: e.target.value })}
+              placeholder="Motivo (obligatorio)"
+              value={form.motivo}
+              onChange={(e) => setForm({ ...form, motivo: e.target.value })}
             />
           </div>
           <div style={{ maxHeight: 180, overflow: 'auto', marginBottom: '0.75rem' }}>
-            {animales.map((a) => (
+            {animals.map((a) => (
               <label key={a.id} style={{ display: 'block', fontSize: '0.9rem' }}>
                 <input
                   type="checkbox"
@@ -306,6 +355,9 @@ const Movimientos = () => {
               </label>
             ))}
           </div>
+          {form.confirmar_capacidad && (
+            <p style={s.sub}>Capacidad excedida: confirme reenviando el formulario.</p>
+          )}
           <button type="submit" style={s.btn}>
             Transferir
           </button>
@@ -322,13 +374,13 @@ const Movimientos = () => {
               onChange={(e) => setForm({ ...form, id_animal_hist: e.target.value })}
             >
               <option value="">Animal</option>
-              {animales.map((a) => (
+              {animals.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.codigo}
                 </option>
               ))}
             </select>
-            <button type="button" style={s.btn} onClick={verHistorial}>
+            <button type="button" style={s.btn} onClick={loadHistory}>
               Ver historial
             </button>
           </div>
@@ -343,7 +395,7 @@ const Movimientos = () => {
               </tr>
             </thead>
             <tbody>
-              {historial.map((h) => (
+              {history.map((h) => (
                 <tr key={h.id}>
                   <td style={s.td}>{String(h.fecha).slice(0, 10)}</td>
                   <td style={s.td}>{h.tipo}</td>
@@ -368,7 +420,7 @@ const Movimientos = () => {
               onChange={(e) => setForm({ ...form, id_jaula_hist: e.target.value })}
             >
               <option value="">Jaula</option>
-              {jaulas.map((j) => (
+              {cages.map((j) => (
                 <option key={j.id} value={j.id}>
                   {j.area} · {j.codigo}
                 </option>
@@ -380,24 +432,24 @@ const Movimientos = () => {
               value={form.fecha_jaula}
               onChange={(e) => setForm({ ...form, fecha_jaula: e.target.value })}
             />
-            <button type="button" style={s.btn} onClick={verOcupacionJaula}>
+            <button type="button" style={s.btn} onClick={loadCageOccupancy}>
               Consultar
             </button>
           </div>
-          {ocupJaula && (
+          {cageOccupancy && (
             <div>
               <p style={s.sub}>
-                {ocupJaula.jaula?.area} / {ocupJaula.jaula?.codigo} al {ocupJaula.fecha}:{' '}
-                {(ocupJaula.en_fecha || []).length} animal(es)
+                {cageOccupancy.jaula?.area} / {cageOccupancy.jaula?.codigo} al{' '}
+                {cageOccupancy.fecha}: {(cageOccupancy.en_fecha || []).length} animal(es)
               </p>
               <ul>
-                {(ocupJaula.en_fecha || []).map((a) => (
+                {(cageOccupancy.en_fecha || []).map((a) => (
                   <li key={a.id}>
                     {a.codigo} ({a.sexo}) {a.categoria || ''}
                   </li>
                 ))}
               </ul>
-              <p style={s.sub}>Hoy en la jaula: {(ocupJaula.actuales || []).length}</p>
+              <p style={s.sub}>Hoy en la jaula: {(cageOccupancy.actuales || []).length}</p>
             </div>
           )}
 
@@ -412,7 +464,7 @@ const Movimientos = () => {
               </tr>
             </thead>
             <tbody>
-              {lista.map((m) => (
+              {recent.map((m) => (
                 <tr key={m.id}>
                   <td style={s.td}>{String(m.fecha).slice(0, 10)}</td>
                   <td style={s.td}>{m.codigo}</td>
@@ -431,11 +483,11 @@ const Movimientos = () => {
         <div>
           <div style={s.card}>
             <h3 style={{ marginTop: 0 }}>Jaulas sobre capacidad (NUC-18)</h3>
-            {sobrecupo.length === 0 ? (
+            {overCap.length === 0 ? (
               <p>Ninguna</p>
             ) : (
               <ul>
-                {sobrecupo.map((j) => (
+                {overCap.map((j) => (
                   <li key={j.id}>
                     {j.area} · {j.codigo}: {j.ocupacion}/{j.capacidad_maxima}
                   </li>
@@ -445,11 +497,11 @@ const Movimientos = () => {
           </div>
           <div style={s.card}>
             <h3 style={{ marginTop: 0 }}>Animales fuera de área (NUC-19)</h3>
-            {fueraArea.length === 0 ? (
+            {outOfArea.length === 0 ? (
               <p>Ninguno</p>
             ) : (
               <ul>
-                {fueraArea.map((a) => (
+                {outOfArea.map((a) => (
                   <li key={a.id}>
                     {a.codigo} en {a.area}/{a.jaula} (esperado: {a.proposito_area})
                   </li>
