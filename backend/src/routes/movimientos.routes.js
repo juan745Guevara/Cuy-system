@@ -304,27 +304,91 @@ router.get(
   '/jaula/:id_jaula',
   asyncHandler(async (req, res) => {
     const fecha = req.query.fecha || hoyISO();
+    const idJaula = Number(req.params.id_jaula);
+
+    const jaulaOk = await pool.query(
+      `SELECT j.id, j.codigo, a.nombre AS area
+       FROM jaulas j JOIN areas a ON a.id = j.id_area
+       WHERE j.id = $1 AND a.id_granja = $2`,
+      [idJaula, req.granjaId]
+    );
+    if (!jaulaOk.rows[0]) {
+      return res.status(404).json({ error: 'Jaula no encontrada' });
+    }
+
+    // Ocupación "hoy": animales activos en la jaula
     const actuales = await pool.query(
-      `SELECT an.id, an.codigo, an.sexo, an.estado
+      `SELECT an.id, an.codigo, an.sexo, an.estado, c.nombre AS categoria
        FROM animales an
+       LEFT JOIN categorias c ON c.id = an.id_categoria
        JOIN jaulas j ON j.id = an.id_jaula
        JOIN areas a ON a.id = j.id_area
        WHERE j.id = $1 AND a.id_granja = $2 AND an.estado = 'activo'
        ORDER BY an.codigo`,
-      [req.params.id_jaula, req.granjaId]
+      [idJaula, req.granjaId]
     );
+
+    // Ocupación a una fecha: última jaula conocida por animal vía movimientos ≤ fecha
+    // + animales sin movimientos creados/asignados ≤ fecha que siguen en esta jaula
+    const enFecha = await pool.query(
+      `WITH ultimos AS (
+         SELECT DISTINCT ON (m.id_animal)
+                m.id_animal, m.id_jaula_destino, m.fecha
+         FROM movimientos m
+         WHERE m.fecha <= $2::date
+           AND (m.id_granja_origen = $3 OR m.id_granja_destino = $3)
+         ORDER BY m.id_animal, m.fecha DESC, m.id DESC
+       )
+       SELECT an.id, an.codigo, an.sexo, an.estado, c.nombre AS categoria
+       FROM animales an
+       LEFT JOIN categorias c ON c.id = an.id_categoria
+       LEFT JOIN ultimos u ON u.id_animal = an.id
+       WHERE (
+           (u.id_jaula_destino = $1)
+           OR (
+             u.id_animal IS NULL
+             AND an.id_jaula = $1
+             AND COALESCE(an.fecha_nacimiento, an.created_at::date) <= $2::date
+           )
+         )
+         AND (an.estado = 'activo' OR COALESCE(an.fecha_baja, '9999-12-31'::date) > $2::date)
+         AND (
+           EXISTS (
+             SELECT 1 FROM movimientos mx
+             WHERE mx.id_animal = an.id
+               AND (mx.id_granja_origen = $3 OR mx.id_granja_destino = $3)
+           )
+           OR an.id_granja = $3
+         )
+       ORDER BY an.codigo`,
+      [idJaula, fecha, req.granjaId]
+    );
+
     const historial = await pool.query(
-      `SELECT m.*, an.codigo
+      `SELECT m.*, an.codigo,
+              jo.codigo AS jaula_origen, ao.nombre AS area_origen,
+              jd.codigo AS jaula_destino, ad.nombre AS area_destino
        FROM movimientos m
        JOIN animales an ON an.id = m.id_animal
+       LEFT JOIN jaulas jo ON jo.id = m.id_jaula_origen
+       LEFT JOIN areas ao ON ao.id = jo.id_area
+       LEFT JOIN jaulas jd ON jd.id = m.id_jaula_destino
+       LEFT JOIN areas ad ON ad.id = jd.id_area
        WHERE (m.id_jaula_origen = $1 OR m.id_jaula_destino = $1)
          AND m.fecha <= $2
          AND (m.id_granja_origen = $3 OR m.id_granja_destino = $3)
-       ORDER BY m.fecha DESC
+       ORDER BY m.fecha DESC, m.id DESC
        LIMIT 100`,
-      [req.params.id_jaula, fecha, req.granjaId]
+      [idJaula, fecha, req.granjaId]
     );
-    res.json({ fecha, actuales: actuales.rows, historial: historial.rows });
+
+    res.json({
+      fecha,
+      jaula: jaulaOk.rows[0],
+      actuales: actuales.rows,
+      en_fecha: enFecha.rows,
+      historial: historial.rows,
+    });
   })
 );
 

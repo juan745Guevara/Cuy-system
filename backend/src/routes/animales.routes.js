@@ -96,6 +96,23 @@ router.get(
        UNION ALL
        SELECT 'venta', v.fecha::text, 'Venta', v.created_at
        FROM ventas v WHERE v.id_animal = $1
+       UNION ALL
+       SELECT m.tipo,
+              m.fecha::text,
+              COALESCE(jo.codigo,'—') || ' (' || COALESCE(ao.nombre,'') || ') → ' ||
+              COALESCE(jd.codigo,'—') || ' (' || COALESCE(ad.nombre,'') || ')' ||
+              CASE WHEN m.id_granja_origen IS DISTINCT FROM m.id_granja_destino
+                   THEN ' [' || COALESCE(go.nombre,'') || ' → ' || COALESCE(gd.nombre,'') || ']'
+                   ELSE '' END,
+              m.created_at
+       FROM movimientos m
+       LEFT JOIN jaulas jo ON jo.id = m.id_jaula_origen
+       LEFT JOIN areas ao ON ao.id = jo.id_area
+       LEFT JOIN jaulas jd ON jd.id = m.id_jaula_destino
+       LEFT JOIN areas ad ON ad.id = jd.id_area
+       LEFT JOIN granjas go ON go.id = m.id_granja_origen
+       LEFT JOIN granjas gd ON gd.id = m.id_granja_destino
+       WHERE m.id_animal = $1
        ORDER BY created_at DESC`,
       [rows[0].id]
     );

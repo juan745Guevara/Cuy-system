@@ -13,6 +13,7 @@ const Movimientos = () => {
   const [sobrecupo, setSobrecupo] = useState([]);
   const [fueraArea, setFueraArea] = useState([]);
   const [historial, setHistorial] = useState([]);
+  const [ocupJaula, setOcupJaula] = useState(null);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [form, setForm] = useState({
@@ -26,6 +27,8 @@ const Movimientos = () => {
     confirmar_area: false,
     id_granja_destino: '',
     id_animal_hist: '',
+    id_jaula_hist: '',
+    fecha_jaula: new Date().toISOString().slice(0, 10),
   });
 
   const load = useCallback(async () => {
@@ -134,6 +137,18 @@ const Movimientos = () => {
       setHistorial(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar historial');
+    }
+  };
+
+  const verOcupacionJaula = async () => {
+    if (!form.id_jaula_hist) return;
+    try {
+      const { data } = await api.get(`/movimientos/jaula/${form.id_jaula_hist}`, {
+        params: { fecha: form.fecha_jaula },
+      });
+      setOcupJaula(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo cargar ocupación');
     }
   };
 
@@ -293,6 +308,7 @@ const Movimientos = () => {
 
       {tab === 'historial' && (
         <div style={s.card}>
+          <h3 style={{ marginTop: 0 }}>Recorrido del animal (NUC-15)</h3>
           <div style={s.row}>
             <select
               style={s.select}
@@ -317,6 +333,7 @@ const Movimientos = () => {
                 <th style={s.th}>Tipo</th>
                 <th style={s.th}>Origen</th>
                 <th style={s.th}>Destino</th>
+                <th style={s.th}>Área dest.</th>
               </tr>
             </thead>
             <tbody>
@@ -326,14 +343,58 @@ const Movimientos = () => {
                   <td style={s.td}>{h.tipo}</td>
                   <td style={s.td}>
                     {h.granja_origen || ''} {h.jaula_origen || '—'}
+                    {h.area_origen ? ` (${h.area_origen})` : ''}
                   </td>
                   <td style={s.td}>
                     {h.granja_destino || ''} {h.jaula_destino || '—'}
                   </td>
+                  <td style={s.td}>{h.area_destino || '—'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          <h3>Ocupación de jaula en una fecha</h3>
+          <div style={s.row}>
+            <select
+              style={s.select}
+              value={form.id_jaula_hist}
+              onChange={(e) => setForm({ ...form, id_jaula_hist: e.target.value })}
+            >
+              <option value="">Jaula</option>
+              {jaulas.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.area} · {j.codigo}
+                </option>
+              ))}
+            </select>
+            <input
+              style={s.input}
+              type="date"
+              value={form.fecha_jaula}
+              onChange={(e) => setForm({ ...form, fecha_jaula: e.target.value })}
+            />
+            <button type="button" style={s.btn} onClick={verOcupacionJaula}>
+              Consultar
+            </button>
+          </div>
+          {ocupJaula && (
+            <div>
+              <p style={s.sub}>
+                {ocupJaula.jaula?.area} / {ocupJaula.jaula?.codigo} al {ocupJaula.fecha}:{' '}
+                {(ocupJaula.en_fecha || []).length} animal(es)
+              </p>
+              <ul>
+                {(ocupJaula.en_fecha || []).map((a) => (
+                  <li key={a.id}>
+                    {a.codigo} ({a.sexo}) {a.categoria || ''}
+                  </li>
+                ))}
+              </ul>
+              <p style={s.sub}>Hoy en la jaula: {(ocupJaula.actuales || []).length}</p>
+            </div>
+          )}
+
           <h3>Últimos de la granja</h3>
           <table style={s.table}>
             <thead>
