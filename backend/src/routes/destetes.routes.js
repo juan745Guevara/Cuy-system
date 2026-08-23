@@ -123,6 +123,26 @@ router.post(
         );
       }
 
+      // CUY-16: pesos de destete → historial de pesajes
+      const machos = gazapos.rows.filter((g) => g.sexo === 'M');
+      const hembras = gazapos.rows.filter((g) => g.sexo === 'H');
+      const pesosM = [peso_m1, peso_m2, peso_m3].filter((p) => p != null && Number(p) > 0);
+      const pesosH = [peso_h1, peso_h2, peso_h3].filter((p) => p != null && Number(p) > 0);
+      for (let i = 0; i < Math.min(machos.length, pesosM.length); i += 1) {
+        await client.query(
+          `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
+           VALUES ($1,$2,$3,$4,false,$5)`,
+          [req.granjaId, machos[i].id, fecha_destete, Number(pesosM[i]), req.user.id]
+        );
+      }
+      for (let i = 0; i < Math.min(hembras.length, pesosH.length); i += 1) {
+        await client.query(
+          `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
+           VALUES ($1,$2,$3,$4,false,$5)`,
+          [req.granjaId, hembras[i].id, fecha_destete, Number(pesosH[i]), req.user.id]
+        );
+      }
+
       // mortalidad de gazapos no destetados
       if (mu > 0) {
         const toKill = gazapos.rows.slice(dm + dh);

@@ -119,6 +119,14 @@ router.post(
           ]
         );
         crias.push(ins.rows[0]);
+        const pesoCria = i === 1 ? peso_m1 : i === 2 ? peso_m2 : peso_m3;
+        if (pesoCria && Number(pesoCria) > 0) {
+          await client.query(
+            `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
+             VALUES ($1,$2,$3,$4,false,$5)`,
+            [req.granjaId, ins.rows[0].id, fecha_parto, Number(pesoCria), req.user.id]
+          );
+        }
       }
       for (let i = 1; i <= vh; i += 1) {
         const codigo = `${madre.codigo}-P${parto.id}-H${i}`;
@@ -140,6 +148,14 @@ router.post(
           ]
         );
         crias.push(ins.rows[0]);
+        const pesoCria = i === 1 ? peso_h1 : i === 2 ? peso_h2 : peso_h3;
+        if (pesoCria && Number(pesoCria) > 0) {
+          await client.query(
+            `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
+             VALUES ($1,$2,$3,$4,false,$5)`,
+            [req.granjaId, ins.rows[0].id, fecha_parto, Number(pesoCria), req.user.id]
+          );
+        }
       }
 
       await client.query('COMMIT');
