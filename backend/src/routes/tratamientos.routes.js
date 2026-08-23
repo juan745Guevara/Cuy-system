@@ -136,15 +136,25 @@ router.get(
 router.get(
   '/en-curso',
   asyncHandler(async (req, res) => {
-    const { rows } = await pool.query(
-      `SELECT t.*, an.codigo, a.nombre AS area
-       FROM tratamientos t
-       LEFT JOIN animales an ON an.id = t.id_animal
-       LEFT JOIN areas a ON a.id = t.id_area
-       WHERE t.id_granja = $1 AND t.estado = 'en_curso'
-       ORDER BY t.fecha_termino ASC`,
-      [req.granjaId]
-    );
+    const params = [req.granjaId];
+    let sql = `
+      SELECT t.*, an.codigo, a.nombre AS area, j.codigo AS jaula
+      FROM tratamientos t
+      LEFT JOIN animales an ON an.id = t.id_animal
+      LEFT JOIN areas a ON a.id = t.id_area
+      LEFT JOIN jaulas j ON j.id = t.id_jaula
+      WHERE t.id_granja = $1 AND t.estado = 'en_curso'`;
+    if (req.query.id_area) {
+      params.push(Number(req.query.id_area));
+      sql += ` AND (t.id_area = $${params.length}
+        OR EXISTS (
+          SELECT 1 FROM jaulas jj
+          JOIN animales aa ON aa.id_jaula = jj.id
+          WHERE aa.id = t.id_animal AND jj.id_area = $${params.length}
+        ))`;
+    }
+    sql += ' ORDER BY t.fecha_termino ASC';
+    const { rows } = await pool.query(sql, params);
     res.json(rows);
   })
 );

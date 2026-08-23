@@ -11,6 +11,7 @@ const Sanidad = () => {
   const [jaulas, setJaulas] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  const [filtroArea, setFiltroArea] = useState('');
   const [form, setForm] = useState({
     tipo: 'curativo',
     producto: '',
@@ -27,9 +28,10 @@ const Sanidad = () => {
 
   const load = useCallback(async () => {
     try {
+      const paramsCurso = filtroArea ? { id_area: filtroArea } : {};
       const [t, c, a, ar, j] = await Promise.all([
         api.get('/tratamientos'),
-        api.get('/tratamientos/en-curso'),
+        api.get('/tratamientos/en-curso', { params: paramsCurso }),
         api.get('/animales', { params: { estado: 'activo' } }),
         api.get('/areas'),
         api.get('/jaulas'),
@@ -42,7 +44,7 @@ const Sanidad = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar');
     }
-  }, []);
+  }, [filtroArea]);
 
   useEffect(() => {
     load();
@@ -181,12 +183,27 @@ const Sanidad = () => {
       </form>
 
       <div style={s.card}>
-        <h3 style={{ marginTop: 0 }}>En curso</h3>
+        <h3 style={{ marginTop: 0 }}>En curso (NUC-25)</h3>
+        <div style={s.row}>
+          <select
+            style={s.select}
+            value={filtroArea}
+            onChange={(e) => setFiltroArea(e.target.value)}
+          >
+            <option value="">Todas las áreas</option>
+            {areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
         <table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Producto</th>
               <th style={s.th}>Animal</th>
+              <th style={s.th}>Área</th>
               <th style={s.th}>Inicio</th>
               <th style={s.th}>Término</th>
               <th style={s.th}></th>
@@ -197,6 +214,7 @@ const Sanidad = () => {
               <tr key={t.id}>
                 <td style={s.td}>{t.producto}</td>
                 <td style={s.td}>{t.codigo || 'grupo'}</td>
+                <td style={s.td}>{t.area || '—'}</td>
                 <td style={s.td}>{String(t.fecha_inicio).slice(0, 10)}</td>
                 <td style={s.td}>{String(t.fecha_termino).slice(0, 10)}</td>
                 <td style={s.td}>
