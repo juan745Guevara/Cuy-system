@@ -113,7 +113,7 @@ const Jaulas = () => {
 
       {ocupacion && (
         <div style={s.card}>
-          <h3 style={{ marginTop: 0 }}>Ocupación (NUC-18)</h3>
+          <h3 style={{ marginTop: 0 }}>Ocupación</h3>
           <p>
             Granja: <strong>{ocupacion.granja?.ocupacion ?? 0}</strong>
             {ocupacion.granja?.capacidad != null

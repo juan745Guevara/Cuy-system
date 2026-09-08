@@ -78,6 +78,40 @@ Cuy-system/
 - **Base de datos:** PostgreSQL
 - **Despliegue:** Docker
 
+## Ejecución
+
+### Backend
+```bash
+cd backend
+npm install
+npm run dev
+```
+El servidor arranca en el puerto **3001**.
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+React arranca en el puerto **3000** por defecto.
+
+### Base de datos
+
+Ejecutar el seed para crear datos iniciales:
+```bash
+cd backend
+npm run db:seed
+```
+
+### Credenciales por defecto
+
+| Rol | Email | Contraseña |
+|-----|-------|------------|
+| Superadmin | superadmin@unas.edu.pe | Admin123! |
+| Admin | admin@unas.edu.pe | Admin123! |
+| Encargado | encargado@unas.edu.pe | Admin123! |
+
 ## Documentación clave
 
 - `docs/vision.md` — visión, alcance y criterios de éxito
