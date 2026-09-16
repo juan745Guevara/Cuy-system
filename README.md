@@ -92,9 +92,15 @@ El servidor arranca en el puerto **3001**.
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
 React arranca en el puerto **3000** por defecto.
+
+Para **producción**, ambos usan `npm start` (el frontend requiere build previo):
+```bash
+cd backend && npm start
+cd frontend && npm run build && npm start
+```
 
 ### Base de datos
 
