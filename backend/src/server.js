@@ -1,11 +1,28 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+
+if (!process.env.JWT_SECRET) {
+  console.error(
+    'JWT_SECRET no está definido. Configúralo en .env antes de iniciar el servidor (ver .env.example).'
+  );
+  process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim());
+
+app.use(helmet());
+app.use(
+  cors({
+    origin: allowedOrigins,
+  })
+);
 app.use(express.json());
 
 app.use('/api/v1/auth', require('./routes/auth.routes'));
