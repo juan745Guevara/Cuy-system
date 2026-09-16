@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const {
   authRequired,
   loadUserFarms,
@@ -36,7 +37,7 @@ async function getCfg(granjaId) {
   return inserted.rows[0];
 }
 
-// CUY-20
+// Ponderación del ranking
 router.get(
   '/config',
   asyncHandler(async (req, res) => {
@@ -49,6 +50,7 @@ router.put(
   canAdmin,
   asyncHandler(async (req, res) => {
     const b = { ...DEFAULT_CFG, ...(req.body || {}) };
+    const current = await getCfg(req.granjaId);
     const { rows } = await pool.query(
       `INSERT INTO ranking_config
         (id_granja, peso_partos, peso_camada, peso_destete, peso_mortalidad,
@@ -75,15 +77,27 @@ router.put(
         b.peso_prenez_macho,
       ]
     );
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'configurar',
+      entidad: 'ranking',
+      idEntidad: req.granjaId,
+      antes: current,
+      despues: rows[0],
+      detalle: 'Configuración de ranking reproductivo',
+    });
     res.json(rows[0]);
   })
 );
 
-// CUY-19
+// Ranking de reproductores
 router.get(
   '/',
   asyncHandler(async (req, res) => {
     const sexo = req.query.sexo || 'H';
+    const idRaza = req.query.id_raza ? Number(req.query.id_raza) : null;
+    const idCategoria = req.query.id_categoria ? Number(req.query.id_categoria) : null;
     const cfg = await getCfg(req.granjaId);
 
     if (sexo === 'H') {
@@ -101,15 +115,24 @@ router.get(
                   (COALESCE(p.peso_m1,0)+COALESCE(p.peso_m2,0)+COALESCE(p.peso_m3,0)
                    +COALESCE(p.peso_h1,0)+COALESCE(p.peso_h2,0)+COALESCE(p.peso_h3,0))
                   / NULLIF((p.vivos_m+p.vivos_h),0)
-                ),0)::numeric(10,2) AS peso_nac_promedio
+                ),0)::numeric(10,2) AS peso_nac_promedio,
+                COALESCE(AVG(
+                  (SELECT (COALESCE(d.peso_m1,0)+COALESCE(d.peso_m2,0)+COALESCE(d.peso_m3,0)
+                           +COALESCE(d.peso_h1,0)+COALESCE(d.peso_h2,0)+COALESCE(d.peso_h3,0))
+                          / NULLIF((d.destetados_m+d.destetados_h),0)
+                   FROM destetes d WHERE d.id_parto = p.id
+                     AND (d.destetados_m+d.destetados_h) > 0)
+                ),0)::numeric(10,2) AS peso_dest_promedio
          FROM animales an
          LEFT JOIN razas r ON r.id = an.id_raza
          LEFT JOIN categorias c ON c.id = an.id_categoria
          LEFT JOIN partos p ON p.id_hembra = an.id
          WHERE an.id_granja = $1 AND an.sexo = 'H' AND an.estado = 'activo'
+           AND ($2::int IS NULL OR an.id_raza = $2)
+           AND ($3::int IS NULL OR an.id_categoria = $3)
          GROUP BY an.id, an.codigo, r.nombre, c.nombre
          ORDER BY an.codigo`,
-        [req.granjaId]
+        [req.granjaId, idRaza, idCategoria]
       );
 
       const ranked = rows.map((row) => {
@@ -120,7 +143,8 @@ router.get(
             Number(row.camada_promedio) * Number(cfg.peso_camada) +
             Number(row.destete_promedio) * Number(cfg.peso_destete) -
             Number(row.mortalidad_camada) * Number(cfg.peso_mortalidad) +
-            Number(row.peso_nac_promedio) * Number(cfg.peso_peso_nac);
+            Number(row.peso_nac_promedio) * Number(cfg.peso_peso_nac) +
+            Number(row.peso_dest_promedio) * Number(cfg.peso_peso_dest);
         return {
           ...row,
           puntaje: score == null ? null : Number(score.toFixed(2)),
@@ -150,9 +174,11 @@ router.get(
        LEFT JOIN empadre_hembras eh ON eh.id_empadre = e.id
        LEFT JOIN partos p ON p.id_empadre = e.id
        WHERE an.id_granja = $1 AND an.sexo = 'M' AND an.estado = 'activo'
+         AND ($2::int IS NULL OR an.id_raza = $2)
+         AND ($3::int IS NULL OR an.id_categoria = $3)
        GROUP BY an.id, an.codigo, r.nombre, c.nombre
        ORDER BY an.codigo`,
-      [req.granjaId]
+      [req.granjaId, idRaza, idCategoria]
     );
 
     const ranked = rows.map((row) => {
@@ -181,7 +207,7 @@ router.get(
   })
 );
 
-// CUY-21
+// Descarte / reemplazo desde el ranking
 router.post(
   '/:id_animal/marcar',
   canWrite,
@@ -210,6 +236,16 @@ router.post(
          VALUES ($1, $2, $3)`,
         [req.params.id_animal, 'Marcado para descarte desde ranking', req.user.id]
       );
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'descartar',
+        entidad: 'animal',
+        idEntidad: rows[0].id,
+        antes: animal.rows[0],
+        despues: rows[0],
+        detalle: `Marcado para descarte desde ranking (${rows[0].codigo})`,
+      });
       return res.json(rows[0]);
     }
 
@@ -232,6 +268,16 @@ router.post(
        VALUES ($1, $2, $3)`,
       [req.params.id_animal, 'Marcado como reemplazo desde ranking', req.user.id]
     );
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'editar',
+      entidad: 'animal',
+      idEntidad: rows[0].id,
+      antes: animal.rows[0],
+      despues: rows[0],
+      detalle: `Marcado como reemplazo desde ranking (${rows[0].codigo})`,
+    });
     res.json(rows[0]);
   })
 );

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
-/** NUC-13 administrar jaulas · CUY-03 · NUC-18 capacidad */
+/** Administrar jaulas · control de capacidad */
 const Jaulas = () => {
   const [jaulas, setJaulas] = useState([]);
   const [areas, setAreas] = useState([]);

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
-/** CUY-12 registrar macho reproductor */
+/** Registrar macho reproductor */
 const Reproductores = () => {
   const [razas, setRazas] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -169,7 +169,7 @@ const Reproductores = () => {
               <td style={s.td}>{a.jaula_codigo || a.id_jaula || '—'}</td>
               <td style={s.td}>
                 <button type="button" style={s.btnGhost} onClick={() => verResultados(a.id)}>
-                  Resultados (CUY-14)
+                  Resultados
                 </button>
               </td>
             </tr>

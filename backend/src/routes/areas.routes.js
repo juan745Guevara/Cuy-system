@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const { PROPOSITOS, normalizeProposito } = require('../utils/propositoArea');
 const {
   authRequired,
@@ -13,7 +14,7 @@ const router = express.Router();
 
 router.use(authRequired, loadUserFarms, requireFarmAccess);
 
-// NUC-16 + CUY-04
+// Gestión de áreas
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -32,7 +33,7 @@ router.get(
   })
 );
 
-// NUC-17 — vista por áreas
+// Vista por áreas
 router.get(
   '/resumen',
   asyncHandler(async (req, res) => {
@@ -95,6 +96,15 @@ router.post(
         );
       }
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'area',
+        idEntidad: area.id,
+        despues: area,
+        detalle: `Alta de área ${area.nombre}`,
+      });
       res.status(201).json(area);
     } catch (err) {
       await client.query('ROLLBACK');
@@ -152,6 +162,16 @@ router.patch(
         [id]
       );
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'desactivar',
+        entidad: 'area',
+        idEntidad: rows[0].id,
+        antes: area.rows[0],
+        despues: rows[0],
+        detalle: `Desactivación de área ${area.rows[0].nombre}`,
+      });
       res.json(rows[0]);
     } catch (err) {
       await client.query('ROLLBACK');

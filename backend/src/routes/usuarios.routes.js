@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const { authRequired, requireRoles, loadUserFarms } = require('../middleware/auth');
 
 const router = express.Router();
@@ -81,6 +82,15 @@ router.post(
         );
       }
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'usuario',
+        idEntidad: user.id,
+        despues: user,
+        detalle: `Alta de usuario ${user.email}`,
+      });
       res.status(201).json(user);
     } catch (err) {
       await client.query('ROLLBACK');
@@ -118,7 +128,7 @@ router.get(
   })
 );
 
-// NUC-06/07 — editar / desactivar / reasignar granjas
+// Editar / desactivar / reasignar granjas
 router.patch(
   '/:id',
   authRequired,
@@ -198,6 +208,16 @@ router.patch(
          WHERE u.id = $1 GROUP BY u.id`,
         [id]
       );
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: activo === false ? 'desactivar' : 'editar',
+        entidad: 'usuario',
+        idEntidad: id,
+        antes: u,
+        despues: rows[0],
+        detalle: `Actualización de usuario ${u.email}`,
+      });
       res.json(full.rows[0] || rows[0]);
     } catch (err) {
       await client.query('ROLLBACK');

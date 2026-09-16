@@ -253,6 +253,18 @@ CREATE TABLE IF NOT EXISTS alerta_config (
   UNIQUE(id_granja, tipo)
 );
 
+-- Rangos de peso por categoría, configurables y persistentes por granja
+CREATE TABLE IF NOT EXISTS peso_rangos (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id) ON DELETE CASCADE,
+  categoria VARCHAR(50) NOT NULL,
+  min INTEGER NOT NULL,
+  max INTEGER NOT NULL,
+  updated_by INTEGER REFERENCES usuarios(id),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(id_granja, categoria)
+);
+
 CREATE TABLE IF NOT EXISTS alertas_descarte (
   id SERIAL PRIMARY KEY,
   id_granja INTEGER NOT NULL REFERENCES granjas(id),

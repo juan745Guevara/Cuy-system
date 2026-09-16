@@ -35,7 +35,7 @@ async function poblacionAt(granjaId, fechaHasta) {
   return rows;
 }
 
-// NUC-28
+// Población resumen
 router.get(
   '/poblacion',
   asyncHandler(async (req, res) => {
@@ -80,7 +80,7 @@ router.get(
   })
 );
 
-// NUC-29
+// Población por área / jaula
 router.get(
   '/resumen-mensual',
   asyncHandler(async (req, res) => {
@@ -154,6 +154,16 @@ router.get(
     const poblacion_inicial = sum(pobIniRows);
     const poblacion_final = sum(pobFinRows);
 
+    const continuidadEsperada =
+      poblacion_inicial +
+      Number(nac.rows[0].nacimientos) -
+      mortTotal -
+      ventTotal +
+      (transferencias_in - transferencias_out);
+    const continuidad_ok =
+      continuidadEsperada === poblacion_final &&
+      Number(poblacion_inicial) >= 0;
+
     res.json({
       anio: year,
       mes: month,
@@ -170,7 +180,16 @@ router.get(
       poblacion_final,
       poblacion_actual: poblacion_final,
       desglose_categorias: Object.values(desglose),
-      continuidad_ok: true,
+      continuidad_ok,
+      continuidad_esperada: continuidadEsperada,
+      continuidad_detalle: {
+        poblacion_inicial,
+        nacimientos: Number(nac.rows[0].nacimientos),
+        mortalidad: mortTotal,
+        ventas: ventTotal,
+        transferencias_in,
+        transferencias_out,
+      },
     });
   })
 );

@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
+import { clearDraft, loadDraft, saveDraft } from '../utils/draftForm';
 
-/** NUC-21 individual · NUC-22 lote · NUC-23 evolución · CUY-16 rangos */
+const DRAFT_KEY = 'draft:pesajes';
+
+const emptyForm = () => ({
+  id_animal: '',
+  fecha: new Date().toISOString().slice(0, 10),
+  peso_gramos: '',
+  id_jaula: '',
+});
+
+/** Pesaje individual y por lote · evolución del peso · rangos por especie */
 const Pesajes = () => {
   const [tab, setTab] = useState('individual');
   const [animales, setAnimales] = useState([]);
@@ -15,12 +25,7 @@ const Pesajes = () => {
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [confirmar, setConfirmar] = useState(false);
-  const [form, setForm] = useState({
-    id_animal: '',
-    fecha: new Date().toISOString().slice(0, 10),
-    peso_gramos: '',
-    id_jaula: '',
-  });
+  const [form, setForm] = useState(() => loadDraft(DRAFT_KEY) || emptyForm());
 
   const load = useCallback(async () => {
     try {
@@ -41,6 +46,10 @@ const Pesajes = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    saveDraft(DRAFT_KEY, form);
+  }, [form]);
+
   const registrar = async (e) => {
     e.preventDefault();
     setError('');
@@ -54,7 +63,8 @@ const Pesajes = () => {
       });
       setOk('Peso registrado');
       setConfirmar(false);
-      setForm((f) => ({ ...f, peso_gramos: '' }));
+      clearDraft(DRAFT_KEY);
+      setForm(emptyForm());
     } catch (err) {
       const d = err.response?.data;
       if (err.response?.status === 409) {
@@ -158,7 +168,7 @@ const Pesajes = () => {
         <form onSubmit={registrar} style={{ ...s.card, ...s.row }}>
           {rangos?.especie && (
             <p style={{ ...s.sub, width: '100%', marginBottom: 0 }}>
-              Unidad: gramos · especie {rangos.especie.min}-{rangos.especie.max} g (CUY-16)
+              Unidad: gramos · especie {rangos.especie.min}-{rangos.especie.max} g
             </p>
           )}
           <input

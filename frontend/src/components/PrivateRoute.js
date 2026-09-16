@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-/** Protege rutas privadas (NUC-01). */
+/** Protege rutas privadas. */
 const PrivateRoute = () => {
   const { token, loading } = useAuth();
 

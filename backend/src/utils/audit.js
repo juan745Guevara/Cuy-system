@@ -1,7 +1,7 @@
 const { pool } = require('../config/database');
 
 /**
- * NUC-41 — registrar cambio con valor anterior/posterior.
+ * Registrar cambio con valor anterior/posterior.
  * Extiende audit_log si faltan columnas (idempotente).
  */
 let ready = false;

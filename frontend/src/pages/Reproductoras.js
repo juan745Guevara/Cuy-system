@@ -17,7 +17,7 @@ async function blobErrorMessage(err, fallback) {
   return data?.error || data?.message || fallback;
 }
 
-/** CUY-06 alta · CUY-10 resultado de ciclo · CUY-11 ficha */
+/** Alta de hembras, resultado de ciclo y ficha individual */
 const Reproductoras = () => {
   const [razas, setRazas] = useState([]);
   const [categorias, setCategorias] = useState([]);

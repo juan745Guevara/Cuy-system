@@ -32,7 +32,7 @@ async function blobErrorMessage(err, fallback) {
 
 /**
  * UI Entrega 1 — ficha de animal
- * NUC-09 registrar · NUC-10 actualizar · NUC-11 buscar · NUC-12 listar/filtrar
+ * Registrar, actualizar, buscar y listar/filtrar animales
  */
 const Animales = () => {
   const [items, setItems] = useState([]);
@@ -450,7 +450,7 @@ const Animales = () => {
           )}
           {(detalle.tratamientos || []).length > 0 && (
             <div>
-              <h4>Tratamientos (NUC-25)</h4>
+              <h4>Tratamientos</h4>
               <ul>
                 {detalle.tratamientos.map((t) => (
                   <li key={t.id}>

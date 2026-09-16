@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler, isValidDateStr, todayISO, promedioPesos } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const { authRequired, loadUserFarms, requireFarmAccess, requireRoles } = require('../middleware/auth');
 
 const router = express.Router();
@@ -176,7 +177,32 @@ router.post(
           [emp.id, hid]
         );
       }
+      // El macho usado en empadre pasa a categoría reproductor
+      if (id_macho) {
+        const catRepro = await client.query(
+          `SELECT c.id FROM categorias c
+           JOIN granjas g ON g.id_especie = c.id_especie
+           WHERE g.id = $1 AND LOWER(c.nombre) = 'reproductor' AND c.activa = true LIMIT 1`,
+          [req.granjaId]
+        );
+        if (catRepro.rows[0]) {
+          await client.query(
+            `UPDATE animales SET id_categoria = $1, updated_at = NOW()
+             WHERE id = $2 AND id_granja = $3`,
+            [catRepro.rows[0].id, id_macho, req.granjaId]
+          );
+        }
+      }
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'empadre',
+        idEntidad: emp.id,
+        despues: { ...emp, hembras },
+        detalle: `Alta de empadre #${emp.id} con ${hembras.length} hembras`,
+      });
       res.status(201).json({ ...emp, hembras, cantidad_hembras: hembras.length });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -212,6 +238,12 @@ router.patch(
       return res.status(400).json({ error: 'resultado inválido' });
     }
     const fechaRes = fecha && isValidDateStr(fecha) ? fecha : todayISO();
+    const antesQ = await pool.query(
+      `SELECT eh.* FROM empadre_hembras eh
+       JOIN empadres e ON e.id = eh.id_empadre
+       WHERE e.id = $1 AND eh.id_hembra = $2 AND e.id_granja = $3`,
+      [req.params.id, req.params.idHembra, req.granjaId]
+    );
     const { rows } = await pool.query(
       `UPDATE empadre_hembras eh SET resultado = $1
        FROM empadres e
@@ -245,6 +277,16 @@ router.patch(
         client.release();
       }
     }
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'editar',
+      entidad: 'empadre',
+      idEntidad: Number(req.params.id),
+      antes: antesQ.rows[0],
+      despues: rows[0],
+      detalle: `Resultado ${resultado} en empadre #${req.params.id} (hembra ${req.params.idHembra})`,
+    });
     res.json(rows[0]);
   })
 );
@@ -474,6 +516,15 @@ router.post(
         [emp.id]
       );
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'editar',
+        entidad: 'empadre',
+        idEntidad: emp.id,
+        despues: { ok: true, id_empadre: emp.id, id_jaula_retorno },
+        detalle: `Cierre de empadre #${emp.id} (macho → jaula ${id_jaula_retorno})`,
+      });
       res.json({ ok: true, id_empadre: emp.id, id_jaula_retorno });
     } catch (err) {
       await client.query('ROLLBACK');

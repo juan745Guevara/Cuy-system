@@ -1,8 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
+import { clearDraft, loadDraft, saveDraft } from '../utils/draftForm';
 
-/** CUY-07 · CUY-13 empadre */
+const DRAFT_KEY = 'draft:empadres';
+
+const emptyForm = () => ({
+  id_macho: '',
+  hembras: [],
+  id_jaula: '',
+  fecha_empadre: new Date().toISOString().slice(0, 10),
+  cantidad_prenadas: '',
+  peso_antes: '',
+  peso_despues: '',
+  notas: '',
+});
+
+/** Empadre (monta) y cierre de ciclo */
 const Empadres = () => {
   const [lista, setLista] = useState([]);
   const [hembras, setHembras] = useState([]);
@@ -11,16 +25,7 @@ const Empadres = () => {
   const [filtroJaula, setFiltroJaula] = useState('');
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
-  const [form, setForm] = useState({
-    id_macho: '',
-    hembras: [],
-    id_jaula: '',
-    fecha_empadre: new Date().toISOString().slice(0, 10),
-    cantidad_prenadas: '',
-    peso_antes: '',
-    peso_despues: '',
-    notas: '',
-  });
+  const [form, setForm] = useState(() => loadDraft(DRAFT_KEY) || emptyForm());
 
   const load = useCallback(async () => {
     try {
@@ -40,6 +45,10 @@ const Empadres = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    saveDraft(DRAFT_KEY, form);
+  }, [form]);
 
   const hembrasVisibles = useMemo(() => {
     if (!filtroJaula) return hembras;
@@ -75,14 +84,8 @@ const Empadres = () => {
       });
       setOk(`Empadre #${data.id} registrado`);
       setLista((prev) => [data, ...prev]);
-      setForm({
-        ...form,
-        hembras: [],
-        cantidad_prenadas: '',
-        peso_antes: '',
-        peso_despues: '',
-        notas: '',
-      });
+      clearDraft(DRAFT_KEY);
+      setForm(emptyForm());
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo registrar empadre');
     }
@@ -242,7 +245,7 @@ const Empadres = () => {
                       }
                     }}
                   >
-                    Cerrar y devolver macho (CUY-15)
+                    Cerrar y devolver macho
                   </button>
                 )}
               </li>

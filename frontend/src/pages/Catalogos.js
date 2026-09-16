@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
-/** CUY-01 razas · CUY-02 categorías */
+/** Razas y categorías */
 const Catalogos = () => {
   const [razas, setRazas] = useState([]);
   const [categorias, setCategorias] = useState([]);

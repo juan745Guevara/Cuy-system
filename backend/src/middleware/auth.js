@@ -61,7 +61,7 @@ function requireFarmAccess(req, res, next) {
     (req.userFarms || []).some((g) => Number(g.id) === farmId);
   if (!ok) return res.status(403).json({ error: 'Granja fuera de su alcance' });
 
-  // NUC-04: granja desactivada no admite nuevos registros
+  // Granja desactivada no admite nuevos registros
   pool
     .query(`SELECT activa FROM granjas WHERE id = $1`, [farmId])
     .then(({ rows }) => {

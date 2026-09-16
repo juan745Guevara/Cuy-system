@@ -10,6 +10,7 @@ router.use(authRequired, loadUserFarms, requireFarmAccess);
 async function workbookResponse(res, filename, build) {
   const wb = new ExcelJS.Workbook();
   await build(wb);
+  if (wb.worksheets.length === 0) return false;
   res.setHeader(
     'Content-Type',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -17,6 +18,7 @@ async function workbookResponse(res, filename, build) {
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   await wb.xlsx.write(res);
   res.end();
+  return true;
 }
 
 function headerUnidad(ws, titulo) {
@@ -28,7 +30,7 @@ function headerUnidad(ws, titulo) {
   ws.getCell('A2').font = { bold: true, size: 11 };
 }
 
-// CUY-22
+// Reporte de hembras
 router.get(
   '/hembras',
   asyncHandler(async (req, res) => {
@@ -192,7 +194,7 @@ router.get(
   })
 );
 
-// CUY-23
+// Reporte de machos
 router.get(
   '/machos',
   asyncHandler(async (req, res) => {
@@ -290,153 +292,177 @@ router.get(
   })
 );
 
-// CUY-24 + NUC-36
+// Inventario mensual (hojas por mes)
+const NOMBRES_MES = [
+  '',
+  'ENERO',
+  'FEBRERO',
+  'MARZO',
+  'ABRIL',
+  'MAYO',
+  'JUNIO',
+  'JULIO',
+  'AGOSTO',
+  'SEPTIEMBRE',
+  'OCTUBRE',
+  'NOVIEMBRE',
+  'DICIEMBRE',
+];
+
+async function hojaMensual(wb, req, year, month) {
+  const mesNombre = NOMBRES_MES[month] || String(month);
+
+  const pob = await pool.query(
+    `SELECT COALESCE(r.nombre,'sin_raza') AS raza,
+            COALESCE(c.nombre,'sin_categoria') AS categoria,
+            a.sexo, COUNT(*)::int AS n
+     FROM animales a
+     LEFT JOIN razas r ON r.id = a.id_raza
+     LEFT JOIN categorias c ON c.id = a.id_categoria
+     WHERE a.id_granja = $1 AND a.estado = 'activo'
+     GROUP BY r.nombre, c.nombre, a.sexo`,
+    [req.granjaId]
+  );
+  if (!pob.rows.length) return false;
+
+  const nac = await pool.query(
+    `SELECT COALESCE(SUM(vivos_m+vivos_h),0)::int AS n FROM partos
+     WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha_parto)=$2 AND EXTRACT(MONTH FROM fecha_parto)=$3`,
+    [req.granjaId, year, month]
+  );
+  const mort = await pool.query(
+    `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
+     FROM mortalidad WHERE id_granja=$1
+       AND EXTRACT(YEAR FROM fecha)=$2 AND EXTRACT(MONTH FROM fecha)=$3
+     GROUP BY LOWER(COALESCE(categoria,''))`,
+    [req.granjaId, year, month]
+  );
+  const vent = await pool.query(
+    `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
+     FROM ventas WHERE id_granja=$1
+       AND EXTRACT(YEAR FROM fecha)=$2 AND EXTRACT(MONTH FROM fecha)=$3
+     GROUP BY LOWER(COALESCE(categoria,''))`,
+    [req.granjaId, year, month]
+  );
+
+  const mortMap = Object.fromEntries(mort.rows.map((r) => [r.categoria, r.n]));
+  const ventMap = Object.fromEntries(vent.rows.map((r) => [r.categoria, r.n]));
+
+  const ws = wb.addWorksheet(mesNombre);
+  headerUnidad(ws, 'REGISTRO DE MORTALIDAD Y VENTA MENSUAL');
+  ws.getCell('A3').value = `MES ${mesNombre} ${year}`;
+  ws.getCell('A3').font = { bold: true };
+
+  ws.getCell('A5').value = 'CLASIFICACION';
+  ws.getCell('B5').value = 'HEMBRAS';
+  ws.getCell('C5').value = 'MACHOS';
+  ws.getCell('D5').value = 'GAZAPOS';
+  ws.getCell('E5').value = 'TOTAL';
+  ['A', 'B', 'C', 'D', 'E'].forEach((c) => {
+    ws.getCell(`${c}5`).font = { bold: true };
+  });
+
+  const byRaza = {};
+  for (const r of pob.rows) {
+    if (!byRaza[r.raza]) byRaza[r.raza] = { H: 0, M: 0, gazapos: 0 };
+    const cat = String(r.categoria).toLowerCase();
+    if (cat.includes('gazapo')) byRaza[r.raza].gazapos += r.n;
+    else if (r.sexo === 'H') byRaza[r.raza].H += r.n;
+    else byRaza[r.raza].M += r.n;
+  }
+  let row = 6;
+  for (const [raza, v] of Object.entries(byRaza)) {
+    ws.getCell(row, 1).value = raza;
+    ws.getCell(row, 2).value = v.H;
+    ws.getCell(row, 3).value = v.M;
+    ws.getCell(row, 4).value = v.gazapos;
+    ws.getCell(row, 5).value = v.H + v.M + v.gazapos;
+    row += 1;
+  }
+
+  row += 2;
+  ws.getCell(row, 1).value = 'Movimiento del mes';
+  ws.getCell(row, 1).font = { bold: true };
+  row += 1;
+  ws.getCell(row, 1).value = 'Nacimientos (cuyes)';
+  ws.getCell(row, 2).value = nac.rows[0].n;
+  row += 1;
+  ws.getCell(row, 1).value = 'Mortalidad Gazapos';
+  ws.getCell(row, 2).value = mortMap.gazapo || 0;
+  row += 1;
+  ws.getCell(row, 1).value = 'Mortalidad Recría';
+  ws.getCell(row, 2).value = (mortMap.recria || 0) + (mortMap.reemplazo || 0);
+  row += 1;
+  ws.getCell(row, 1).value = 'Mortalidad Reproductor';
+  ws.getCell(row, 2).value =
+    (mortMap.reproductor || 0) + (mortMap.reproductora || 0);
+  row += 1;
+  ws.getCell(row, 1).value = 'Ventas Recría';
+  ws.getCell(row, 2).value = (ventMap.recria || 0) + (ventMap.reemplazo || 0);
+  row += 1;
+  ws.getCell(row, 1).value = 'Ventas Descarte';
+  ws.getCell(row, 2).value = ventMap.descarte || 0;
+
+  row += 2;
+  ws.getCell(row, 1).value = 'Población por categoría';
+  ws.getCell(row, 1).font = { bold: true };
+  row += 1;
+  const cats = {};
+  for (const r of pob.rows) {
+    const k = r.categoria;
+    if (!cats[k]) cats[k] = { H: 0, M: 0 };
+    cats[k][r.sexo] += r.n;
+  }
+  ws.getCell(row, 1).value = 'Categoría';
+  ws.getCell(row, 2).value = 'Hembras';
+  ws.getCell(row, 3).value = 'Machos';
+  row += 1;
+  for (const [cat, v] of Object.entries(cats)) {
+    ws.getCell(row, 1).value = cat;
+    ws.getCell(row, 2).value = v.H;
+    ws.getCell(row, 3).value = v.M;
+    row += 1;
+  }
+
+  return true;
+}
+
 router.get(
   '/inventario-mensual',
   asyncHandler(async (req, res) => {
     const year = Number(req.query.anio) || new Date().getFullYear();
-    const month = Number(req.query.mes) || new Date().getMonth() + 1;
-    const mesNombre = [
-      '',
-      'ENERO',
-      'FEBRERO',
-      'MARZO',
-      'ABRIL',
-      'MAYO',
-      'JUNIO',
-      'JULIO',
-      'AGOSTO',
-      'SEPTIEMBRE',
-      'OCTUBRE',
-      'NOVIEMBRE',
-      'DICIEMBRE',
-    ][month];
+    const mes = req.query.mes != null && req.query.mes !== '' ? Number(req.query.mes) : null;
 
-    const pob = await pool.query(
-      `SELECT COALESCE(r.nombre,'sin_raza') AS raza,
-              COALESCE(c.nombre,'sin_categoria') AS categoria,
-              a.sexo, COUNT(*)::int AS n
-       FROM animales a
-       LEFT JOIN razas r ON r.id = a.id_raza
-       LEFT JOIN categorias c ON c.id = a.id_categoria
-       WHERE a.id_granja = $1 AND a.estado = 'activo'
-       GROUP BY r.nombre, c.nombre, a.sexo`,
-      [req.granjaId]
-    );
-    if (!pob.rows.length) {
-      return res.status(400).json({ error: 'No hay datos de inventario para exportar' });
+    // Exportación anual completa (12 hojas, una por mes)
+    if (mes == null || Number.isNaN(mes)) {
+      const ok = await workbookResponse(res, `inventario-anual-${year}.xlsx`, async (wb) => {
+        for (let m = 1; m <= 12; m++) await hojaMensual(wb, req, year, m);
+      });
+      if (!ok) {
+        return res.status(400).json({ error: 'No hay datos de inventario para exportar' });
+      }
+      return;
     }
 
-    const nac = await pool.query(
-      `SELECT COALESCE(SUM(vivos_m+vivos_h),0)::int AS n FROM partos
-       WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha_parto)=$2 AND EXTRACT(MONTH FROM fecha_parto)=$3`,
-      [req.granjaId, year, month]
-    );
-    const mort = await pool.query(
-      `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
-       FROM mortalidad WHERE id_granja=$1
-         AND EXTRACT(YEAR FROM fecha)=$2 AND EXTRACT(MONTH FROM fecha)=$3
-       GROUP BY LOWER(COALESCE(categoria,''))`,
-      [req.granjaId, year, month]
-    );
-    const vent = await pool.query(
-      `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
-       FROM ventas WHERE id_granja=$1
-         AND EXTRACT(YEAR FROM fecha)=$2 AND EXTRACT(MONTH FROM fecha)=$3
-       GROUP BY LOWER(COALESCE(categoria,''))`,
-      [req.granjaId, year, month]
-    );
-
-    const mortMap = Object.fromEntries(mort.rows.map((r) => [r.categoria, r.n]));
-    const ventMap = Object.fromEntries(vent.rows.map((r) => [r.categoria, r.n]));
-
-    await workbookResponse(res, `inventario-${year}-${month}.xlsx`, async (wb) => {
-      const ws = wb.addWorksheet(String(year));
-      headerUnidad(ws, 'REGISTRO DE MORTALIDAD Y VENTA MENSUAL');
-      ws.getCell('A3').value = `MES ${mesNombre} ${year}`;
-      ws.getCell('A3').font = { bold: true };
-
-      ws.getCell('A5').value = 'CLASIFICACION';
-      ws.getCell('B5').value = 'HEMBRAS';
-      ws.getCell('C5').value = 'MACHOS';
-      ws.getCell('D5').value = 'GAZAPOS';
-      ws.getCell('E5').value = 'TOTAL';
-      ['A', 'B', 'C', 'D', 'E'].forEach((c) => {
-        ws.getCell(`${c}5`).font = { bold: true };
-      });
-
-      const byRaza = {};
-      for (const r of pob.rows) {
-        if (!byRaza[r.raza]) byRaza[r.raza] = { H: 0, M: 0, gazapos: 0 };
-        const cat = String(r.categoria).toLowerCase();
-        if (cat.includes('gazapo')) byRaza[r.raza].gazapos += r.n;
-        else if (r.sexo === 'H') byRaza[r.raza].H += r.n;
-        else byRaza[r.raza].M += r.n;
-      }
-      let row = 6;
-      for (const [raza, v] of Object.entries(byRaza)) {
-        ws.getCell(row, 1).value = raza;
-        ws.getCell(row, 2).value = v.H;
-        ws.getCell(row, 3).value = v.M;
-        ws.getCell(row, 4).value = v.gazapos;
-        ws.getCell(row, 5).value = v.H + v.M + v.gazapos;
-        row += 1;
-      }
-
-      row += 2;
-      ws.getCell(row, 1).value = 'Movimiento del mes';
-      ws.getCell(row, 1).font = { bold: true };
-      row += 1;
-      ws.getCell(row, 1).value = 'Nacimientos (cuyes)';
-      ws.getCell(row, 2).value = nac.rows[0].n;
-      row += 1;
-      ws.getCell(row, 1).value = 'Mortalidad Gazapos';
-      ws.getCell(row, 2).value = mortMap.gazapo || 0;
-      row += 1;
-      ws.getCell(row, 1).value = 'Mortalidad Recría';
-      ws.getCell(row, 2).value = (mortMap.recria || 0) + (mortMap.reemplazo || 0);
-      row += 1;
-      ws.getCell(row, 1).value = 'Mortalidad Reproductor';
-      ws.getCell(row, 2).value =
-        (mortMap.reproductor || 0) + (mortMap.reproductora || 0);
-      row += 1;
-      ws.getCell(row, 1).value = 'Ventas Recría';
-      ws.getCell(row, 2).value = (ventMap.recria || 0) + (ventMap.reemplazo || 0);
-      row += 1;
-      ws.getCell(row, 1).value = 'Ventas Descarte';
-      ws.getCell(row, 2).value = ventMap.descarte || 0;
-
-      row += 2;
-      ws.getCell(row, 1).value = 'Población por categoría';
-      ws.getCell(row, 1).font = { bold: true };
-      row += 1;
-      const cats = {};
-      for (const r of pob.rows) {
-        const k = r.categoria;
-        if (!cats[k]) cats[k] = { H: 0, M: 0 };
-        cats[k][r.sexo] += r.n;
-      }
-      ws.getCell(row, 1).value = 'Categoría';
-      ws.getCell(row, 2).value = 'Hembras';
-      ws.getCell(row, 3).value = 'Machos';
-      row += 1;
-      for (const [cat, v] of Object.entries(cats)) {
-        ws.getCell(row, 1).value = cat;
-        ws.getCell(row, 2).value = v.H;
-        ws.getCell(row, 3).value = v.M;
-        row += 1;
-      }
+    const ok = await workbookResponse(res, `inventario-${year}-${mes}.xlsx`, async (wb) => {
+      return await hojaMensual(wb, req, year, mes);
     });
+    if (!ok) {
+      return res.status(400).json({ error: 'No hay datos de inventario para exportar' });
+    }
   })
 );
 
-// NUC-37 — listado de animales con alcance (granja activa + periodo informativo)
+// Listado de animales con alcance (granja activa + periodo informativo)
 router.get(
   '/animales',
   asyncHandler(async (req, res) => {
     const year = Number(req.query.anio) || new Date().getFullYear();
     const month = Number(req.query.mes) || new Date().getMonth() + 1;
+    const estado = req.query.estado && req.query.estado !== 'todos' ? req.query.estado : null;
     const idArea = req.query.id_area ? Number(req.query.id_area) : null;
+    const idRaza = req.query.id_raza ? Number(req.query.id_raza) : null;
+    const idCategoria = req.query.id_categoria ? Number(req.query.id_categoria) : null;
     const params = [req.granjaId];
     let sql = `
       SELECT a.codigo, a.sexo, a.estado, a.fecha_nacimiento,
@@ -447,10 +473,22 @@ router.get(
       LEFT JOIN categorias c ON c.id = a.id_categoria
       LEFT JOIN jaulas j ON j.id = a.id_jaula
       LEFT JOIN areas ar ON ar.id = j.id_area
-      WHERE a.id_granja = $1 AND a.estado = 'activo'`;
+      WHERE a.id_granja = $1`;
+    if (estado) {
+      params.push(estado);
+      sql += ` AND a.estado = $${params.length}`;
+    }
     if (idArea) {
       params.push(idArea);
       sql += ` AND ar.id = $${params.length}`;
+    }
+    if (idRaza) {
+      params.push(idRaza);
+      sql += ` AND r.id = $${params.length}`;
+    }
+    if (idCategoria) {
+      params.push(idCategoria);
+      sql += ` AND c.id = $${params.length}`;
     }
     sql += ' ORDER BY ar.nombre, j.codigo, a.codigo';
     const { rows } = await pool.query(sql, params);
@@ -476,6 +514,104 @@ router.get(
         ]);
       }
     });
+  })
+);
+
+// Reporte consolidado de todas las granjas (Excel)
+router.get(
+  '/consolidado',
+  asyncHandler(async (req, res) => {
+    const year = Number(req.query.anio) || new Date().getFullYear();
+    const mes = req.query.mes != null && req.query.mes !== '' ? Number(req.query.mes) : null;
+
+    const isSuper = req.user?.rol === 'superadmin';
+    const granjas = await pool.query(
+      `SELECT g.id, g.nombre FROM granjas g
+       WHERE $1::boolean
+          OR EXISTS (SELECT 1 FROM granja_usuarios gu WHERE gu.id_granja = g.id AND gu.id_usuario = $2)
+       ORDER BY g.nombre`,
+      [isSuper, req.user.id]
+    );
+    if (!granjas.rows.length) {
+      return res.status(400).json({ error: 'No hay granjas para consolidar' });
+    }
+
+    const filas = [];
+    let totH = 0, totM = 0, totG = 0, totNac = 0, totMort = 0, totVent = 0;
+    for (const g of granjas.rows) {
+      const pob = await pool.query(
+        `SELECT COALESCE(c.nombre,'sin_categoria') AS categoria, a.sexo, COUNT(*)::int AS n
+         FROM animales a LEFT JOIN categorias c ON c.id = a.id_categoria
+         WHERE a.id_granja = $1 AND a.estado = 'activo'
+         GROUP BY c.nombre, a.sexo`,
+        [g.id]
+      );
+      let H = 0, M = 0, G = 0;
+      for (const r of pob.rows) {
+        const cat = String(r.categoria).toLowerCase();
+        if (cat.includes('gazapo')) G += r.n;
+        else if (r.sexo === 'H') H += r.n;
+        else M += r.n;
+      }
+      const mesFilter = mes && !Number.isNaN(mes) ? ` AND EXTRACT(MONTH FROM {{col}})=$3` : '';
+      const nac = await pool.query(
+        `SELECT COALESCE(SUM(vivos_m+vivos_h),0)::int AS n FROM partos
+         WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha_parto)=$2${mesFilter.replace('{{col}}', 'fecha_parto')}`,
+        mes && !Number.isNaN(mes) ? [g.id, year, mes] : [g.id, year]
+      );
+      const mort = await pool.query(
+        `SELECT COALESCE(SUM(cantidad),0)::int AS n FROM mortalidad
+         WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha)=$2${mesFilter.replace('{{col}}', 'fecha')}`,
+        mes && !Number.isNaN(mes) ? [g.id, year, mes] : [g.id, year]
+      );
+      const vent = await pool.query(
+        `SELECT COALESCE(SUM(cantidad),0)::int AS n FROM ventas
+         WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha)=$2${mesFilter.replace('{{col}}', 'fecha')}`,
+        mes && !Number.isNaN(mes) ? [g.id, year, mes] : [g.id, year]
+      );
+      filas.push({
+        granja: g.nombre,
+        H,
+        M,
+        G,
+        total: H + M + G,
+        nacimientos: Number(nac.rows[0].n),
+        mortalidad: Number(mort.rows[0].n),
+        ventas: Number(vent.rows[0].n),
+      });
+      totH += H; totM += M; totG += G; totNac += Number(nac.rows[0].n);
+      totMort += Number(mort.rows[0].n); totVent += Number(vent.rows[0].n);
+    }
+
+    const ok = await workbookResponse(res, `consolidado-${year}.xlsx`, async (wb) => {
+      const ws = wb.addWorksheet('Consolidado');
+      headerUnidad(ws, 'REPORTE CONSOLIDADO DE GRANJAS');
+      ws.getCell('A3').value = `PERIODO ${mes && !Number.isNaN(mes) ? NOMBRES_MES[mes] + ' ' : 'AÑO '}${year}`;
+      ws.getCell('A3').font = { bold: true };
+
+      const headers = ['GRANJA', 'HEMBRAS', 'MACHOS', 'GAZAPOS', 'POBLACIÓN TOTAL', 'NACIMIENTOS', 'MORTALIDAD', 'VENTAS'];
+      let row = 5;
+      headers.forEach((t, i) => {
+        ws.getCell(row, i + 1).value = t;
+        ws.getCell(row, i + 1).font = { bold: true };
+      });
+      row += 1;
+      for (const f of filas) {
+        [f.granja, f.H, f.M, f.G, f.total, f.nacimientos, f.mortalidad, f.ventas].forEach((v, i) => {
+          ws.getCell(row, i + 1).value = v;
+        });
+        row += 1;
+      }
+      [ 'TOTAL', totH, totM, totG, filas.reduce((s, f) => s + f.total, 0), totNac, totMort, totVent ].forEach((v, i) => {
+        ws.getCell(row, i + 1).value = v;
+        ws.getCell(row, i + 1).font = { bold: true };
+      });
+      ws.getColumn(1).width = 30;
+      for (let c = 2; c <= 8; c++) ws.getColumn(c).width = 16;
+    });
+    if (!ok) {
+      return res.status(400).json({ error: 'No hay datos para consolidar' });
+    }
   })
 );
 

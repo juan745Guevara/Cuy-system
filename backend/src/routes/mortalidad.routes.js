@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { asyncHandler, isValidDateStr } = require('../utils/helpers');
+const { asyncHandler, isValidDateStr, esFechaFutura } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const { authRequired, loadUserFarms, requireFarmAccess, requireRoles } = require('../middleware/auth');
 
 const router = express.Router();
@@ -25,7 +26,7 @@ async function pobCategoria(granjaId, categoria) {
   return rows[0].n;
 }
 
-// NUC-26
+// Mortalidad / bajas
 router.post(
   '/',
   canWrite,
@@ -36,6 +37,9 @@ router.post(
     }
     if (!isValidDateStr(fecha)) {
       return res.status(400).json({ error: 'fecha inválida', campo: 'fecha' });
+    }
+    if (esFechaFutura(fecha)) {
+      return res.status(400).json({ error: 'fecha no puede ser futura', campo: 'fecha' });
     }
     const cant = Number(cantidad);
     if (!Number.isFinite(cant) || cant <= 0) {
@@ -81,6 +85,15 @@ router.post(
         );
       }
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'mortalidad',
+        idEntidad: rows[0].id,
+        despues: rows[0],
+        detalle: `Mortalidad de ${cant} ${categoria || (id_animal ? `animal ${id_animal}` : 'animales')}`,
+      });
       res.status(201).json(rows[0]);
     } catch (err) {
       await client.query('ROLLBACK');

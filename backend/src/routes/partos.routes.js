@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { asyncHandler, normalizeCodigo, isValidDateStr, promedioPesos } = require('../utils/helpers');
+const { asyncHandler, normalizeCodigo, isValidDateStr, promedioPesos, esFechaFutura } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const { authRequired, loadUserFarms, requireFarmAccess, requireRoles } = require('../middleware/auth');
 
 const router = express.Router();
@@ -17,7 +18,7 @@ async function catId(client, granjaId, nombre) {
   return rows[0]?.id || null;
 }
 
-// CUY-08
+// Registrar parto
 router.post(
   '/',
   canWrite,
@@ -41,6 +42,9 @@ router.post(
     }
     if (!isValidDateStr(fecha_parto)) {
       return res.status(400).json({ error: 'fecha_parto inválida', campo: 'fecha_parto' });
+    }
+    if (esFechaFutura(fecha_parto)) {
+      return res.status(400).json({ error: 'fecha_parto no puede ser futura', campo: 'fecha_parto' });
     }
     const vm = Number(vivos_m) || 0;
     const vh = Number(vivos_h) || 0;
@@ -98,6 +102,14 @@ router.post(
 
       const idGazapo = await catId(client, req.granjaId, 'gazapo');
       const madre = hembra.rows[0];
+      // La madre pasa a categoría reproductora tras su primer parto
+      const idReproductora = await catId(client, req.granjaId, 'reproductora');
+      if (idReproductora && madre.id_categoria !== idReproductora) {
+        await client.query(
+          `UPDATE animales SET id_categoria = $1, updated_at = NOW() WHERE id = $2`,
+          [idReproductora, id_hembra]
+        );
+      }
       const crias = [];
       for (let i = 1; i <= vm; i += 1) {
         const codigo = `${madre.codigo}-P${parto.id}-M${i}`;
@@ -159,6 +171,15 @@ router.post(
       }
 
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'parto',
+        idEntidad: parto.id,
+        despues: { ...parto, crias },
+        detalle: `Parto #${parto.id}: ${vm}M/${vh}H (${crias.length} gazapos)`,
+      });
       res.status(201).json({
         ...parto,
         peso_promedio_nacimiento: promedioPesos(peso_m1, peso_m2, peso_m3, peso_h1, peso_h2, peso_h3),

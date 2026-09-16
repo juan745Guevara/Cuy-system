@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { asyncHandler } = require('../utils/helpers');
+const { asyncHandler, isValidDateStr, esFechaFutura } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const {
   authRequired,
   loadUserFarms,
@@ -18,7 +19,7 @@ function addDays(fechaISO, dias) {
   return d.toISOString().slice(0, 10);
 }
 
-// NUC-24
+// Registrar tratamiento
 router.post(
   '/',
   canWrite,
@@ -45,6 +46,15 @@ router.post(
     }
     if (!['preventivo', 'curativo'].includes(tipo)) {
       return res.status(400).json({ error: 'tipo debe ser preventivo o curativo' });
+    }
+    if (!isValidDateStr(fecha_inicio)) {
+      return res.status(400).json({ error: 'fecha_inicio inválida', campo: 'fecha_inicio' });
+    }
+    if (esFechaFutura(fecha_inicio)) {
+      return res.status(400).json({ error: 'fecha_inicio no puede ser futura', campo: 'fecha_inicio' });
+    }
+    if (!Number.isFinite(Number(duracion_dias)) || Number(duracion_dias) <= 0) {
+      return res.status(400).json({ error: 'duracion_dias debe ser mayor que cero', campo: 'duracion_dias' });
     }
 
     const termino = addDays(fecha_inicio, Number(duracion_dias));
@@ -99,11 +109,20 @@ router.post(
       );
       creados.push(rows[0]);
     }
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'crear',
+      entidad: 'tratamiento',
+      idEntidad: creados[0].id,
+      despues: creados,
+      detalle: `Tratamiento ${tipo} "${producto}" para ${creados.length} registro(s)`,
+    });
     res.status(201).json({ registrados: creados.length, tratamientos: creados });
   })
 );
 
-// NUC-25 listado
+// Historial sanitario
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -172,6 +191,15 @@ router.patch(
       [motivo_cierre || null, req.params.id, req.granjaId]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Tratamiento no encontrado' });
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'finalizar',
+      entidad: 'tratamiento',
+      idEntidad: rows[0].id,
+      despues: rows[0],
+      detalle: `Finalización de tratamiento #${rows[0].id} (${rows[0].producto})`,
+    });
     res.json(rows[0]);
   })
 );

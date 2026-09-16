@@ -2,10 +2,16 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import RoleRoute from './components/RoleRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import SeleccionGranja from './pages/SeleccionGranja';
 import Dashboard from './pages/Dashboard';
+import EventosHub from './pages/EventosHub';
+import BusquedaGlobal from './pages/BusquedaGlobal';
+import RegistroHub from './pages/RegistroHub';
+import GranjasHub from './pages/GranjasHub';
+import ConfiguracionHub from './pages/ConfiguracionHub';
 import Animales from './pages/Animales';
 import Areas from './pages/Areas';
 import Jaulas from './pages/Jaulas';
@@ -43,27 +49,50 @@ function App() {
             <Route path="seleccionar-granja" element={<SeleccionGranja />} />
             <Route element={<RequireGranja />}>
               <Route element={<Layout />}>
-                <Route index element={<Dashboard />} />
+                {/* Dashboard General (entrada principal) */}
+                <Route index element={<Navigate to="/dashboard" replace />} />
+
+                {/* Eventos */}
+                <Route path="eventos" element={<EventosHub />} />
+                <Route path="dashboard" element={<Dashboard />} />
+
+                {/* Buscar */}
+                <Route path="buscar" element={<BusquedaGlobal />} />
+
+                {/* Ventas */}
+                <Route path="ventas" element={<Ventas />} />
+
+                {/* Registro */}
+                <Route path="registro" element={<RegistroHub />} />
                 <Route path="animales" element={<Animales />} />
-                <Route path="areas" element={<Areas />} />
-                <Route path="jaulas" element={<Jaulas />} />
-                <Route path="catalogos" element={<Catalogos />} />
-                <Route path="empadres" element={<Empadres />} />
                 <Route path="reproductoras" element={<Reproductoras />} />
                 <Route path="reproductores" element={<Reproductores />} />
+                <Route path="movimientos" element={<Movimientos />} />
+
+                {/* Granjas */}
+                <Route path="granjas-panel" element={<GranjasHub />} />
+                <Route path="areas" element={<Areas />} />
+                <Route path="jaulas" element={<Jaulas />} />
+                <Route path="inventario" element={<Inventario />} />
+
+                {/* Configuración */}
+                <Route path="configuracion" element={<ConfiguracionHub />} />
+                <Route path="catalogos" element={<Catalogos />} />
+                <Route path="alertas" element={<Alertas />} />
+                <Route path="empadres" element={<Empadres />} />
                 <Route path="partos" element={<Partos />} />
                 <Route path="destetes" element={<Destetes />} />
                 <Route path="mortalidad" element={<Mortalidad />} />
-                <Route path="ventas" element={<Ventas />} />
-                <Route path="movimientos" element={<Movimientos />} />
                 <Route path="pesajes" element={<Pesajes />} />
                 <Route path="sanidad" element={<Sanidad />} />
-                <Route path="alertas" element={<Alertas />} />
                 <Route path="ranking" element={<Ranking />} />
-                <Route path="auditoria" element={<Auditoria />} />
-                <Route path="inventario" element={<Inventario />} />
-                <Route path="usuarios" element={<Usuarios />} />
-                <Route path="granjas" element={<Granjas />} />
+
+                {/* Rutas de Gestión restringidas */}
+                <Route element={<RoleRoute roles={['superadmin', 'admin']} />}>
+                  <Route path="usuarios" element={<Usuarios />} />
+                  <Route path="granjas" element={<Granjas />} />
+                  <Route path="auditoria" element={<Auditoria />} />
+                </Route>
               </Route>
             </Route>
           </Route>

@@ -25,10 +25,24 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Rechaza fechas futuras (comparación lexicográfica sobre ISO YYYY-MM-DD)
+function esFechaFutura(fechaStr) {
+  if (!isValidDateStr(fechaStr)) return false;
+  return String(fechaStr).slice(0, 10) > todayISO();
+}
+
+// Devuelve true si la fecha es inválida o futura (para los handlers)
+function errorFecha(res, campo, mensaje = null) {
+  res.status(400).json({ error: mensaje || `${campo} no puede ser futura`, campo });
+  return true;
+}
+
 module.exports = {
   normalizeCodigo,
   asyncHandler,
   promedioPesos,
   isValidDateStr,
   todayISO,
+  esFechaFutura,
+  errorFecha,
 };

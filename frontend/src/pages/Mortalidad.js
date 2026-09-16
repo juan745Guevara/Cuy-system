@@ -1,8 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
+import { clearDraft, loadDraft, saveDraft } from '../utils/draftForm';
 
-/** NUC-26 mortalidad */
+const DRAFT_KEY = 'draft:mortalidad';
+
+const emptyForm = () => ({
+  id_animal: '',
+  fecha: new Date().toISOString().slice(0, 10),
+  clasificacion: '',
+  categoria: '',
+  cantidad: 1,
+  causa: '',
+  id_jaula: '',
+});
+
+/** Mortalidad y bajas */
 const Mortalidad = () => {
   const [lista, setLista] = useState([]);
   const [animales, setAnimales] = useState([]);
@@ -11,15 +24,7 @@ const Mortalidad = () => {
   const [jaulas, setJaulas] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
-  const [form, setForm] = useState({
-    id_animal: '',
-    fecha: new Date().toISOString().slice(0, 10),
-    clasificacion: '',
-    categoria: '',
-    cantidad: 1,
-    causa: '',
-    id_jaula: '',
-  });
+  const [form, setForm] = useState(() => loadDraft(DRAFT_KEY) || emptyForm());
 
   const load = useCallback(async () => {
     try {
@@ -44,6 +49,10 @@ const Mortalidad = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    saveDraft(DRAFT_KEY, form);
+  }, [form]);
+
   const crear = async (e) => {
     e.preventDefault();
     setError('');
@@ -64,13 +73,8 @@ const Mortalidad = () => {
         id_jaula: form.id_jaula ? Number(form.id_jaula) : null,
       });
       setOk('Mortalidad registrada');
-      setForm((f) => ({
-        ...f,
-        id_animal: '',
-        cantidad: 1,
-        causa: '',
-        id_jaula: '',
-      }));
+      clearDraft(DRAFT_KEY);
+      setForm(emptyForm());
       load();
     } catch (err) {
       const data = err.response?.data;

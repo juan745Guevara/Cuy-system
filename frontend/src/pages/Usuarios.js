@@ -3,7 +3,7 @@ import api from '../services/api';
 import { page as s } from '../styles/ui';
 import { useAuth } from '../context/AuthContext';
 
-/** NUC-06/07/08 — gestión de usuarios con alcance por granja */
+/** Gestión de usuarios con alcance por granja */
 const Usuarios = () => {
   const { user } = useAuth();
   const [lista, setLista] = useState([]);

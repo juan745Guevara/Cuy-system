@@ -3,7 +3,7 @@ import api from '../services/api';
 import { page as s } from '../styles/ui';
 import { useAuth } from '../context/AuthContext';
 
-/** CUY-19 ranking · CUY-20 ponderación · CUY-21 descarte/reemplazo */
+/** Ranking de reproductores · ponderación de indicadores · descarte/reemplazo */
 const Ranking = () => {
   const { user } = useAuth();
   const admin = user?.rol === 'superadmin' || user?.rol === 'admin' || user?.rol === 'supervisor';
@@ -79,7 +79,7 @@ const Ranking = () => {
 
       {admin && config && (
         <form onSubmit={guardarConfig} style={s.card}>
-          <h3 style={{ marginTop: 0 }}>Ponderación (CUY-20)</h3>
+          <h3 style={{ marginTop: 0 }}>Ponderación</h3>
           <div style={s.row}>
             {[
               'peso_partos',

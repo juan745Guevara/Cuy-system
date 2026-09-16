@@ -1,8 +1,26 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
+import { clearDraft, loadDraft, saveDraft } from '../utils/draftForm';
 
-/** NUC-14 traslado · NUC-15 historial · NUC-18/19 avisos · NUC-20 transferencia */
+const DRAFT_KEY = 'draft:movimientos';
+
+const emptyForm = () => ({
+  fecha: new Date().toISOString().slice(0, 10),
+  id_area_destino: '',
+  id_jaula_destino: '',
+  ids_animales: [],
+  id_jaula_origen_completa: '',
+  motivo: '',
+  confirmar_capacidad: false,
+  confirmar_area: false,
+  id_granja_destino: '',
+  id_animal_hist: '',
+  id_jaula_hist: '',
+  fecha_jaula: new Date().toISOString().slice(0, 10),
+});
+
+/** Traslados, historial de movimientos, avisos de capacidad/área y transferencias entre granjas */
 const Movimientos = () => {
   const [tab, setTab] = useState('traslado');
   const [animals, setAnimals] = useState([]);
@@ -17,20 +35,7 @@ const Movimientos = () => {
   const [destCages, setDestCages] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
-  const [form, setForm] = useState({
-    fecha: new Date().toISOString().slice(0, 10),
-    id_area_destino: '',
-    id_jaula_destino: '',
-    ids_animales: [],
-    id_jaula_origen_completa: '',
-    motivo: '',
-    confirmar_capacidad: false,
-    confirmar_area: false,
-    id_granja_destino: '',
-    id_animal_hist: '',
-    id_jaula_hist: '',
-    fecha_jaula: new Date().toISOString().slice(0, 10),
-  });
+  const [form, setForm] = useState(() => loadDraft(DRAFT_KEY) || emptyForm());
 
   const load = useCallback(async () => {
     try {
@@ -58,6 +63,10 @@ const Movimientos = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    saveDraft(DRAFT_KEY, form);
+  }, [form]);
 
   const cagesForDest = form.id_area_destino
     ? cages.filter((j) => String(j.id_area) === String(form.id_area_destino))
@@ -103,12 +112,8 @@ const Movimientos = () => {
         confirmar_area: form.confirmar_area,
       });
       setOk(`Trasladados: ${data.trasladados}`);
-      setForm((f) => ({
-        ...f,
-        ids_animales: [],
-        confirmar_capacidad: false,
-        confirmar_area: false,
-      }));
+      clearDraft(DRAFT_KEY);
+      setForm(emptyForm());
       load();
     } catch (err) {
       const d = err.response?.data;
@@ -213,7 +218,7 @@ const Movimientos = () => {
 
       {tab === 'traslado' && (
         <form onSubmit={submitTraslado} style={s.card}>
-          <p style={s.sub}>Elija área y luego jaula de destino (NUC-14)</p>
+          <p style={s.sub}>Elija área y luego jaula de destino</p>
           <div style={s.row}>
             <input
               style={s.input}
@@ -298,7 +303,7 @@ const Movimientos = () => {
 
       {tab === 'transferencia' && (
         <form onSubmit={submitTransferencia} style={s.card}>
-          <p style={s.sub}>Misma especie · supervisor/admin (NUC-20)</p>
+          <p style={s.sub}>Misma especie · supervisor/admin</p>
           <div style={s.row}>
             <input
               style={s.input}
@@ -366,7 +371,7 @@ const Movimientos = () => {
 
       {tab === 'historial' && (
         <div style={s.card}>
-          <h3 style={{ marginTop: 0 }}>Recorrido del animal (NUC-15)</h3>
+          <h3 style={{ marginTop: 0 }}>Recorrido del animal</h3>
           <div style={s.row}>
             <select
               style={s.select}
@@ -482,7 +487,7 @@ const Movimientos = () => {
       {tab === 'avisos' && (
         <div>
           <div style={s.card}>
-            <h3 style={{ marginTop: 0 }}>Jaulas sobre capacidad (NUC-18)</h3>
+            <h3 style={{ marginTop: 0 }}>Jaulas sobre capacidad</h3>
             {overCap.length === 0 ? (
               <p>Ninguna</p>
             ) : (
@@ -496,7 +501,7 @@ const Movimientos = () => {
             )}
           </div>
           <div style={s.card}>
-            <h3 style={{ marginTop: 0 }}>Animales fuera de área (NUC-19)</h3>
+            <h3 style={{ marginTop: 0 }}>Animales fuera de área</h3>
             {outOfArea.length === 0 ? (
               <p>Ninguno</p>
             ) : (

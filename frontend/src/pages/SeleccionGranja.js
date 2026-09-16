@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/ui';
 
-/** NUC-02: elegir especie y luego granja activa. */
+/** Elegir especie y luego granja activa. */
 const SeleccionGranja = () => {
   const { granjas, seleccionarGranja, logout } = useAuth();
   const navigate = useNavigate();

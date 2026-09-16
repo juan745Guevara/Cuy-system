@@ -13,7 +13,7 @@ const PROPOSITOS = [
   { value: 'otro', label: 'Otro' },
 ];
 
-/** NUC-16 definir áreas · NUC-17 ver granja por áreas · CUY-04 */
+/** Definir áreas, ver la granja por áreas */
 const Areas = () => {
   const [areas, setAreas] = useState([]);
   const [resumen, setResumen] = useState([]);
@@ -70,7 +70,7 @@ const Areas = () => {
   return (
     <div style={s.wrap}>
       <h1 style={s.title}>Áreas de la granja</h1>
-      <p style={s.sub}>Organización espacial y ocupación por área (CUY-04)</p>
+      <p style={s.sub}>Organización espacial y ocupación por área</p>
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
 

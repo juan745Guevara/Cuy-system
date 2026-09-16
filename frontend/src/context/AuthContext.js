@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
     setToken(data.token);
     setUser(data.user);
     setGranjas(data.granjas || []);
-    // NUC-02: si solo hay una especie/granja, se selecciona sola
+    // Si solo hay una especie/granja, se selecciona sola
     if (data.granjas?.length === 1) {
       localStorage.setItem('granjaId', String(data.granjas[0].id));
       setGranjaActiva(data.granjas[0].id);
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     else localStorage.setItem('granjaId', String(id));
   };
 
-  // NUC-01: caducidad por inactividad (30 min)
+  // Caducidad por inactividad (30 min)
   useEffect(() => {
     if (!token) return undefined;
     const MAX_IDLE_MS = 30 * 60 * 1000;

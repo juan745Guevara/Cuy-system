@@ -1,8 +1,25 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
+import { clearDraft, loadDraft, saveDraft } from '../utils/draftForm';
 
-/** NUC-24 registrar · NUC-25 historial sanitario */
+const DRAFT_KEY = 'draft:sanidad';
+
+const emptyForm = () => ({
+  tipo: 'curativo',
+  producto: '',
+  dosis: '',
+  via: '',
+  fecha_inicio: new Date().toISOString().slice(0, 10),
+  duracion_dias: 3,
+  diagnostico: '',
+  responsable: '',
+  id_animal: '',
+  id_jaula: '',
+  id_area: '',
+});
+
+/** Registrar tratamientos · historial sanitario */
 const Sanidad = () => {
   const [lista, setLista] = useState([]);
   const [enCurso, setEnCurso] = useState([]);
@@ -12,19 +29,7 @@ const Sanidad = () => {
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [filtroArea, setFiltroArea] = useState('');
-  const [form, setForm] = useState({
-    tipo: 'curativo',
-    producto: '',
-    dosis: '',
-    via: '',
-    fecha_inicio: new Date().toISOString().slice(0, 10),
-    duracion_dias: 3,
-    diagnostico: '',
-    responsable: '',
-    id_animal: '',
-    id_jaula: '',
-    id_area: '',
-  });
+  const [form, setForm] = useState(() => loadDraft(DRAFT_KEY) || emptyForm());
 
   const load = useCallback(async () => {
     try {
@@ -50,6 +55,10 @@ const Sanidad = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    saveDraft(DRAFT_KEY, form);
+  }, [form]);
+
   const crear = async (e) => {
     e.preventDefault();
     setError('');
@@ -63,6 +72,8 @@ const Sanidad = () => {
         duracion_dias: Number(form.duracion_dias),
       });
       setOk(`Tratamientos registrados: ${data.registrados}`);
+      clearDraft(DRAFT_KEY);
+      setForm(emptyForm());
       load();
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo registrar');
@@ -183,7 +194,7 @@ const Sanidad = () => {
       </form>
 
       <div style={s.card}>
-        <h3 style={{ marginTop: 0 }}>En curso (NUC-25)</h3>
+        <h3 style={{ marginTop: 0 }}>En curso</h3>
         <div style={s.row}>
           <select
             style={s.select}

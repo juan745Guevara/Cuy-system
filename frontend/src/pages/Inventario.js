@@ -16,7 +16,7 @@ async function blobErrorMessage(err, fallback) {
   return data?.error || data?.message || fallback;
 }
 
-/** NUC-28/29/31/32 · NUC-36/CUY-22..24 Excel */
+/** Inventario: población, resumen, por área, consolidado y exportación Excel */
 const Inventario = () => {
   const now = new Date();
   const [poblacion, setPoblacion] = useState(null);
@@ -252,7 +252,7 @@ const Inventario = () => {
       )}
 
       <div style={s.card}>
-        <h3 style={{ marginTop: 0 }}>Población por área (NUC-31)</h3>
+        <h3 style={{ marginTop: 0 }}>Población por área</h3>
         {porArea.map((a) => (
           <div key={a.id} style={{ marginBottom: '0.75rem' }}>
             <strong>
@@ -274,7 +274,7 @@ const Inventario = () => {
       {consolidado && (
         <div style={s.card}>
           <h3 style={{ marginTop: 0 }}>
-            Consolidado institucional {consolidado.mes}/{consolidado.anio} (NUC-30/32)
+            Consolidado institucional {consolidado.mes}/{consolidado.anio}
           </h3>
           <table style={s.table}>
             <thead>
@@ -310,7 +310,7 @@ const Inventario = () => {
       )}
 
       <div style={s.card}>
-        <h3 style={{ marginTop: 0 }}>Exportar Excel (NUC-36/37 · CUY-22..24)</h3>
+        <h3 style={{ marginTop: 0 }}>Exportar Excel</h3>
         <p style={{ color: '#7A6358', marginTop: 0 }}>
           Alcance: granja activa · periodo {mes}/{anio}
         </p>
@@ -320,14 +320,14 @@ const Inventario = () => {
             style={s.btn}
             onClick={() => descargar('/reportes/hembras', 'registro-hembras.xlsx')}
           >
-            Hembras (CUY-22)
+            Hembras
           </button>
           <button
             type="button"
             style={s.btn}
             onClick={() => descargar('/reportes/machos', 'registro-machos.xlsx')}
           >
-            Machos (CUY-23)
+            Machos
           </button>
           <button
             type="button"
@@ -336,7 +336,7 @@ const Inventario = () => {
               descargar('/reportes/inventario-mensual', `inventario-${anio}-${mes}.xlsx`)
             }
           >
-            Inventario mensual (CUY-24 / NUC-36)
+            Inventario mensual
           </button>
           <button
             type="button"
@@ -348,7 +348,7 @@ const Inventario = () => {
               )
             }
           >
-            Listado animales (NUC-37)
+            Listado animales
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const {
   authRequired,
   requireRoles,
@@ -9,7 +10,7 @@ const {
 
 const router = express.Router();
 
-// NUC-04
+// Administración de granjas
 router.get(
   '/',
   authRequired,
@@ -35,6 +36,15 @@ router.post(
          RETURNING *`,
         [nombre, id_especie, ubicacion || null, responsable || null, fecha_inicio || null]
       );
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'granja',
+        idEntidad: rows[0].id,
+        despues: rows[0],
+        detalle: `Alta de granja ${rows[0].nombre}`,
+      });
       res.status(201).json(rows[0]);
     } catch (err) {
       if (err.code === '23505') {
@@ -55,11 +65,20 @@ router.patch(
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Granja no encontrada' });
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'desactivar',
+      entidad: 'granja',
+      idEntidad: rows[0].id,
+      despues: rows[0],
+      detalle: `Desactivación de granja ${rows[0].nombre}`,
+    });
     res.json(rows[0]);
   })
 );
 
-// NUC-05
+// Asignación de usuarios
 router.put(
   '/:id/usuarios',
   authRequired,
@@ -85,6 +104,15 @@ router.put(
         );
       }
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId,
+        accion: 'configurar',
+        entidad: 'granja',
+        idEntidad: granjaId,
+        despues: { id_granja: granjaId, usuarios: usuario_ids },
+        detalle: `Configuración de usuarios de la granja ${granjaId}`,
+      });
       res.json({ ok: true, id_granja: granjaId, usuarios: usuario_ids });
     } catch (err) {
       await client.query('ROLLBACK');

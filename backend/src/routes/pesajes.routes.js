@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const {
   authRequired,
   loadUserFarms,
@@ -21,27 +22,80 @@ const RANGOS_DEFAULT = {
   default: { min: 50, max: 2000 },
 };
 
-/** Límites absolutos de la especie (rechazo duro NUC-21) */
+/** Límites absolutos de la especie (rechazo duro) */
 const ESPECIE_ABS = { min: 20, max: 3000 };
 
-let RANGOS = { ...RANGOS_DEFAULT };
+// Rangos persistentes por granja en la tabla peso_rangos
+const CATEGORIAS_RANGO = Object.keys(RANGOS_DEFAULT);
 
-function rangoPara(nombre) {
-  if (!nombre) return RANGOS.default;
+async function getRangos(granjaId) {
+  const { rows } = await pool.query(
+    `SELECT categoria, min, max FROM peso_rangos WHERE id_granja = $1`,
+    [granjaId]
+  );
+  if (!rows.length) {
+    for (const cat of CATEGORIAS_RANGO) {
+      const r = RANGOS_DEFAULT[cat];
+      await pool.query(
+        `INSERT INTO peso_rangos (id_granja, categoria, min, max)
+         VALUES ($1,$2,$3,$4) ON CONFLICT (id_granja, categoria) DO NOTHING`,
+        [granjaId, cat, r.min, r.max]
+      );
+    }
+    return { ...RANGOS_DEFAULT };
+  }
+  const out = {};
+  for (const cat of CATEGORIAS_RANGO) {
+    out[cat] = { ...RANGOS_DEFAULT[cat] };
+  }
+  for (const r of rows) {
+    if (out[r.categoria]) out[r.categoria] = { min: r.min, max: r.max };
+    else out[r.categoria] = { min: r.min, max: r.max };
+  }
+  return out;
+}
+
+async function saveRangos(granjaId, next, userId) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    for (const cat of CATEGORIAS_RANGO) {
+      if (!next[cat]) continue;
+      await client.query(
+        `INSERT INTO peso_rangos (id_granja, categoria, min, max, updated_by, updated_at)
+         VALUES ($1,$2,$3,$4,$5,NOW())
+         ON CONFLICT (id_granja, categoria) DO UPDATE SET
+           min = EXCLUDED.min, max = EXCLUDED.max,
+           updated_by = EXCLUDED.updated_by, updated_at = NOW()`,
+        [granjaId, cat, next[cat].min, next[cat].max, userId || null]
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+function rangoPara(rangos, nombre) {
+  const base = rangos || RANGOS_DEFAULT;
+  if (!nombre) return base.default;
   const n = String(nombre).toLowerCase();
-  if (n.includes('gazapo') || n.includes('cria') || n.includes('cría')) return RANGOS.gazapo;
-  if (n.includes('destete')) return RANGOS.destete;
-  if (n.includes('recr') || n.includes('reemplazo')) return RANGOS.recria;
-  if (n.includes('reproductora')) return RANGOS.reproductora;
-  if (n.includes('reproductor')) return RANGOS.reproductor;
-  return RANGOS.default;
+  if (n.includes('recr') || n.includes('reemplazo')) return base.recria;
+  if (n.includes('gazapo') || n.includes('cria') || n.includes('cría')) return base.gazapo;
+  if (n.includes('destete')) return base.destete;
+  if (n.includes('reproductora')) return base.reproductora;
+  if (n.includes('reproductor')) return base.reproductor;
+  return base.default;
 }
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, confirmar }) {
+async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, confirmar, rangos }) {
   if (!fecha || peso == null) {
     const err = new Error('fecha y peso_gramos son obligatorios');
     err.status = 400;
@@ -58,7 +112,7 @@ async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, c
     err.status = 400;
     throw err;
   }
-  // NUC-21: rechazo duro fuera del rango válido de la especie
+  // Rechazo duro fuera del rango válido de la especie
   if (pesoNum < ESPECIE_ABS.min || pesoNum > ESPECIE_ABS.max) {
     const err = new Error(
       `Peso inválido para la especie (${ESPECIE_ABS.min}-${ESPECIE_ABS.max} g)`
@@ -80,7 +134,7 @@ async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, c
     throw err;
   }
 
-  const rango = rangoPara(animal.categoria);
+  const rango = rangoPara(rangos, animal.categoria);
   const fuera = pesoNum < rango.min || pesoNum > rango.max;
   if (fuera && !confirmar) {
     const err = new Error(
@@ -99,7 +153,7 @@ async function insertPesaje(client, { granjaId, animalId, fecha, peso, userId, c
   return inserted.rows[0];
 }
 
-// NUC-21
+// Límites de especie y rechazo
 router.post(
   '/',
   canWrite,
@@ -107,6 +161,7 @@ router.post(
     const { id_animal, fecha, peso_gramos, confirmar_fuera_rango } = req.body || {};
     const client = await pool.connect();
     try {
+      const rangos = await getRangos(req.granjaId);
       const row = await insertPesaje(client, {
         granjaId: req.granjaId,
         animalId: Number(id_animal),
@@ -114,6 +169,16 @@ router.post(
         peso: peso_gramos,
         userId: req.user.id,
         confirmar: confirmar_fuera_rango,
+        rangos,
+      });
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'pesaje',
+        idEntidad: row.id,
+        despues: row,
+        detalle: `Pesaje de ${row.peso_gramos} g para animal ${row.id_animal}`,
       });
       res.status(201).json(row);
     } catch (err) {
@@ -126,7 +191,7 @@ router.post(
   })
 );
 
-// NUC-22
+// Pesaje por lote
 router.post(
   '/lote',
   canWrite,
@@ -141,6 +206,7 @@ router.post(
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      const rangos = await getRangos(req.granjaId);
       const creados = [];
       for (const p of validos) {
         try {
@@ -152,6 +218,7 @@ router.post(
               peso: p.peso_gramos,
               userId: req.user.id,
               confirmar: confirmar_fuera_rango || p.confirmar_fuera_rango,
+              rangos,
             })
           );
         } catch (err) {
@@ -162,6 +229,15 @@ router.post(
         }
       }
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'pesaje',
+        idEntidad: creados[0].id,
+        despues: creados,
+        detalle: `${creados.length} pesajes registrados en lote`,
+      });
       res.status(201).json({ registrados: creados.length, pesajes: creados });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -172,7 +248,7 @@ router.post(
   })
 );
 
-// NUC-23
+// Evolución del peso
 router.get(
   '/animal/:id_animal',
   asyncHandler(async (req, res) => {
@@ -214,18 +290,21 @@ router.get(
   })
 );
 
-router.get('/rangos', asyncHandler(async (_req, res) => {
-  res.json({ categorias: RANGOS, especie: ESPECIE_ABS });
+router.get('/rangos', asyncHandler(async (req, res) => {
+  const rangos = await getRangos(req.granjaId);
+  res.json({ categorias: rangos, especie: ESPECIE_ABS });
 }));
 
-// CUY-16 — rangos configurables por la unidad
+// Rangos configurables por la unidad (persistentes en BD)
 router.put(
   '/rangos',
   requireRoles('superadmin', 'admin', 'encargado'),
   asyncHandler(async (req, res) => {
     const body = req.body || {};
-    const next = { ...RANGOS };
-    for (const key of Object.keys(RANGOS_DEFAULT)) {
+    const current = await getRangos(req.granjaId);
+    const next = {};
+    for (const key of CATEGORIAS_RANGO) {
+      next[key] = { ...current[key] };
       if (body[key]?.min != null && body[key]?.max != null) {
         const min = Number(body[key].min);
         const max = Number(body[key].max);
@@ -235,8 +314,19 @@ router.put(
         next[key] = { min, max };
       }
     }
-    RANGOS = next;
-    res.json({ categorias: RANGOS, especie: ESPECIE_ABS });
+    await saveRangos(req.granjaId, next, req.user.id);
+    const rangos = await getRangos(req.granjaId);
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'configurar',
+      entidad: 'rango',
+      idEntidad: req.granjaId,
+      antes: current,
+      despues: rangos,
+      detalle: 'Configuración de rangos de peso',
+    });
+    res.json({ categorias: rangos, especie: ESPECIE_ABS });
   })
 );
 

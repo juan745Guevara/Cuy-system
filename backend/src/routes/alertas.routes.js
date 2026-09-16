@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const {
   authRequired,
   loadUserFarms,
@@ -17,6 +18,8 @@ const DEFAULTS = [
   { tipo: 'destete_pendiente', dias: 14, activo: true },
   { tipo: 'empadre_disponible', dias: 7, activo: true },
   { tipo: 'sin_prenez', dias: 30, activo: true },
+  { tipo: 'edad_recria', dias: 21, activo: true },
+  { tipo: 'edad_empadre', dias: 90, activo: true },
 ];
 
 async function getConfig(granjaId) {
@@ -50,7 +53,7 @@ function hoyISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-// NUC-35 / CUY-17
+// Plazos de alerta configurables
 router.get(
   '/config',
   asyncHandler(async (req, res) => {
@@ -75,11 +78,20 @@ router.put(
         [req.granjaId, it.tipo, Number(it.dias) || 0, it.activo !== false]
       );
     }
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'configurar',
+      entidad: 'alerta',
+      idEntidad: req.granjaId,
+      despues: items,
+      detalle: `Configuración de ${items.length} alerta(s)`,
+    });
     res.json(await getConfig(req.granjaId));
   })
 );
 
-// NUC-33 / CUY-18 — alertas calculadas
+// Alertas calculadas del ciclo reproductivo
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -160,6 +172,79 @@ router.get(
       }
     }
 
+    // Revisión de hembra sin preñez confirmada: empadre abierto sin parto
+    const sinP = byTipo.sin_prenez;
+    if (sinP?.activo) {
+      const { rows } = await pool.query(
+        `SELECT eh.id_hembra, eh.id_empadre, e.fecha_empadre, an.codigo, j.codigo AS jaula
+         FROM empadre_hembras eh
+         JOIN empadres e ON e.id = eh.id_empadre
+         JOIN animales an ON an.id = eh.id_hembra
+         LEFT JOIN jaulas j ON j.id = an.id_jaula
+         LEFT JOIN partos p ON p.id_empadre = e.id AND p.id_hembra = eh.id_hembra
+         WHERE e.id_granja = $1 AND eh.resultado = 'abierto' AND an.estado = 'activo'
+           AND p.id IS NULL`,
+        [req.granjaId]
+      );
+      for (const r of rows) {
+        if (descartado('sin_prenez', r.id_hembra, r.id_empadre)) continue;
+        const prevista = addDays(r.fecha_empadre, sinP.dias);
+        alertas.push({
+          key: `sin_prenez-${r.id_hembra}-${r.id_empadre}`,
+          tipo: 'sin_prenez',
+          id_animal: r.id_hembra,
+          id_referencia: r.id_empadre,
+          codigo: r.codigo,
+          jaula: r.jaula,
+          fecha_prevista: prevista,
+          vencida: prevista < hoy,
+          ruta: '/reproductoras',
+          mensaje: `Revisar preñez de ${r.codigo} (empadre sin confirmar)`,
+        });
+      }
+    }
+
+    // Empadre disponible tras el destete: reproductora sin ciclo abierto
+    const empDisp = byTipo.empadre_disponible;
+    if (empDisp?.activo) {
+      const { rows } = await pool.query(
+        `SELECT an.id AS id_hembra, an.codigo, j.codigo AS jaula,
+                MAX(COALESCE(p.fecha_parto, e.fecha_empadre)) AS ultimo_evento
+         FROM animales an
+         LEFT JOIN jaulas j ON j.id = an.id_jaula
+         LEFT JOIN categorias c ON c.id = an.id_categoria
+         LEFT JOIN empadre_hembras eh ON eh.id_hembra = an.id
+         LEFT JOIN empadres e ON e.id = eh.id_empadre
+         LEFT JOIN partos p ON p.id_empadre = e.id AND p.id_hembra = an.id
+         WHERE an.id_granja = $1 AND an.estado = 'activo' AND an.sexo = 'H'
+           AND LOWER(COALESCE(c.nombre,'')) LIKE '%reproductora%'
+           AND an.id NOT IN (
+             SELECT eh2.id_hembra FROM empadre_hembras eh2
+             JOIN empadres e2 ON e2.id = eh2.id_empadre
+             WHERE e2.id_granja = $1 AND eh2.resultado = 'abierto'
+           )
+         GROUP BY an.id, an.codigo, j.codigo
+         HAVING MAX(COALESCE(p.fecha_parto, e.fecha_empadre)) IS NOT NULL`,
+        [req.granjaId]
+      );
+      for (const r of rows) {
+        if (descartado('empadre_disponible', r.id_hembra, null)) continue;
+        const prevista = addDays(r.ultimo_evento, empDisp.dias);
+        alertas.push({
+          key: `empadre_disponible-${r.id_hembra}`,
+          tipo: 'empadre_disponible',
+          id_animal: r.id_hembra,
+          id_referencia: null,
+          codigo: r.codigo,
+          jaula: r.jaula,
+          fecha_prevista: prevista,
+          vencida: prevista < hoy,
+          ruta: '/empadres',
+          mensaje: `Empadre disponible para ${r.codigo}`,
+        });
+      }
+    }
+
     alertas.sort((a, b) => String(a.fecha_prevista).localeCompare(String(b.fecha_prevista)));
     res.json({
       pendientes: alertas,
@@ -169,7 +254,7 @@ router.get(
   })
 );
 
-// NUC-34
+// Descartar alerta
 router.post(
   '/descartar',
   requireRoles('superadmin', 'admin', 'encargado', 'supervisor', 'auxiliar'),
@@ -188,6 +273,15 @@ router.post(
         req.user.id,
       ]
     );
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'descartar',
+      entidad: 'alerta',
+      idEntidad: rows[0].id,
+      despues: rows[0],
+      detalle: `Descarte de alerta ${tipo}${id_animal ? ` para animal ${id_animal}` : ''}`,
+    });
     res.status(201).json(rows[0]);
   })
 );

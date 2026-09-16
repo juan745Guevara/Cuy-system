@@ -22,7 +22,7 @@ const emptyForm = () => ({
 
 const numOrNull = (v) => (v === '' || v == null ? null : Number(v));
 
-/** CUY-08 partos */
+/** Partos y camadas */
 const Partos = () => {
   const [lista, setLista] = useState([]);
   const [hembras, setHembras] = useState([]);

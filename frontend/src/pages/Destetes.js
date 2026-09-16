@@ -23,7 +23,7 @@ const emptyForm = () => ({
 
 const numOrNull = (v) => (v === '' || v == null ? null : Number(v));
 
-/** CUY-09 destetes */
+/** Destetes y separación de crías */
 const Destetes = () => {
   const [lista, setLista] = useState([]);
   const [partos, setPartos] = useState([]);

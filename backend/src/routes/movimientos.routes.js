@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const { animalFueraDeArea, normalizeProposito } = require('../utils/propositoArea');
 const {
   authRequired,
@@ -32,7 +33,7 @@ function hoyISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-// NUC-14
+// Traslado
 router.post(
   '/traslado',
   canWrite,
@@ -131,7 +132,7 @@ router.post(
       if (avisosArea.length && confirmar_area && !(motivo || '').trim()) {
         await client.query('ROLLBACK');
         return res.status(400).json({
-          error: 'Indique el motivo al confirmar un animal fuera de área (NUC-19)',
+          error: 'Indique el motivo al confirmar un animal fuera de área',
           campo: 'motivo',
         });
       }
@@ -164,6 +165,15 @@ router.post(
       }
 
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'movimiento',
+        idEntidad: creados[0].id,
+        despues: creados,
+        detalle: `Traslado de ${creados.length} animales a la jaula ${id_jaula_destino}`,
+      });
       res.status(201).json({
         trasladados: creados.length,
         excedio_capacidad: excedio,
@@ -178,7 +188,7 @@ router.post(
   })
 );
 
-// NUC-20
+// Transferencia entre granjas
 router.get(
   '/jaulas-destino/:id_granja',
   canTransfer,
@@ -346,6 +356,15 @@ router.post(
       }
 
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'movimiento',
+        idEntidad: creados[0].id,
+        despues: creados,
+        detalle: `Transferencia de ${creados.length} animales a la granja ${id_granja_destino}`,
+      });
       res.status(201).json({
         transferidos: creados.length,
         excedio_capacidad: excedio,
@@ -360,7 +379,7 @@ router.post(
   })
 );
 
-// NUC-15
+// Historial de movimientos
 router.get(
   '/animal/:id_animal',
   asyncHandler(async (req, res) => {
@@ -484,7 +503,7 @@ router.get(
   })
 );
 
-// NUC-18
+// Avisos de sobrecupo
 router.get(
   '/sobrecupo',
   asyncHandler(async (req, res) => {
@@ -504,7 +523,7 @@ router.get(
   })
 );
 
-// NUC-19 + CUY-05
+// Animales fuera de área
 router.get(
   '/fuera-de-area',
   asyncHandler(async (req, res) => {

@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { asyncHandler, isValidDateStr, promedioPesos } = require('../utils/helpers');
+const { asyncHandler, isValidDateStr, promedioPesos, esFechaFutura } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const { authRequired, loadUserFarms, requireFarmAccess, requireRoles } = require('../middleware/auth');
 
 const router = express.Router();
@@ -17,7 +18,7 @@ async function catId(client, granjaId, nombres) {
   return rows;
 }
 
-// CUY-09
+// Registrar destete
 router.post(
   '/',
   canWrite,
@@ -42,6 +43,9 @@ router.post(
     }
     if (!isValidDateStr(fecha_destete)) {
       return res.status(400).json({ error: 'fecha_destete inválida', campo: 'fecha_destete' });
+    }
+    if (esFechaFutura(fecha_destete)) {
+      return res.status(400).json({ error: 'fecha_destete no puede ser futura', campo: 'fecha_destete' });
     }
 
     const partoQ = await pool.query(`SELECT * FROM partos WHERE id = $1 AND id_granja = $2`, [
@@ -123,7 +127,7 @@ router.post(
         );
       }
 
-      // CUY-16: pesos de destete → historial de pesajes
+      // Pesos de destete → historial de pesajes
       const machos = gazapos.rows.filter((g) => g.sexo === 'M');
       const hembras = gazapos.rows.filter((g) => g.sexo === 'H');
       const pesosM = [peso_m1, peso_m2, peso_m3].filter((p) => p != null && Number(p) > 0);
@@ -173,6 +177,15 @@ router.post(
       );
 
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'destete',
+        idEntidad: rows[0].id,
+        despues: rows[0],
+        detalle: `Destete #${rows[0].id}: ${dm}M/${dh}H del parto #${id_parto}`,
+      });
       res.status(201).json({
         ...rows[0],
         peso_promedio_destete: promedioPesos(peso_m1, peso_m2, peso_m3, peso_h1, peso_h2, peso_h3),

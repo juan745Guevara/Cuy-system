@@ -4,7 +4,7 @@ import api from '../services/api';
 import { page as s } from '../styles/ui';
 import { useAuth } from '../context/AuthContext';
 
-/** NUC-33 pendientes · NUC-34 descartar · NUC-35 / CUY-17 config plazos */
+/** Tablero de alertas pendientes/vencidas/próximas · descartar · configurar plazos */
 const Alertas = () => {
   const { user } = useAuth();
   const admin = user?.rol === 'superadmin' || user?.rol === 'admin' || user?.rol === 'supervisor';
@@ -113,7 +113,7 @@ const Alertas = () => {
 
       {admin && (
         <form onSubmit={guardarConfig} style={s.card}>
-          <h3 style={{ marginTop: 0 }}>Configurar plazos (NUC-35 / CUY-17)</h3>
+          <h3 style={{ marginTop: 0 }}>Configurar plazos</h3>
           {config.map((c, i) => (
             <div key={c.tipo} style={s.row}>
               <span style={{ minWidth: 160 }}>{c.tipo}</span>

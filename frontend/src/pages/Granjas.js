@@ -3,7 +3,7 @@ import api from '../services/api';
 import { page as s } from '../styles/ui';
 import { useAuth } from '../context/AuthContext';
 
-/** NUC-04 administrar granjas · NUC-05 asignar usuarios */
+/** Administrar granjas · asignar usuarios */
 const Granjas = () => {
   const { user } = useAuth();
   const [granjas, setGranjas] = useState([]);

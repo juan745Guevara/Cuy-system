@@ -1,5 +1,5 @@
 /**
- * CUY-05 / NUC-19 — correspondencia categoría ↔ propósito de área (módulo cuyes).
+ * Correspondencia categoría ↔ propósito de área (módulo cuyes).
  * Códigos canónicos usados en seed, áreas y validaciones.
  */
 const PROPOSITOS = [
@@ -40,7 +40,7 @@ function normalizeProposito(p) {
 
 /**
  * ¿El animal (sexo + proposito_area de su categoría) encaja en el área destino?
- * Empadre admite un macho junto a hembras (CUY-05).
+ * Empadre admite un macho junto a hembras.
  */
 function animalCorrespondeAlArea({ sexo, propositoCategoria }, propositoArea) {
   const area = normalizeProposito(propositoArea);

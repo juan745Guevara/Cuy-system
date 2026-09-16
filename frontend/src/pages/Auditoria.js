@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
 
-/** NUC-41 trazabilidad / anulación */
+/** Trazabilidad / anulación */
 const Auditoria = () => {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState('');
@@ -44,7 +44,7 @@ const Auditoria = () => {
   return (
     <div style={s.wrap}>
       <h1 style={s.title}>Auditoría</h1>
-      <p style={s.sub}>Historial de cambios y anulaciones (NUC-41)</p>
+      <p style={s.sub}>Historial de cambios y anulaciones</p>
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
 

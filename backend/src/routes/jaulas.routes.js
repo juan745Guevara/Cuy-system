@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { asyncHandler, normalizeCodigo } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const {
   authRequired,
   loadUserFarms,
@@ -11,7 +12,7 @@ const {
 const router = express.Router();
 router.use(authRequired, loadUserFarms, requireFarmAccess);
 
-// NUC-13 + CUY-03
+// Gestión de jaulas
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -34,7 +35,7 @@ router.get(
   })
 );
 
-/** NUC-18 — ocupación por jaula / área / granja + sobrecupo */
+/** Ocupación por jaula / área / granja + sobrecupo */
 router.get(
   '/ocupacion',
   asyncHandler(async (req, res) => {
@@ -126,6 +127,15 @@ router.post(
          VALUES ($1, $2, $3) RETURNING *`,
         [id_area, String(codigo).trim(), capacidad_maxima || null]
       );
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'jaula',
+        idEntidad: rows[0].id,
+        despues: rows[0],
+        detalle: `Alta de jaula ${rows[0].codigo}`,
+      });
       res.status(201).json(rows[0]);
     } catch (err) {
       if (err.code === '23505') {
@@ -177,6 +187,16 @@ router.patch(
        WHERE id = $4 RETURNING *`,
       [codigo ? String(codigo).trim() : null, capacidad_maxima ?? null, id_area || null, id]
     );
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'editar',
+      entidad: 'jaula',
+      idEntidad: id,
+      antes: cur.rows[0],
+      despues: rows[0],
+      detalle: `Edición de jaula ${rows[0].codigo}`,
+    });
     res.json(rows[0]);
   })
 );
@@ -193,6 +213,15 @@ router.patch(
       [id, req.granjaId]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Jaula no encontrada' });
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: 'desactivar',
+      entidad: 'jaula',
+      idEntidad: rows[0].id,
+      despues: rows[0],
+      detalle: `Desactivación de jaula ${rows[0].codigo}`,
+    });
     res.json(rows[0]);
   })
 );

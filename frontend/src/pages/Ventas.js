@@ -1,8 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { page as s } from '../styles/ui';
+import { clearDraft, loadDraft, saveDraft } from '../utils/draftForm';
 
-/** NUC-27 ventas */
+const DRAFT_KEY = 'draft:ventas';
+const emptyForm = () => ({
+  id_animal: '',
+  fecha: new Date().toISOString().slice(0, 10),
+  clasificacion: '',
+  categoria: '',
+  cantidad: 1,
+  comprador: '',
+  precio: '',
+});
+
+/** Ventas y descartes */
 const Ventas = () => {
   const [lista, setLista] = useState([]);
   const [animales, setAnimales] = useState([]);
@@ -10,15 +22,14 @@ const Ventas = () => {
   const [razas, setRazas] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
-  const [form, setForm] = useState({
-    id_animal: '',
+  const [descartes, setDescartes] = useState([]);
+  const [sel, setSel] = useState({});
+  const [dForm, setDForm] = useState({
     fecha: new Date().toISOString().slice(0, 10),
-    clasificacion: '',
-    categoria: '',
-    cantidad: 1,
     comprador: '',
     precio: '',
   });
+  const [form, setForm] = useState(() => loadDraft(DRAFT_KEY) || emptyForm());
 
   const load = useCallback(async () => {
     try {
@@ -37,9 +48,51 @@ const Ventas = () => {
     }
   }, []);
 
+  const loadDescartes = useCallback(async () => {
+    try {
+      const d = await api.get('/ventas/descartes');
+      setDescartes(d.data);
+      setSel(Object.fromEntries(d.data.map((g) => [g.categoria, true])));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al cargar descartes');
+    }
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadDescartes();
+  }, [load, loadDescartes]);
+
+  useEffect(() => {
+    saveDraft(DRAFT_KEY, form);
+  }, [form]);
+
+  const toggleSel = (categoria) =>
+    setSel((prev) => ({ ...prev, [categoria]: !prev[categoria] }));
+
+  const venderDescartes = async () => {
+    setError('');
+    setOk('');
+    const ids = descartes.filter((g) => sel[g.categoria]).flatMap((g) => g.id_animales);
+    if (!ids.length) {
+      setError('Seleccioná al menos un grupo de descartes');
+      return;
+    }
+    try {
+      const r = await api.post('/ventas/descartes', {
+        fecha: dForm.fecha,
+        comprador: dForm.comprador || null,
+        precio: dForm.precio ? Number(dForm.precio) : null,
+        id_animales: ids,
+      });
+      setOk(`Venta agrupada registrada (${r.data.registradas} descartes)`);
+      loadDescartes();
+      load();
+    } catch (err) {
+      const data = err.response?.data;
+      setError(data?.error || 'No se pudieron vender los descartes');
+    }
+  };
 
   const crear = async (e) => {
     e.preventDefault();
@@ -61,13 +114,8 @@ const Ventas = () => {
         precio: form.precio ? Number(form.precio) : null,
       });
       setOk('Venta registrada');
-      setForm((f) => ({
-        ...f,
-        id_animal: '',
-        cantidad: 1,
-        comprador: '',
-        precio: '',
-      }));
+      clearDraft(DRAFT_KEY);
+      setForm(emptyForm());
       load();
     } catch (err) {
       const data = err.response?.data;
@@ -152,6 +200,63 @@ const Ventas = () => {
           Registrar venta
         </button>
       </form>
+
+      <div style={{ ...s.card, marginTop: '1.2rem' }}>
+        <h2 style={{ ...s.title, fontSize: '1.25rem' }}>Descartes para venta</h2>
+        {descartes.length === 0 ? (
+          <p style={{ margin: 0, color: '#7A6358' }}>No hay descartes pendientes.</p>
+        ) : (
+          <>
+            <div style={s.row}>
+              <input
+                style={s.input}
+                type="date"
+                value={dForm.fecha}
+                onChange={(e) => setDForm({ ...dForm, fecha: e.target.value })}
+              />
+              <input
+                style={s.input}
+                placeholder="Comprador"
+                value={dForm.comprador}
+                onChange={(e) => setDForm({ ...dForm, comprador: e.target.value })}
+              />
+              <input
+                style={s.input}
+                type="number"
+                step="0.01"
+                placeholder="Precio"
+                value={dForm.precio}
+                onChange={(e) => setDForm({ ...dForm, precio: e.target.value })}
+              />
+              <button type="button" style={s.btn} onClick={venderDescartes}>
+                Vender seleccionados
+              </button>
+            </div>
+            <div style={s.row}>
+              {descartes.map((g) => (
+                <label
+                  key={g.categoria}
+                  style={{
+                    ...s.btnGhost,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    margin: 0,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!sel[g.categoria]}
+                    onChange={() => toggleSel(g.categoria)}
+                  />
+                  {g.categoria || 'Sin categoría'} ({g.cantidad})
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       <table style={s.table}>
         <thead>

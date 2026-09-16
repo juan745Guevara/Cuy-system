@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { asyncHandler, normalizeCodigo, isValidDateStr } = require('../utils/helpers');
+const { asyncHandler, normalizeCodigo, isValidDateStr, esFechaFutura } = require('../utils/helpers');
+const { writeAudit } = require('../utils/audit');
 const {
   authRequired,
   loadUserFarms,
@@ -158,6 +159,9 @@ router.post(
     if (fecha_nacimiento && !isValidDateStr(fecha_nacimiento)) {
       return res.status(400).json({ error: 'fecha_nacimiento inválida', campo: 'fecha_nacimiento' });
     }
+    if (esFechaFutura(fecha_nacimiento)) {
+      return res.status(400).json({ error: 'fecha_nacimiento no puede ser futura', campo: 'fecha_nacimiento' });
+    }
 
     const j = await pool.query(
       `SELECT j.id, j.capacidad_maxima,
@@ -190,7 +194,7 @@ router.post(
       const ex = existing.rows[0];
       if (ex.estado === 'activo') {
         return res.status(409).json({
-          error: 'Código duplicado en la granja (NUC-40)',
+          error: 'Código duplicado en la granja',
           animal: ex,
         });
       }
@@ -223,10 +227,19 @@ router.post(
           [rows[0].id, particularidad, req.user.id]
         );
       }
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'reusar',
+        entidad: 'animal',
+        idEntidad: rows[0].id,
+        despues: rows[0],
+        detalle: `Reuso del código ${rows[0].codigo}`,
+      });
       return res.status(201).json(rows[0]);
     }
 
-    const client = await pool.connect();
+const client = await pool.connect();
     try {
       await client.query('BEGIN');
       const { rows } = await client.query(
@@ -246,17 +259,26 @@ router.post(
         ]
       );
       if (particularidad) {
-        await client.query(
+        await pool.query(
           `INSERT INTO animal_particularidades (id_animal, texto, created_by) VALUES ($1,$2,$3)`,
           [rows[0].id, particularidad, req.user.id]
         );
       }
       await client.query('COMMIT');
+      await writeAudit({
+        userId: req.user.id,
+        granjaId: req.granjaId,
+        accion: 'crear',
+        entidad: 'animal',
+        idEntidad: rows[0].id,
+        despues: rows[0],
+        detalle: `Alta de animal ${rows[0].codigo}`,
+      });
       res.status(201).json(rows[0]);
     } catch (err) {
       await client.query('ROLLBACK');
       if (err.code === '23505') {
-        return res.status(409).json({ error: 'Código duplicado en la granja (NUC-40)' });
+        return res.status(409).json({ error: 'Código duplicado en la granja' });
       }
       throw err;
     } finally {
@@ -281,10 +303,17 @@ router.patch(
     if (fecha_baja && !isValidDateStr(fecha_baja)) {
       return res.status(400).json({ error: 'fecha_baja inválida', campo: 'fecha_baja' });
     }
+    if (esFechaFutura(fecha_baja)) {
+      return res.status(400).json({ error: 'fecha_baja no puede ser futura', campo: 'fecha_baja' });
+    }
     if (estado && estado !== 'activo' && !motivo_baja && !fecha_baja) {
       // allow but prefer both
     }
 
+    const antes = await pool.query(
+      `SELECT * FROM animales WHERE id = $1 AND id_granja = $2`,
+      [id, req.granjaId]
+    );
     const { rows } = await pool.query(
       `UPDATE animales SET
          estado = COALESCE($1, estado),
@@ -302,6 +331,16 @@ router.patch(
         [id, particularidad, fecha_baja || null, req.user.id]
       );
     }
+    await writeAudit({
+      userId: req.user.id,
+      granjaId: req.granjaId,
+      accion: estado && estado !== 'activo' ? 'dar_de_baja' : 'editar',
+      entidad: 'animal',
+      idEntidad: id,
+      antes: antes.rows[0],
+      despues: rows[0],
+      detalle: `Actualización de animal ${rows[0].codigo}`,
+    });
     res.json(rows[0]);
   })
 );
