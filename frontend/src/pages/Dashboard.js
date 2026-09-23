@@ -216,12 +216,12 @@ const Dashboard = () => {
     setLoading(true);
     const now = new Date();
     Promise.all([
-      api.get('/inventario/poblacion').catch(() => ({ data: null })),
-      api.get('/inventario/resumen-mensual', {
+      api.get('/inventory/population').catch(() => ({ data: null })),
+      api.get('/inventory/monthly-summary', {
         params: { anio: now.getFullYear(), mes: now.getMonth() + 1 },
       }).catch(() => ({ data: null })),
-      api.get('/alertas').catch(() => ({ data: null })),
-      api.get('/jaulas/ocupacion').catch(() => ({ data: null })),
+      api.get('/alerts').catch(() => ({ data: null })),
+      api.get('/cages/occupancy').catch(() => ({ data: null })),
     ])
       .then(([p, r, a, o]) => {
         setPob(p.data);
@@ -307,12 +307,12 @@ const Dashboard = () => {
   });
 
   const pipeline = [
-    { n: 1, name: 'Empadre / Monta', time: 'Día 0 - 30', count: `${repos.hembrasRepro} Hembras`, route: '/empadres', active: true },
-    { n: 2, name: 'Gestación', time: '68 días prom.', count: `${partosProyectados} Partos prox.`, route: '/alertas', active: true },
-    { n: 3, name: 'Parto & Lactancia', time: 'Día 0 - 14', count: `${nacimientosMes} Nacimientos`, route: '/partos', active: true },
-    { n: 4, name: 'Destete', time: 'Día 14 - 21', count: `${destetesPendientes} Camadas`, route: '/destetes', active: true },
-    { n: 5, name: 'Recría & Engorde', time: 'Día 21 - 90', count: `${repos.recria + repos.engorde} Gazapos`, route: '/animales', active: true },
-    { n: 6, name: 'Selección / Venta', time: '> 90 días', count: `${ventasMes} Salidas mes`, route: '/ventas', active: false },
+    { n: 1, name: 'Empadre / Monta', time: 'Día 0 - 30', count: `${repos.hembrasRepro} Hembras`, route: '/breedings', active: true },
+    { n: 2, name: 'Gestación', time: '68 días prom.', count: `${partosProyectados} Partos prox.`, route: '/alerts', active: true },
+    { n: 3, name: 'Parto & Lactancia', time: 'Día 0 - 14', count: `${nacimientosMes} Nacimientos`, route: '/births', active: true },
+    { n: 4, name: 'Destete', time: 'Día 14 - 21', count: `${destetesPendientes} Camadas`, route: '/weanings', active: true },
+    { n: 5, name: 'Recría & Engorde', time: 'Día 21 - 90', count: `${repos.recria + repos.engorde} Gazapos`, route: '/animals', active: true },
+    { n: 6, name: 'Selección / Venta', time: '> 90 días', count: `${ventasMes} Salidas mes`, route: '/sales', active: false },
   ];
 
   const statusJaula = {
@@ -412,7 +412,7 @@ const Dashboard = () => {
             <span>+ Nuevo Registro Rápido</span>
           </Link>
 
-          <Link to="/empadres" style={{ ...s.btnGhost, padding: '0.62rem 1rem', display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem' }}>
+          <Link to="/breedings" style={{ ...s.btnGhost, padding: '0.62rem 1rem', display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
@@ -577,8 +577,8 @@ const Dashboard = () => {
                 ['+ Nacimientos', resumen?.nacimientos ?? 0],
                 ['− Mortalidad', resumen?.mortalidad ?? 0],
                 ['− Ventas', resumen?.ventas ?? 0],
-                ['+ Transferencias in', resumen?.transferencias_in ?? 0],
-                ['− Transferencias out', resumen?.transferencias_out ?? 0],
+                ['+ Transferencias in', resumen?.transfers_in ?? 0],
+                ['− Transferencias out', resumen?.transfers_out ?? 0],
               ].map(([label, val]) => (
                 <div
                   key={label}
@@ -691,7 +691,7 @@ const Dashboard = () => {
                 <div style={{ marginTop: '1rem', fontSize: '0.83rem', color: theme.muted }}>
                   <strong style={{ color: theme.maroon }}>{empadresDisponibles}</strong> hembras listas para nuevo
                   empadre.{' '}
-                  <Link to="/empadres" style={{ color: theme.maroon, fontWeight: 700 }}>
+                  <Link to="/breedings" style={{ color: theme.maroon, fontWeight: 700 }}>
                     Iniciar wizard →
                   </Link>
                 </div>
@@ -811,14 +811,14 @@ const Dashboard = () => {
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => navigate('/movimientos')}
+                onClick={() => navigate('/movements')}
                 style={{ ...s.btn, flex: 1, textAlign: 'center', fontSize: '0.85rem', padding: '0.6rem' }}
               >
-                Registrar traslado
+                Registrar relocate
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/pesajes')}
+                onClick={() => navigate('/weighings')}
                 style={{ ...s.btnGhost, flex: 1, textAlign: 'center', fontSize: '0.85rem', padding: '0.6rem' }}
               >
                 Pesaje de control

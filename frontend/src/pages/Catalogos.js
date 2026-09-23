@@ -15,8 +15,8 @@ const Catalogos = () => {
   const load = useCallback(async () => {
     try {
       const [r, c] = await Promise.all([
-        api.get('/catalogos/razas'),
-        api.get('/catalogos/categorias'),
+        api.get('/catalogs/breeds'),
+        api.get('/catalogs/categories'),
       ]);
       setRazas(r.data);
       setCategorias(c.data);
@@ -33,7 +33,7 @@ const Catalogos = () => {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/catalogos/razas', { nombre: razaNombre });
+      await api.post('/catalogs/breeds', { nombre: razaNombre });
       setOk('Raza agregada');
       setRazaNombre('');
       load();
@@ -46,7 +46,7 @@ const Catalogos = () => {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/catalogos/categorias', {
+      await api.post('/catalogs/categories', {
         nombre: catNombre,
         proposito_area: proposito,
       });
@@ -58,30 +58,30 @@ const Catalogos = () => {
     }
   };
 
-  const desactivarRaza = async (id, nombre) => {
+  const deactivateRaza = async (id, nombre) => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/catalogos/razas/${id}/desactivar`);
+      await api.patch(`/catalogs/breeds/${id}/deactivate`);
       setOk(`Raza "${nombre}" desactivada`);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo desactivar raza');
+      setError(err.response?.data?.error || 'No se pudo deactivate raza');
     }
   };
 
-  const desactivarCategoria = async (id, nombre) => {
+  const deactivateCategoria = async (id, nombre) => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/catalogos/categorias/${id}/desactivar`);
+      await api.patch(`/catalogs/categories/${id}/deactivate`);
       setOk(`Categoría "${nombre}" desactivada`);
       load();
     } catch (err) {
       if (err.response?.status === 404) {
-        setError('Endpoint de desactivar categoría no disponible aún');
+        setError('Endpoint de deactivate categoría no disponible aún');
       } else {
-        setError(err.response?.data?.error || 'No se pudo desactivar categoría');
+        setError(err.response?.data?.error || 'No se pudo deactivate categoría');
       }
     }
   };
@@ -122,7 +122,7 @@ const Catalogos = () => {
                 }}
               >
                 <span>{r.nombre}</span>
-                <button type="button" style={s.btnDanger} onClick={() => desactivarRaza(r.id, r.nombre)}>
+                <button type="button" style={s.btnDanger} onClick={() => deactivateRaza(r.id, r.nombre)}>
                   Desactivar
                 </button>
               </li>
@@ -171,7 +171,7 @@ const Catalogos = () => {
                 <button
                   type="button"
                   style={s.btnDanger}
-                  onClick={() => desactivarCategoria(c.id, c.nombre)}
+                  onClick={() => deactivateCategoria(c.id, c.nombre)}
                 >
                   Desactivar
                 </button>

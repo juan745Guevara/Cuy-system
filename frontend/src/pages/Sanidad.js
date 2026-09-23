@@ -35,11 +35,11 @@ const Sanidad = () => {
     try {
       const paramsCurso = filtroArea ? { id_area: filtroArea } : {};
       const [t, c, a, ar, j] = await Promise.all([
-        api.get('/tratamientos'),
-        api.get('/tratamientos/en-curso', { params: paramsCurso }),
-        api.get('/animales', { params: { estado: 'activo' } }),
+        api.get('/treatments'),
+        api.get('/treatments/in-progress', { params: paramsCurso }),
+        api.get('/animals', { params: { estado: 'activo' } }),
         api.get('/areas'),
-        api.get('/jaulas'),
+        api.get('/cages'),
       ]);
       setLista(t.data);
       setEnCurso(c.data);
@@ -64,7 +64,7 @@ const Sanidad = () => {
     setError('');
     setOk('');
     try {
-      const { data } = await api.post('/tratamientos', {
+      const { data } = await api.post('/treatments', {
         ...form,
         id_animal: form.id_animal ? Number(form.id_animal) : null,
         id_jaula: form.id_jaula ? Number(form.id_jaula) : null,
@@ -80,10 +80,10 @@ const Sanidad = () => {
     }
   };
 
-  const terminar = async (id) => {
+  const complete = async (id) => {
     const motivo = window.prompt('Motivo de cierre (opcional)') || '';
     try {
-      await api.patch(`/tratamientos/${id}/terminar`, { motivo_cierre: motivo });
+      await api.patch(`/treatments/${id}/complete`, { motivo_cierre: motivo });
       setOk('Tratamiento cerrado');
       load();
     } catch (err) {
@@ -229,7 +229,7 @@ const Sanidad = () => {
                 <td style={s.td}>{String(t.fecha_inicio).slice(0, 10)}</td>
                 <td style={s.td}>{String(t.fecha_termino).slice(0, 10)}</td>
                 <td style={s.td}>
-                  <button type="button" style={s.btnDanger} onClick={() => terminar(t.id)}>
+                  <button type="button" style={s.btnDanger} onClick={() => complete(t.id)}>
                     Terminar
                   </button>
                 </td>

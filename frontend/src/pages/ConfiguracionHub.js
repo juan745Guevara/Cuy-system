@@ -20,7 +20,7 @@ const CONFIG_ITEMS = [
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
-    path: '/usuarios',
+    path: '/users',
     keywords: ['usuarios', 'cuentas', 'roles', 'permisos', 'personal', 'operadores', 'granjas asignadas'],
   },
   {
@@ -36,7 +36,7 @@ const CONFIG_ITEMS = [
         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
       </svg>
     ),
-    path: '/catalogos',
+    path: '/catalogs',
     keywords: ['catalogos', 'razas', 'lineas', 'categorias', 'especies', 'clasificacion'],
   },
   {
@@ -52,7 +52,7 @@ const CONFIG_ITEMS = [
         <polyline points="12 6 12 12 16 14" />
       </svg>
     ),
-    path: '/alertas',
+    path: '/alerts',
     keywords: ['plazos', 'dias destete', 'dias gestacion', 'alertas', 'ciclo biologico', 'tiempos'],
   },
   {
@@ -72,7 +72,7 @@ const CONFIG_ITEMS = [
         <polyline points="10 9 9 9 8 9" />
       </svg>
     ),
-    path: '/auditoria',
+    path: '/audit',
     keywords: ['auditoria', 'logs', 'historial', 'trazabilidad', 'quien modifico', 'seguridad'],
   },
   {
@@ -89,7 +89,7 @@ const CONFIG_ITEMS = [
         <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
-    path: '/granjas',
+    path: '/farms',
     keywords: ['granjas', 'crear granja', 'especies', 'responsable'],
   },
 ];

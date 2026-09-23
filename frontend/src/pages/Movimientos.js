@@ -20,9 +20,9 @@ const emptyForm = () => ({
   fecha_jaula: new Date().toISOString().slice(0, 10),
 });
 
-/** Traslados, historial de movimientos, avisos de capacidad/área y transferencias entre granjas */
+/** Traslados, historial de movimientos, avisos de capacidad/área y transfers entre granjas */
 const Movimientos = () => {
-  const [tab, setTab] = useState('traslado');
+  const [tab, setTab] = useState('relocate');
   const [animals, setAnimals] = useState([]);
   const [cages, setCages] = useState([]);
   const [areas, setAreas] = useState([]);
@@ -40,13 +40,13 @@ const Movimientos = () => {
   const load = useCallback(async () => {
     try {
       const [a, j, ar, m, sc, fa, g] = await Promise.all([
-        api.get('/animales', { params: { estado: 'activo' } }),
-        api.get('/jaulas'),
+        api.get('/animals', { params: { estado: 'activo' } }),
+        api.get('/cages'),
         api.get('/areas'),
-        api.get('/movimientos'),
-        api.get('/movimientos/sobrecupo'),
-        api.get('/movimientos/fuera-de-area'),
-        api.get('/granjas').catch(() => ({ data: [] })),
+        api.get('/movements'),
+        api.get('/movements/overcapacity'),
+        api.get('/movements/out-of-area'),
+        api.get('/farms').catch(() => ({ data: [] })),
       ]);
       setAnimals(a.data.data || a.data);
       setCages(j.data);
@@ -100,7 +100,7 @@ const Movimientos = () => {
     setError('');
     setOk('');
     try {
-      const { data } = await api.post('/movimientos/traslado', {
+      const { data } = await api.post('/movements/relocate', {
         fecha: form.fecha,
         id_jaula_destino: Number(form.id_jaula_destino),
         ids_animales: form.ids_animales,
@@ -127,7 +127,7 @@ const Movimientos = () => {
     setError('');
     setOk('');
     try {
-      const { data } = await api.post('/movimientos/transferencia', {
+      const { data } = await api.post('/movements/transfer', {
         fecha: form.fecha,
         id_granja_destino: Number(form.id_granja_destino),
         id_jaula_destino: Number(form.id_jaula_destino),
@@ -160,7 +160,7 @@ const Movimientos = () => {
     setDestCages([]);
     if (!id) return;
     try {
-      const { data } = await api.get(`/movimientos/jaulas-destino/${id}`);
+      const { data } = await api.get(`/movements/destination-cages/${id}`);
       setDestCages(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron cargar jaulas destino');
@@ -170,7 +170,7 @@ const Movimientos = () => {
   const loadHistory = async () => {
     if (!form.id_animal_hist) return;
     try {
-      const { data } = await api.get(`/movimientos/animal/${form.id_animal_hist}`);
+      const { data } = await api.get(`/movements/animal/${form.id_animal_hist}`);
       setHistory(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar historial');
@@ -180,7 +180,7 @@ const Movimientos = () => {
   const loadCageOccupancy = async () => {
     if (!form.id_jaula_hist) return;
     try {
-      const { data } = await api.get(`/movimientos/jaula/${form.id_jaula_hist}`, {
+      const { data } = await api.get(`/movements/cage/${form.id_jaula_hist}`, {
         params: { fecha: form.fecha_jaula },
       });
       setCageOccupancy(data);
@@ -189,19 +189,19 @@ const Movimientos = () => {
     }
   };
 
-  const activeFarm = localStorage.getItem('granjaId') || '';
+  const activeFarm = localStorage.getItem('farmId') || '';
 
   return (
     <div style={s.wrap}>
       <h1 style={s.title}>Movimientos</h1>
-      <p style={s.sub}>Traslados internos, transferencias e historial</p>
+      <p style={s.sub}>Traslados internos, transfers e historial</p>
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
 
       <div style={s.row}>
         {[
-          ['traslado', 'Traslado'],
-          ['transferencia', 'Transferencia'],
+          ['relocate', 'Traslado'],
+          ['transfer', 'Transferencia'],
           ['historial', 'Historial'],
           ['avisos', 'Avisos'],
         ].map(([k, label]) => (
@@ -216,7 +216,7 @@ const Movimientos = () => {
         ))}
       </div>
 
-      {tab === 'traslado' && (
+      {tab === 'relocate' && (
         <form onSubmit={submitTraslado} style={s.card}>
           <p style={s.sub}>Elija área y luego jaula de destino</p>
           <div style={s.row}>
@@ -296,12 +296,12 @@ const Movimientos = () => {
             </p>
           )}
           <button type="submit" style={s.btn}>
-            Registrar traslado
+            Registrar relocate
           </button>
         </form>
       )}
 
-      {tab === 'transferencia' && (
+      {tab === 'transfer' && (
         <form onSubmit={submitTransferencia} style={s.card}>
           <p style={s.sub}>Misma especie · supervisor/admin</p>
           <div style={s.row}>

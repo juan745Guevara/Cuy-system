@@ -25,14 +25,14 @@ const Granjas = () => {
 
   const load = useCallback(async () => {
     try {
-      const g = await api.get('/granjas');
+      const g = await api.get('/farms');
       setGranjas(g.data);
       if (esSuper) {
-        const e = await api.get('/catalogos/especies');
+        const e = await api.get('/catalogs/species');
         setEspecies(e.data);
       }
       if (puedeAsignar) {
-        const u = await api.get('/usuarios');
+        const u = await api.get('/users');
         setUsuarios(u.data);
       }
     } catch (err) {
@@ -49,7 +49,7 @@ const Granjas = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/granjas', {
+      await api.post('/farms', {
         ...form,
         id_especie: Number(form.id_especie),
       });
@@ -61,13 +61,13 @@ const Granjas = () => {
     }
   };
 
-  const desactivar = async (id) => {
+  const deactivate = async (id) => {
     try {
-      await api.patch(`/granjas/${id}/desactivar`);
+      await api.patch(`/farms/${id}/deactivate`);
       setOk('Granja desactivada');
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo desactivar');
+      setError(err.response?.data?.error || 'No se pudo deactivate');
     }
   };
 
@@ -76,7 +76,7 @@ const Granjas = () => {
     setError('');
     setOk('');
     try {
-      await api.put(`/granjas/${asignacion.id_granja}/usuarios`, {
+      await api.put(`/farms/${asignacion.id_granja}/users`, {
         usuario_ids: asignacion.usuario_ids,
       });
       setOk('Usuarios asignados a la granja');
@@ -119,7 +119,7 @@ const Granjas = () => {
               <td style={s.td}>{g.ubicacion || '—'}</td>
               <td style={s.td}>
                 {esSuper && (
-                  <button type="button" style={s.btnDanger} onClick={() => desactivar(g.id)}>
+                  <button type="button" style={s.btnDanger} onClick={() => deactivate(g.id)}>
                     Desactivar
                   </button>
                 )}

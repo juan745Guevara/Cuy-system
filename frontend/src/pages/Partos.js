@@ -33,8 +33,8 @@ const Partos = () => {
   const load = useCallback(async () => {
     try {
       const [p, h] = await Promise.all([
-        api.get('/partos'),
-        api.get('/animales', { params: { sexo: 'H', estado: 'activo' } }),
+        api.get('/births'),
+        api.get('/animals', { params: { sexo: 'H', estado: 'activo' } }),
       ]);
       setLista(p.data);
       setHembras(h.data.data || h.data);
@@ -74,7 +74,7 @@ const Partos = () => {
       return;
     }
     try {
-      await api.post('/partos', {
+      await api.post('/births', {
         id_hembra: Number(form.id_hembra),
         id_empadre: form.id_empadre ? Number(form.id_empadre) : null,
         fecha_parto: form.fecha_parto,

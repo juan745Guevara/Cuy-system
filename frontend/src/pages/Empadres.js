@@ -30,9 +30,9 @@ const Empadres = () => {
   const load = useCallback(async () => {
     try {
       const [h, m, j] = await Promise.all([
-        api.get('/animales', { params: { sexo: 'H', estado: 'activo' } }),
-        api.get('/animales', { params: { sexo: 'M', estado: 'activo' } }),
-        api.get('/jaulas'),
+        api.get('/animals', { params: { sexo: 'H', estado: 'activo' } }),
+        api.get('/animals', { params: { sexo: 'M', estado: 'activo' } }),
+        api.get('/cages'),
       ]);
       setHembras(h.data.data || h.data);
       setMachos(m.data.data || m.data);
@@ -72,7 +72,7 @@ const Empadres = () => {
       return;
     }
     try {
-      const { data } = await api.post('/empadres', {
+      const { data } = await api.post('/breedings', {
         id_macho: form.id_macho ? Number(form.id_macho) : null,
         hembras: form.hembras,
         id_jaula: form.id_jaula ? Number(form.id_jaula) : null,
@@ -129,7 +129,7 @@ const Empadres = () => {
               setFiltroJaula(id);
               if (!id) return;
               try {
-                const { data } = await api.get(`/empadres/jaula/${id}/hembras`);
+                const { data } = await api.get(`/breedings/cage/${id}/females`);
                 setForm((f) => ({
                   ...f,
                   id_jaula: id,
@@ -236,7 +236,7 @@ const Empadres = () => {
                       );
                       if (!idJaula) return;
                       try {
-                        await api.post(`/empadres/${e.id}/cerrar`, {
+                        await api.post(`/breedings/${e.id}/close`, {
                           id_jaula_retorno: Number(idJaula),
                         });
                         setOk(`Empadre #${e.id} cerrado · macho retornado`);

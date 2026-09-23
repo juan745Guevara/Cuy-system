@@ -15,8 +15,8 @@ const GranjasHub = () => {
 
   useEffect(() => {
     Promise.all([
-      api.get('/jaulas/ocupacion').catch(() => ({ data: null })),
-      api.get('/inventario/poblacion').catch(() => ({ data: null })),
+      api.get('/cages/occupancy').catch(() => ({ data: null })),
+      api.get('/inventory/population').catch(() => ({ data: null })),
     ]).then(([o, p]) => {
       setOcupacion(o.data);
       setPob(p.data);
@@ -72,7 +72,7 @@ const GranjasHub = () => {
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
         </svg>
       ),
-      path: '/jaulas',
+      path: '/cages',
       keywords: ['jaulas', 'codigos', 'pozas', 'ubicacion'],
     },
     {
@@ -89,7 +89,7 @@ const GranjasHub = () => {
           <line x1="6" y1="20" x2="6" y2="14" />
         </svg>
       ),
-      path: '/inventario',
+      path: '/inventory',
       keywords: ['inventario', 'poblacion', 'censo', 'resumen', 'reporte'],
     },
     ...(admin
@@ -100,14 +100,14 @@ const GranjasHub = () => {
             category: 'Gestión',
             color: '#1565C0',
             bgBadge: 'rgba(21, 101, 192, 0.1)',
-            desc: 'Crear granjas, definir especie, responsables, ubicación geográfica y activar/desactivar unidades.',
+            desc: 'Crear granjas, definir especie, responsables, ubicación geográfica y activar/deactivate unidades.',
             icon: (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             ),
-            path: '/granjas',
+            path: '/farms',
             keywords: ['crear granja', 'administrar', 'especie', 'sedes'],
           },
         ]
@@ -191,7 +191,7 @@ const GranjasHub = () => {
           type="button"
           onClick={() => {
             seleccionarGranja(null);
-            localStorage.removeItem('granjaId');
+            localStorage.removeItem('farmId');
             navigate('/seleccionar-granja');
           }}
           style={{
@@ -285,7 +285,7 @@ const GranjasHub = () => {
               </span>
             ))}
           </div>
-          <Link to="/jaulas" style={{ display: 'inline-block', marginTop: 8, color: '#C62828', fontWeight: 700, fontSize: '0.84rem' }}>
+          <Link to="/cages" style={{ display: 'inline-block', marginTop: 8, color: '#C62828', fontWeight: 700, fontSize: '0.84rem' }}>
             Gestionar jaulas →
           </Link>
         </div>
@@ -302,7 +302,7 @@ const GranjasHub = () => {
         {filtered.map((item) => (
           <div
             key={item.id}
-            onClick={() => navigate(item.path, { state: { from: '/granjas-panel' } })}
+            onClick={() => navigate(item.path, { state: { from: '/farms-panel' } })}
             style={{
               background: theme.creamSoft,
               border: `1.5px solid ${theme.border}`,

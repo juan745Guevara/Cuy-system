@@ -12,7 +12,7 @@ const Auditoria = () => {
 
   const load = useCallback(async () => {
     try {
-      const { data } = await api.get('/auditoria', {
+      const { data } = await api.get('/audit', {
         params: entidad ? { entidad } : undefined,
       });
       setRows(data);
@@ -30,7 +30,7 @@ const Auditoria = () => {
     setError('');
     setOk('');
     try {
-      await api.post(`/auditoria/anular/${anular.tipo}/${anular.id}`, {
+      await api.post(`/audit/void/${anular.tipo}/${anular.id}`, {
         motivo: anular.motivo,
       });
       setOk(`Registro ${anular.tipo} #${anular.id} anulado`);

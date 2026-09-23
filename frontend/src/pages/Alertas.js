@@ -4,7 +4,7 @@ import api from '../services/api';
 import { page as s } from '../styles/ui';
 import { useAuth } from '../context/AuthContext';
 
-/** Tablero de alertas pendientes/vencidas/próximas · descartar · configurar plazos */
+/** Tablero de alertas pendientes/vencidas/próximas · discard · configurar plazos */
 const Alertas = () => {
   const { user } = useAuth();
   const admin = user?.rol === 'superadmin' || user?.rol === 'admin' || user?.rol === 'supervisor';
@@ -15,7 +15,7 @@ const Alertas = () => {
 
   const load = useCallback(async () => {
     try {
-      const [a, c] = await Promise.all([api.get('/alertas'), api.get('/alertas/config')]);
+      const [a, c] = await Promise.all([api.get('/alerts'), api.get('/alerts/config')]);
       setData(a.data);
       setConfig(c.data);
     } catch (err) {
@@ -27,10 +27,10 @@ const Alertas = () => {
     load();
   }, [load]);
 
-  const descartar = async (alerta) => {
+  const discard = async (alerta) => {
     const motivo = window.prompt('Motivo del descarte') || '';
     try {
-      await api.post('/alertas/descartar', {
+      await api.post('/alerts/discard', {
         tipo: alerta.tipo,
         id_animal: alerta.id_animal,
         id_referencia: alerta.id_referencia,
@@ -39,7 +39,7 @@ const Alertas = () => {
       setOk('Alerta descartada');
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo descartar');
+      setError(err.response?.data?.error || 'No se pudo discard');
     }
   };
 
@@ -47,7 +47,7 @@ const Alertas = () => {
     e.preventDefault();
     setError('');
     try {
-      const { data } = await api.put('/alertas/config', config);
+      const { data } = await api.put('/alerts/config', config);
       setConfig(data);
       setOk('Plazos actualizados');
       load();
@@ -81,7 +81,7 @@ const Alertas = () => {
               <li key={a.key} style={{ marginBottom: '0.5rem' }}>
                 <strong>{a.mensaje}</strong> · {a.fecha_prevista} · jaula {a.jaula || '—'}{' '}
                 <Link to={a.ruta || '/'}>Ir</Link>{' '}
-                <button type="button" style={s.btnDanger} onClick={() => descartar(a)}>
+                <button type="button" style={s.btnDanger} onClick={() => discard(a)}>
                   Descartar
                 </button>
               </li>
@@ -102,7 +102,7 @@ const Alertas = () => {
               <li key={a.key} style={{ marginBottom: '0.5rem' }}>
                 {a.mensaje} · {a.fecha_prevista} · jaula {a.jaula || '—'}{' '}
                 <Link to={a.ruta || '/'}>Ir</Link>{' '}
-                <button type="button" style={s.btnGhost} onClick={() => descartar(a)}>
+                <button type="button" style={s.btnGhost} onClick={() => discard(a)}>
                   Descartar
                 </button>
               </li>

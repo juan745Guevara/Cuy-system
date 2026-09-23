@@ -34,10 +34,10 @@ const Ventas = () => {
   const load = useCallback(async () => {
     try {
       const [v, a, c, r] = await Promise.all([
-        api.get('/ventas'),
-        api.get('/animales', { params: { estado: 'activo' } }),
-        api.get('/catalogos/categorias'),
-        api.get('/catalogos/razas'),
+        api.get('/sales'),
+        api.get('/animals', { params: { estado: 'activo' } }),
+        api.get('/catalogs/categories'),
+        api.get('/catalogs/breeds'),
       ]);
       setLista(v.data);
       setAnimales(a.data.data || a.data);
@@ -50,7 +50,7 @@ const Ventas = () => {
 
   const loadDescartes = useCallback(async () => {
     try {
-      const d = await api.get('/ventas/descartes');
+      const d = await api.get('/sales/discards');
       setDescartes(d.data);
       setSel(Object.fromEntries(d.data.map((g) => [g.categoria, true])));
     } catch (err) {
@@ -70,7 +70,7 @@ const Ventas = () => {
   const toggleSel = (categoria) =>
     setSel((prev) => ({ ...prev, [categoria]: !prev[categoria] }));
 
-  const venderDescartes = async () => {
+  const sellDiscards = async () => {
     setError('');
     setOk('');
     const ids = descartes.filter((g) => sel[g.categoria]).flatMap((g) => g.id_animales);
@@ -79,7 +79,7 @@ const Ventas = () => {
       return;
     }
     try {
-      const r = await api.post('/ventas/descartes', {
+      const r = await api.post('/sales/discards', {
         fecha: dForm.fecha,
         comprador: dForm.comprador || null,
         precio: dForm.precio ? Number(dForm.precio) : null,
@@ -104,7 +104,7 @@ const Ventas = () => {
       return;
     }
     try {
-      await api.post('/ventas', {
+      await api.post('/sales', {
         fecha: form.fecha,
         id_animal: form.id_animal ? Number(form.id_animal) : null,
         clasificacion: form.clasificacion || null,
@@ -228,7 +228,7 @@ const Ventas = () => {
                 value={dForm.precio}
                 onChange={(e) => setDForm({ ...dForm, precio: e.target.value })}
               />
-              <button type="button" style={s.btn} onClick={venderDescartes}>
+              <button type="button" style={s.btn} onClick={sellDiscards}>
                 Vender seleccionados
               </button>
             </div>

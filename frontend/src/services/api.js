@@ -9,9 +9,9 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  const granjaId = localStorage.getItem('granjaId');
+  const farmId = localStorage.getItem('farmId');
   if (token) config.headers.Authorization = `Bearer ${token}`;
-  if (granjaId) config.headers['x-granja-id'] = granjaId;
+  if (farmId) config.headers['x-farm-id'] = farmId;
   return config;
 });
 

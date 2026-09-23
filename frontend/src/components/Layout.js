@@ -28,7 +28,7 @@ const mainNavItems = [
         <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
     ),
-    matchPaths: ['/eventos', '/empadres', '/partos', '/destetes', '/mortalidad', '/pesajes', '/sanidad', '/alertas', '/ranking'],
+    matchPaths: ['/eventos', '/breedings', '/births', '/weanings', '/mortality', '/weighings', '/sanidad', '/alerts', '/ranking'],
   },
   {
     to: '/buscar',
@@ -42,7 +42,7 @@ const mainNavItems = [
     matchPaths: ['/buscar'],
   },
   {
-    to: '/ventas',
+    to: '/sales',
     label: 'Ventas',
     icon: (
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -50,7 +50,7 @@ const mainNavItems = [
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
     ),
-    matchPaths: ['/ventas'],
+    matchPaths: ['/sales'],
   },
   {
     to: '/registro',
@@ -63,10 +63,10 @@ const mainNavItems = [
         <line x1="22" y1="11" x2="16" y2="11" />
       </svg>
     ),
-    matchPaths: ['/registro', '/animales', '/reproductoras', '/reproductores', '/movimientos'],
+    matchPaths: ['/registro', '/animals', '/breeding-females', '/breeding-males', '/movements'],
   },
   {
-    to: '/granjas-panel',
+    to: '/farms-panel',
     label: 'Granjas',
     icon: (
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -74,7 +74,7 @@ const mainNavItems = [
         <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
-    matchPaths: ['/granjas-panel', '/areas', '/jaulas', '/inventario'],
+    matchPaths: ['/farms-panel', '/areas', '/cages', '/inventory'],
   },
   {
     to: '/configuracion',
@@ -85,33 +85,33 @@ const mainNavItems = [
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
     ),
-    matchPaths: ['/configuracion', '/usuarios', '/catalogos', '/auditoria', '/granjas'],
+    matchPaths: ['/configuracion', '/users', '/catalogs', '/audit', '/farms'],
   },
 ];
 
 // Mapeo de subpáginas → hub de origen (usado cuando no hay state de navegación)
-const HUB_PATHS = ['/dashboard', '/eventos', '/buscar', '/ventas', '/registro', '/granjas-panel', '/configuracion'];
+const HUB_PATHS = ['/dashboard', '/eventos', '/buscar', '/sales', '/registro', '/farms-panel', '/configuracion'];
 
 const SUBPAGE_HUB = {
-  '/empadres': '/eventos',
-  '/partos': '/eventos',
-  '/destetes': '/eventos',
-  '/mortalidad': '/eventos',
-  '/pesajes': '/eventos',
+  '/breedings': '/eventos',
+  '/births': '/eventos',
+  '/weanings': '/eventos',
+  '/mortality': '/eventos',
+  '/weighings': '/eventos',
   '/sanidad': '/eventos',
-  '/alertas': '/configuracion',
+  '/alerts': '/configuracion',
   '/ranking': '/eventos',
-  '/animales': '/registro',
-  '/reproductoras': '/registro',
-  '/reproductores': '/registro',
-  '/movimientos': '/registro',
-  '/areas': '/granjas-panel',
-  '/jaulas': '/granjas-panel',
-  '/inventario': '/granjas-panel',
-  '/usuarios': '/configuracion',
-  '/catalogos': '/configuracion',
-  '/auditoria': '/configuracion',
-  '/granjas': '/configuracion',
+  '/animals': '/registro',
+  '/breeding-females': '/registro',
+  '/breeding-males': '/registro',
+  '/movements': '/registro',
+  '/areas': '/farms-panel',
+  '/cages': '/farms-panel',
+  '/inventory': '/farms-panel',
+  '/users': '/configuracion',
+  '/catalogs': '/configuracion',
+  '/audit': '/configuracion',
+  '/farms': '/configuracion',
 };
 
 const initiales = (nombre) =>
@@ -302,7 +302,7 @@ const Layout = () => {
                   type="button"
                   onClick={() => {
                     seleccionarGranja(null);
-                    localStorage.removeItem('granjaId');
+                    localStorage.removeItem('farmId');
                     navigate('/seleccionar-granja');
                   }}
                   title="Cambiar granja"

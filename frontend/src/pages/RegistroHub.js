@@ -18,7 +18,7 @@ const REGISTROS_ITEMS = [
         <line x1="22" y1="11" x2="16" y2="11" />
       </svg>
     ),
-    path: '/animales',
+    path: '/animals',
     keywords: ['cuy', 'animal', 'codigo', 'genero', 'raza', 'categoria', 'jaula', 'alta', 'ingreso'],
   },
   {
@@ -35,7 +35,7 @@ const REGISTROS_ITEMS = [
         <path d="M9 18h6" />
       </svg>
     ),
-    path: '/reproductoras',
+    path: '/breeding-females',
     keywords: ['hembras', 'reproductoras', 'madres', 'partos', 'fichas hembras'],
   },
   {
@@ -53,7 +53,7 @@ const REGISTROS_ITEMS = [
         <path d="M19 5v5" />
       </svg>
     ),
-    path: '/reproductores',
+    path: '/breeding-males',
     keywords: ['machos', 'reproductores', 'padres', 'empadres', 'fichas machos'],
   },
   {
@@ -86,7 +86,7 @@ const REGISTROS_ITEMS = [
         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
       </svg>
     ),
-    path: '/jaulas',
+    path: '/cages',
     keywords: ['jaulas', 'codigo jaula', 'capacidad', 'ubicacion', 'pozas', 'corral'],
   },
   {
@@ -104,8 +104,8 @@ const REGISTROS_ITEMS = [
         <path d="M21 13v2a4 4 0 0 1-4 4H3" />
       </svg>
     ),
-    path: '/movimientos',
-    keywords: ['traslados', 'movimiento', 'cambio jaula', 'reubicacion'],
+    path: '/movements',
+    keywords: ['relocates', 'movimiento', 'cambio jaula', 'reubicacion'],
   },
 ];
 

@@ -31,10 +31,10 @@ const Inventario = () => {
     setError('');
     try {
       const [p, r, a, c] = await Promise.all([
-        api.get('/inventario/poblacion'),
-        api.get('/inventario/resumen-mensual', { params: { anio, mes } }),
-        api.get('/inventario/por-area'),
-        api.get('/inventario/consolidado', { params: { anio, mes } }),
+        api.get('/inventory/population'),
+        api.get('/inventory/monthly-summary', { params: { anio, mes } }),
+        api.get('/inventory/by-area'),
+        api.get('/inventory/consolidated', { params: { anio, mes } }),
       ]);
       setPoblacion(p.data);
       setResumen(r.data);
@@ -222,8 +222,8 @@ const Inventario = () => {
           <p>Nacimientos: {resumen.nacimientos ?? '—'}</p>
           <p>Mortalidad: {resumen.mortalidad ?? '—'}</p>
           <p>Ventas: {resumen.ventas ?? '—'}</p>
-          <p>Transferencias in: {resumen.transferencias_in ?? '—'}</p>
-          <p>Transferencias out: {resumen.transferencias_out ?? '—'}</p>
+          <p>Transferencias in: {resumen.transfers_in ?? '—'}</p>
+          <p>Transferencias out: {resumen.transfers_out ?? '—'}</p>
           <p>
             Población final:{' '}
             {resumen.poblacion_final ?? resumen.poblacion_actual ?? '—'}
@@ -318,14 +318,14 @@ const Inventario = () => {
           <button
             type="button"
             style={s.btn}
-            onClick={() => descargar('/reportes/hembras', 'registro-hembras.xlsx')}
+            onClick={() => descargar('/reports/females', 'registro-hembras.xlsx')}
           >
             Hembras
           </button>
           <button
             type="button"
             style={s.btn}
-            onClick={() => descargar('/reportes/machos', 'registro-machos.xlsx')}
+            onClick={() => descargar('/reports/males', 'registro-machos.xlsx')}
           >
             Machos
           </button>
@@ -333,7 +333,7 @@ const Inventario = () => {
             type="button"
             style={s.btn}
             onClick={() =>
-              descargar('/reportes/inventario-mensual', `inventario-${anio}-${mes}.xlsx`)
+              descargar('/reports/inventory-mensual', `inventario-${anio}-${mes}.xlsx`)
             }
           >
             Inventario mensual
@@ -343,7 +343,7 @@ const Inventario = () => {
             style={s.btnGhost}
             onClick={() =>
               descargar(
-                `/reportes/animales?anio=${anio}&mes=${mes}`,
+                `/reports/animals?anio=${anio}&mes=${mes}`,
                 `animales-${anio}-${mes}.xlsx`
               )
             }

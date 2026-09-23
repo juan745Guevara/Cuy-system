@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [granjas, setGranjas] = useState([]);
   const [granjaActiva, setGranjaActiva] = useState(
-    () => Number(localStorage.getItem('granjaId')) || null
+    () => Number(localStorage.getItem('farmId')) || null
   );
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [loading, setLoading] = useState(!!localStorage.getItem('token'));
@@ -19,10 +19,10 @@ export const AuthProvider = ({ children }) => {
     setGranjas(data.granjas || []);
     // Si solo hay una especie/granja, se selecciona sola
     if (data.granjas?.length === 1) {
-      localStorage.setItem('granjaId', String(data.granjas[0].id));
+      localStorage.setItem('farmId', String(data.granjas[0].id));
       setGranjaActiva(data.granjas[0].id);
     } else {
-      localStorage.removeItem('granjaId');
+      localStorage.removeItem('farmId');
       setGranjaActiva(null);
     }
   }, []);
@@ -63,13 +63,13 @@ export const AuthProvider = ({ children }) => {
     setGranjas([]);
     setGranjaActiva(null);
     localStorage.removeItem('token');
-    localStorage.removeItem('granjaId');
+    localStorage.removeItem('farmId');
   }, []);
 
   const seleccionarGranja = (id) => {
     setGranjaActiva(id);
-    if (id == null) localStorage.removeItem('granjaId');
-    else localStorage.setItem('granjaId', String(id));
+    if (id == null) localStorage.removeItem('farmId');
+    else localStorage.setItem('farmId', String(id));
   };
 
   // Caducidad por inactividad (30 min)

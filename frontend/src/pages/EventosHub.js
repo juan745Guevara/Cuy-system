@@ -16,7 +16,7 @@ const EVENTOS_LIST = [
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
       </svg>
     ),
-    path: '/empadres',
+    path: '/breedings',
     keywords: ['monta', 'empadre', 'cruce', 'macho', 'hembras', 'reproduccion', 'preñez'],
   },
   {
@@ -32,7 +32,7 @@ const EVENTOS_LIST = [
         <path d="M12 6v6l4 2" />
       </svg>
     ),
-    path: '/partos',
+    path: '/births',
     keywords: ['parto', 'camada', 'nacimiento', 'crias', 'gazapos', 'peso nacimiento'],
   },
   {
@@ -50,7 +50,7 @@ const EVENTOS_LIST = [
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
-    path: '/destetes',
+    path: '/weanings',
     keywords: ['destete', 'separacion', 'recria', 'camada destete', 'peso destete'],
   },
   {
@@ -67,7 +67,7 @@ const EVENTOS_LIST = [
         <line x1="9" y1="9" x2="15" y2="15" />
       </svg>
     ),
-    path: '/mortalidad',
+    path: '/mortality',
     keywords: ['mortalidad', 'muerte', 'baja', 'deceso', 'causa', 'enfermedad'],
   },
   {
@@ -85,7 +85,7 @@ const EVENTOS_LIST = [
         <path d="M18 10l-3 6h6l-3-6z" />
       </svg>
     ),
-    path: '/pesajes',
+    path: '/weighings',
     keywords: ['pesaje', 'peso', 'gramos', 'lote', 'crecimiento', 'balanza'],
   },
   {
@@ -111,7 +111,7 @@ const EVENTOS_LIST = [
     category: 'Manejo',
     color: '#1565C0',
     bgBadge: 'rgba(21, 101, 192, 0.1)',
-    desc: 'Traslados internos de jaula a jaula, por área o transferencias entre granjas.',
+    desc: 'Traslados internos de jaula a jaula, por área o transfers entre granjas.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <polyline points="17 1 21 5 17 9" />
@@ -120,8 +120,8 @@ const EVENTOS_LIST = [
         <path d="M21 13v2a4 4 0 0 1-4 4H3" />
       </svg>
     ),
-    path: '/movimientos',
-    keywords: ['movimiento', 'traslado', 'jaula', 'transferencia', 'cambio jaula', 'reubicacion'],
+    path: '/movements',
+    keywords: ['movimiento', 'relocate', 'jaula', 'transfer', 'cambio jaula', 'reubicacion'],
   },
   {
     id: 'alertas',
@@ -136,7 +136,7 @@ const EVENTOS_LIST = [
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
     ),
-    path: '/alertas',
+    path: '/alerts',
     keywords: ['alertas', 'parto proximo', 'destete pendiente', 'plazos', 'vencidos', 'avisos'],
   },
   {
@@ -163,7 +163,7 @@ const EventosHub = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/alertas')
+    api.get('/alerts')
       .then((res) => {
         const data = res.data;
         setAlertasCount({
@@ -332,7 +332,7 @@ const EventosHub = () => {
             </div>
           </div>
           <Link
-            to="/alertas"
+            to="/alerts"
             style={{
               padding: '0.45rem 0.9rem',
               background: '#E65100',

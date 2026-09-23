@@ -29,11 +29,11 @@ const Mortalidad = () => {
   const load = useCallback(async () => {
     try {
       const [m, a, c, r, j] = await Promise.all([
-        api.get('/mortalidad'),
-        api.get('/animales', { params: { estado: 'activo' } }),
-        api.get('/catalogos/categorias'),
-        api.get('/catalogos/razas'),
-        api.get('/jaulas'),
+        api.get('/mortality'),
+        api.get('/animals', { params: { estado: 'activo' } }),
+        api.get('/catalogs/categories'),
+        api.get('/catalogs/breeds'),
+        api.get('/cages'),
       ]);
       setLista(m.data);
       setAnimales(a.data.data || a.data);
@@ -63,7 +63,7 @@ const Mortalidad = () => {
       return;
     }
     try {
-      await api.post('/mortalidad', {
+      await api.post('/mortality', {
         fecha: form.fecha,
         id_animal: form.id_animal ? Number(form.id_animal) : null,
         clasificacion: form.clasificacion || null,

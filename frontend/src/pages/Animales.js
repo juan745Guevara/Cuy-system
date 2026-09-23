@@ -32,7 +32,7 @@ async function blobErrorMessage(err, fallback) {
 
 /**
  * UI Entrega 1 — ficha de animal
- * Registrar, actualizar, buscar y listar/filtrar animales
+ * Registrar, actualizar, buscar y list/filtrar animales
  */
 const Animales = () => {
   const [items, setItems] = useState([]);
@@ -78,7 +78,7 @@ const Animales = () => {
     setNotFoundCodigo('');
     try {
       const params = buildParams();
-      const { data } = await api.get('/animales', { params });
+      const { data } = await api.get('/animals', { params });
       const rows = Array.isArray(data.data || data) ? [...(data.data || data)] : [];
       if (params.sort === 'fecha_nacimiento') {
         rows.sort((a, b) =>
@@ -101,9 +101,9 @@ const Animales = () => {
   const loadCatalogs = useCallback(async () => {
     try {
       const [r, c, j, a] = await Promise.all([
-        api.get('/catalogos/razas'),
-        api.get('/catalogos/categorias'),
-        api.get('/jaulas'),
+        api.get('/catalogs/breeds'),
+        api.get('/catalogs/categories'),
+        api.get('/cages'),
         api.get('/areas'),
       ]);
       setRazas(r.data);
@@ -130,7 +130,7 @@ const Animales = () => {
     setDetalle(null);
     setNotFoundCodigo('');
     try {
-      const { data } = await api.get(`/animales/buscar/${encodeURIComponent(q.trim())}`);
+      const { data } = await api.get(`/animals/search/${encodeURIComponent(q.trim())}`);
       setItems([data]);
       setTotal(1);
       setDetalle(data);
@@ -168,7 +168,7 @@ const Animales = () => {
         particularidad: form.particularidad || null,
       };
       if (form.confirmar_reuso) body.confirmar_reuso = true;
-      await api.post('/animales', body);
+      await api.post('/animals', body);
       setOk(`Animal ${form.codigo} registrado`);
       setShowForm(false);
       clearDraft(DRAFT_KEY);
@@ -190,7 +190,7 @@ const Animales = () => {
     if (!bajaModal) return;
     setError('');
     try {
-      await api.patch(`/animales/${bajaModal.id}`, {
+      await api.patch(`/animals/${bajaModal.id}`, {
         estado: bajaModal.estado,
         fecha_baja: bajaFecha,
         motivo_baja: bajaMotivo || (bajaModal.estado === 'descarte' ? 'Descarte' : 'Baja operativa'),
@@ -209,10 +209,10 @@ const Animales = () => {
     if (!detalle?.id || !partTexto.trim()) return;
     setError('');
     try {
-      await api.patch(`/animales/${detalle.id}`, { particularidad: partTexto.trim() });
+      await api.patch(`/animals/${detalle.id}`, { particularidad: partTexto.trim() });
       setOk('Particularidad registrada');
       setPartTexto('');
-      const { data } = await api.get(`/animales/buscar/${encodeURIComponent(detalle.codigo)}`);
+      const { data } = await api.get(`/animals/search/${encodeURIComponent(detalle.codigo)}`);
       setDetalle(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo guardar particularidad');
@@ -223,7 +223,7 @@ const Animales = () => {
     setError('');
     const params = buildParams();
     try {
-      const res = await api.get('/reportes/animales', { responseType: 'blob', params });
+      const res = await api.get('/reports/animals', { responseType: 'blob', params });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url;
@@ -233,7 +233,7 @@ const Animales = () => {
     } catch (err) {
       if (err.response?.status === 404) {
         try {
-          const { data } = await api.get('/animales', { params });
+          const { data } = await api.get('/animals', { params });
           const rows = data.data || data;
           const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' });
           const url = window.URL.createObjectURL(blob);
@@ -567,7 +567,7 @@ const Animales = () => {
                         onClick={async () => {
                           try {
                             const { data } = await api.get(
-                              `/animales/buscar/${encodeURIComponent(a.codigo)}`
+                              `/animals/search/${encodeURIComponent(a.codigo)}`
                             );
                             setDetalle(data);
                           } catch (err) {

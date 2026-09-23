@@ -25,14 +25,14 @@ const BusquedaGlobal = () => {
     setLoading(true);
     try {
       const [anRes, jRes, arRes, vRes, empRes, pRes, mRes, uRes] = await Promise.allSettled([
-        api.get('/animales'),
-        api.get('/jaulas'),
+        api.get('/animals'),
+        api.get('/cages'),
         api.get('/areas'),
-        api.get('/ventas'),
-        api.get('/empadres'),
-        api.get('/partos'),
-        api.get('/mortalidad'),
-        api.get('/usuarios'),
+        api.get('/sales'),
+        api.get('/breedings'),
+        api.get('/births'),
+        api.get('/mortality'),
+        api.get('/users'),
       ]);
 
       setData({
@@ -299,7 +299,7 @@ const BusquedaGlobal = () => {
             <h2 style={{ ...s.title, fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span>🐹</span> Cuyes / Fichas de Animales ({resAnimales.length})
             </h2>
-            <Link to="/animales" style={{ color: theme.maroon, fontSize: '0.85rem', fontWeight: 700 }}>
+            <Link to="/animals" style={{ color: theme.maroon, fontSize: '0.85rem', fontWeight: 700 }}>
               Ver todos en Animales →
             </Link>
           </div>
@@ -313,7 +313,7 @@ const BusquedaGlobal = () => {
             {resAnimales.slice(0, activeTab === 'todos' ? 8 : 40).map((a) => (
               <div
                 key={a.id}
-                onClick={() => navigate('/animales')}
+                onClick={() => navigate('/animals')}
                 style={{
                   ...s.card,
                   margin: 0,
@@ -381,7 +381,7 @@ const BusquedaGlobal = () => {
             <h2 style={{ ...s.title, fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span>🛖</span> Jaulas y Áreas ({resJaulas.length + resAreas.length})
             </h2>
-            <Link to="/jaulas" style={{ color: theme.maroon, fontSize: '0.85rem', fontWeight: 700 }}>
+            <Link to="/cages" style={{ color: theme.maroon, fontSize: '0.85rem', fontWeight: 700 }}>
               Ver Jaulas →
             </Link>
           </div>
@@ -395,7 +395,7 @@ const BusquedaGlobal = () => {
             {resJaulas.slice(0, activeTab === 'todos' ? 6 : 30).map((j) => (
               <div
                 key={j.id}
-                onClick={() => navigate('/jaulas')}
+                onClick={() => navigate('/cages')}
                 style={{
                   ...s.card,
                   margin: 0,
@@ -448,7 +448,7 @@ const BusquedaGlobal = () => {
             <h2 style={{ ...s.title, fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span>💰</span> Ventas Registradas ({resVentas.length})
             </h2>
-            <Link to="/ventas" style={{ color: theme.maroon, fontSize: '0.85rem', fontWeight: 700 }}>
+            <Link to="/sales" style={{ color: theme.maroon, fontSize: '0.85rem', fontWeight: 700 }}>
               Ver Módulo de Ventas →
             </Link>
           </div>
@@ -462,7 +462,7 @@ const BusquedaGlobal = () => {
             {resVentas.slice(0, activeTab === 'todos' ? 6 : 30).map((v) => (
               <div
                 key={v.id}
-                onClick={() => navigate('/ventas')}
+                onClick={() => navigate('/sales')}
                 style={{
                   ...s.card,
                   margin: 0,
@@ -508,7 +508,7 @@ const BusquedaGlobal = () => {
             {resEmpadres.slice(0, 4).map((e) => (
               <div
                 key={`emp-${e.id}`}
-                onClick={() => navigate('/empadres')}
+                onClick={() => navigate('/breedings')}
                 style={{ ...s.card, margin: 0, padding: '1rem', cursor: 'pointer' }}
               >
                 <div style={{ fontSize: '0.75rem', color: '#7A1216', fontWeight: 700 }}>EMPADRE / MONTA</div>
@@ -523,7 +523,7 @@ const BusquedaGlobal = () => {
             {resPartos.slice(0, 4).map((p) => (
               <div
                 key={`par-${p.id}`}
-                onClick={() => navigate('/partos')}
+                onClick={() => navigate('/births')}
                 style={{ ...s.card, margin: 0, padding: '1rem', cursor: 'pointer' }}
               >
                 <div style={{ fontSize: '0.75rem', color: '#9C27B0', fontWeight: 700 }}>PARTO / CAMADA</div>
@@ -538,7 +538,7 @@ const BusquedaGlobal = () => {
             {resMortalidad.slice(0, 4).map((m) => (
               <div
                 key={`mor-${m.id}`}
-                onClick={() => navigate('/mortalidad')}
+                onClick={() => navigate('/mortality')}
                 style={{ ...s.card, margin: 0, padding: '1rem', cursor: 'pointer' }}
               >
                 <div style={{ fontSize: '0.75rem', color: '#C62828', fontWeight: 700 }}>MORTALIDAD / BAJA</div>

@@ -19,9 +19,9 @@ const Jaulas = () => {
     setError('');
     try {
       const [j, a, o] = await Promise.all([
-        api.get('/jaulas'),
+        api.get('/cages'),
         api.get('/areas'),
-        api.get('/jaulas/ocupacion'),
+        api.get('/cages/occupancy'),
       ]);
       setJaulas(j.data);
       setAreas(a.data);
@@ -41,7 +41,7 @@ const Jaulas = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/jaulas', {
+      await api.post('/cages', {
         id_area: Number(idArea),
         codigo,
         capacidad_maxima: capacidad ? Number(capacidad) : null,
@@ -61,7 +61,7 @@ const Jaulas = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/jaulas/${edit.id}`, {
+      await api.patch(`/cages/${edit.id}`, {
         codigo: edit.codigo,
         capacidad_maxima: edit.capacidad ? Number(edit.capacidad) : null,
         id_area: Number(edit.id_area),
@@ -74,26 +74,26 @@ const Jaulas = () => {
     }
   };
 
-  const desactivar = async (j) => {
+  const deactivate = async (j) => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/jaulas/${j.id}/desactivar`);
+      await api.patch(`/cages/${j.id}/deactivate`);
       setOk(`Jaula ${j.codigo} desactivada`);
       if (ocupantes?.id === j.id) setOcupantes(null);
       if (edit?.id === j.id) setEdit(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo desactivar');
+      setError(err.response?.data?.error || 'No se pudo deactivate');
     }
   };
 
   const verAnimales = async (id) => {
     try {
-      const { data } = await api.get(`/jaulas/${id}/animales`);
+      const { data } = await api.get(`/cages/${id}/animals`);
       setOcupantes({ id, data });
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudieron listar animales');
+      setError(err.response?.data?.error || 'No se pudieron list animales');
     }
   };
 
@@ -247,7 +247,7 @@ const Jaulas = () => {
                 >
                   Editar
                 </button>
-                <button type="button" style={s.btnDanger} onClick={() => desactivar(j)}>
+                <button type="button" style={s.btnDanger} onClick={() => deactivate(j)}>
                   Desactivar
                 </button>
               </td>

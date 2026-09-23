@@ -25,14 +25,14 @@ const SeleccionGranja = () => {
     [granjas, especieId]
   );
 
-  const [granjaId, setGranjaId] = useState(
+  const [farmId, setGranjaId] = useState(
     granjasFiltradas.length === 1 ? granjasFiltradas[0].id : ''
   );
 
   const handleContinue = (e) => {
     e.preventDefault();
-    if (!granjaId) return;
-    seleccionarGranja(Number(granjaId));
+    if (!farmId) return;
+    seleccionarGranja(Number(farmId));
     navigate('/');
   };
 
@@ -168,7 +168,7 @@ const SeleccionGranja = () => {
           Granja
         </label>
         <select
-          value={granjaId}
+          value={farmId}
           onChange={(e) => setGranjaId(e.target.value)}
           required
           disabled={!especieId}
@@ -184,21 +184,21 @@ const SeleccionGranja = () => {
 
         <button
           type="submit"
-          disabled={!granjaId}
+          disabled={!farmId}
           style={{
             width: '100%',
             padding: '0.85rem',
             marginTop: '0.25rem',
-            background: granjaId
+            background: farmId
               ? `linear-gradient(180deg, ${theme.maroonSoft} 0%, ${theme.maroon} 100%)`
               : theme.creamDeep,
-            color: granjaId ? theme.creamSoft : theme.muted,
+            color: farmId ? theme.creamSoft : theme.muted,
             border: 'none',
             borderRadius: theme.radiusSm,
-            cursor: granjaId ? 'pointer' : 'not-allowed',
+            cursor: farmId ? 'pointer' : 'not-allowed',
             fontWeight: 700,
             fontFamily: theme.fontBody,
-            boxShadow: granjaId ? '0 10px 22px rgba(122,18,22,0.22)' : 'none',
+            boxShadow: farmId ? '0 10px 22px rgba(122,18,22,0.22)' : 'none',
           }}
         >
           Continuar

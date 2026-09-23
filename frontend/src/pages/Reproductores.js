@@ -23,10 +23,10 @@ const Reproductores = () => {
   const load = useCallback(async () => {
     try {
       const [r, c, j, a] = await Promise.all([
-        api.get('/catalogos/razas'),
-        api.get('/catalogos/categorias'),
-        api.get('/jaulas'),
-        api.get('/animales', { params: { sexo: 'M', estado: 'activo' } }),
+        api.get('/catalogs/breeds'),
+        api.get('/catalogs/categories'),
+        api.get('/cages'),
+        api.get('/animals', { params: { sexo: 'M', estado: 'activo' } }),
       ]);
       setRazas(r.data);
       setCategorias(c.data);
@@ -46,7 +46,7 @@ const Reproductores = () => {
   const verResultados = async (id) => {
     setError('');
     try {
-      const { data } = await api.get(`/empadres/reproductores/${id}`);
+      const { data } = await api.get(`/breedings/breeding-males/${id}`);
       setDetalle(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar ficha del macho');
@@ -62,7 +62,7 @@ const Reproductores = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/empadres/reproductores', {
+      await api.post('/breedings/breeding-males', {
         codigo: form.codigo,
         id_raza: form.id_raza ? Number(form.id_raza) : null,
         id_categoria: form.id_categoria ? Number(form.id_categoria) : null,

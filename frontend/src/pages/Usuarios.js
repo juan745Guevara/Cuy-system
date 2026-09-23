@@ -29,7 +29,7 @@ const Usuarios = () => {
   const load = useCallback(async () => {
     if (!puedeAdmin) return;
     try {
-      const [u, g] = await Promise.all([api.get('/usuarios'), api.get('/granjas')]);
+      const [u, g] = await Promise.all([api.get('/users'), api.get('/farms')]);
       setLista(u.data);
       setGranjas(g.data);
     } catch (err) {
@@ -64,7 +64,7 @@ const Usuarios = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/usuarios', {
+      await api.post('/users', {
         ...form,
         granja_ids: form.granja_ids.map(Number),
       });
@@ -98,7 +98,7 @@ const Usuarios = () => {
         granja_ids: editForm.granja_ids.map(Number),
       };
       if (editForm.password.trim()) body.password = editForm.password;
-      await api.patch(`/usuarios/${editId}`, body);
+      await api.patch(`/users/${editId}`, body);
       setOk('Usuario actualizado');
       setEditId(null);
       load();
@@ -107,11 +107,11 @@ const Usuarios = () => {
     }
   };
 
-  const desactivar = async (u) => {
+  const deactivate = async (u) => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/usuarios/${u.id}`, {
+      await api.patch(`/users/${u.id}`, {
         activo: false,
         granja_ids: (u.granjas || []).map((g) => g.id),
       });
@@ -119,7 +119,7 @@ const Usuarios = () => {
       if (editId === u.id) setEditId(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo desactivar');
+      setError(err.response?.data?.error || 'No se pudo deactivate');
     }
   };
 
@@ -267,7 +267,7 @@ const Usuarios = () => {
                   Editar
                 </button>
                 {u.activo !== false && (
-                  <button type="button" style={s.btnDanger} onClick={() => desactivar(u)}>
+                  <button type="button" style={s.btnDanger} onClick={() => deactivate(u)}>
                     Desactivar
                   </button>
                 )}

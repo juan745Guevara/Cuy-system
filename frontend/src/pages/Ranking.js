@@ -43,13 +43,13 @@ const Ranking = () => {
     }
   };
 
-  const marcar = async (id, accion) => {
+  const mark = async (id, accion) => {
     try {
-      await api.post(`/ranking/${id}/marcar`, { accion });
+      await api.post(`/ranking/${id}/mark`, { accion });
       setOk(`Marcado como ${accion}`);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo marcar');
+      setError(err.response?.data?.error || 'No se pudo mark');
     }
   };
 
@@ -133,10 +133,10 @@ const Ranking = () => {
                   : `empadres ${r.empadres} · preñez ${r.pct_prenez}% · camada ${r.camada_promedio}`}
               </td>
               <td style={s.td}>
-                <button type="button" style={s.btnGhost} onClick={() => marcar(r.id, 'reemplazo')}>
+                <button type="button" style={s.btnGhost} onClick={() => mark(r.id, 'reemplazo')}>
                   Reemplazo
                 </button>{' '}
-                <button type="button" style={s.btnDanger} onClick={() => marcar(r.id, 'descarte')}>
+                <button type="button" style={s.btnDanger} onClick={() => mark(r.id, 'descarte')}>
                   Descarte
                 </button>
               </td>

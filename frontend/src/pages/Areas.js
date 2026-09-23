@@ -26,7 +26,7 @@ const Areas = () => {
   const load = useCallback(async () => {
     setError('');
     try {
-      const [a, r] = await Promise.all([api.get('/areas'), api.get('/areas/resumen')]);
+      const [a, r] = await Promise.all([api.get('/areas'), api.get('/areas/summary')]);
       setAreas(a.data);
       setResumen(r.data);
     } catch (err) {
@@ -55,15 +55,15 @@ const Areas = () => {
     }
   };
 
-  const desactivar = async (id, nom) => {
+  const deactivate = async (id, nom) => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/areas/${id}/desactivar`);
+      await api.patch(`/areas/${id}/deactivate`);
       setOk(`Área "${nom}" desactivada`);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo desactivar el área');
+      setError(err.response?.data?.error || 'No se pudo deactivate el área');
     }
   };
 
@@ -124,7 +124,7 @@ const Areas = () => {
               <td style={s.td}>{a.activa === false ? 'Inactiva' : 'Activa'}</td>
               <td style={s.td}>
                 {a.activa !== false && (
-                  <button type="button" style={s.btnDanger} onClick={() => desactivar(a.id, a.nombre)}>
+                  <button type="button" style={s.btnDanger} onClick={() => deactivate(a.id, a.nombre)}>
                     Desactivar
                   </button>
                 )}
