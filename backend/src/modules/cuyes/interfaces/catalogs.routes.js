@@ -52,15 +52,8 @@ function createCatalogsRoutes(service) {
     })
   );
 
-  router.get(
-    '/species',
-    asyncHandler(async (req, res) => {
-      sendResult(res, await service.listSpecies());
-    })
-  );
-
   router.patch(
-    '/razas/:id/deactivate',
+    '/breeds/:id/deactivate',
     canAdmin,
     asyncHandler(async (req, res) => {
       sendResult(
@@ -75,7 +68,7 @@ function createCatalogsRoutes(service) {
   );
 
   router.patch(
-    '/categorias/:id/deactivate',
+    '/categories/:id/deactivate',
     canAdmin,
     asyncHandler(async (req, res) => {
       sendResult(

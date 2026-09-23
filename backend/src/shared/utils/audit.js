@@ -1,4 +1,4 @@
-const { pool } = require('../database');
+const { getPrisma } = require('../database/prisma');
 
 /**
  * Registrar cambio con valor anterior/posterior.
@@ -6,9 +6,9 @@ const { pool } = require('../database');
  */
 let ready = false;
 
-async function ensureAuditSchema() {
+async function ensureAuditSchema(prisma = getPrisma()) {
   if (ready) return;
-  await pool.query(`
+  await prisma.$executeRawUnsafe(`
     ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS entidad VARCHAR(80);
     ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_entidad INTEGER;
     ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_granja INTEGER;
@@ -28,22 +28,20 @@ async function writeAudit({
   despues,
   detalle,
 }) {
-  await ensureAuditSchema();
-  await pool.query(
-    `INSERT INTO audit_log
-      (id_usuario, accion, detalle, entidad, id_entidad, id_granja, antes, despues)
-     VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb)`,
-    [
-      userId || null,
+  const prisma = getPrisma();
+  await ensureAuditSchema(prisma);
+  await prisma.auditLog.create({
+    data: {
+      id_usuario: userId || null,
       accion,
-      detalle || null,
-      entidad || null,
-      idEntidad || null,
-      farmId || null,
-      antes != null ? JSON.stringify(antes) : null,
-      despues != null ? JSON.stringify(despues) : null,
-    ]
-  );
+      detalle: detalle || null,
+      entidad: entidad || null,
+      id_entidad: idEntidad || null,
+      id_granja: farmId || null,
+      antes: antes != null ? antes : undefined,
+      despues: despues != null ? despues : undefined,
+    },
+  });
 }
 
 module.exports = { writeAudit, ensureAuditSchema };

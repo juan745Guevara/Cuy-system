@@ -74,7 +74,7 @@ Cuy-system/
 ## Stack objetivo
 
 - **Frontend:** React
-- **Backend:** Node.js
+- **Backend:** Node.js + Express + **Prisma ORM**
 - **Base de datos:** PostgreSQL
 - **Despliegue:** Docker
 
@@ -84,9 +84,12 @@ Cuy-system/
 ```bash
 cd backend
 npm install
+npm run db:generate   # genera el cliente Prisma
 npm run dev
 ```
 El servidor arranca en el puerto **3001**.
+
+El esquema ORM está en `backend/prisma/schema.prisma`. Las migraciones SQL iniciales siguen en `backend/src/shared/config/schema.sql` (`npm run db:migrate`).
 
 ### Frontend
 ```bash

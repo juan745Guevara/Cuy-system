@@ -15,7 +15,7 @@ const Alertas = () => {
 
   const load = useCallback(async () => {
     try {
-      const [a, c] = await Promise.all([api.get('/alerts'), api.get('/alerts/config')]);
+      const [a, c] = await Promise.all([api.get('/cuyes/alerts'), api.get('/cuyes/alerts/config')]);
       setData(a.data);
       setConfig(c.data);
     } catch (err) {
@@ -30,7 +30,7 @@ const Alertas = () => {
   const discard = async (alerta) => {
     const motivo = window.prompt('Motivo del descarte') || '';
     try {
-      await api.post('/alerts/discard', {
+      await api.post('/cuyes/alerts/discard', {
         tipo: alerta.tipo,
         id_animal: alerta.id_animal,
         id_referencia: alerta.id_referencia,
@@ -47,7 +47,7 @@ const Alertas = () => {
     e.preventDefault();
     setError('');
     try {
-      const { data } = await api.put('/alerts/config', config);
+      const { data } = await api.put('/cuyes/alerts/config', config);
       setConfig(data);
       setOk('Plazos actualizados');
       load();

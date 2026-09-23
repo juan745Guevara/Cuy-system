@@ -15,8 +15,8 @@ const Catalogos = () => {
   const load = useCallback(async () => {
     try {
       const [r, c] = await Promise.all([
-        api.get('/catalogs/breeds'),
-        api.get('/catalogs/categories'),
+        api.get('/cuyes/catalogs/breeds'),
+        api.get('/cuyes/catalogs/categories'),
       ]);
       setRazas(r.data);
       setCategorias(c.data);
@@ -33,7 +33,7 @@ const Catalogos = () => {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/catalogs/breeds', { nombre: razaNombre });
+      await api.post('/cuyes/catalogs/breeds', { nombre: razaNombre });
       setOk('Raza agregada');
       setRazaNombre('');
       load();
@@ -46,7 +46,7 @@ const Catalogos = () => {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/catalogs/categories', {
+      await api.post('/cuyes/catalogs/categories', {
         nombre: catNombre,
         proposito_area: proposito,
       });
@@ -62,7 +62,7 @@ const Catalogos = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/catalogs/breeds/${id}/deactivate`);
+      await api.patch(`/cuyes/catalogs/breeds/${id}/deactivate`);
       setOk(`Raza "${nombre}" desactivada`);
       load();
     } catch (err) {
@@ -74,7 +74,7 @@ const Catalogos = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/catalogs/categories/${id}/deactivate`);
+      await api.patch(`/cuyes/catalogs/categories/${id}/deactivate`);
       setOk(`Categoría "${nombre}" desactivada`);
       load();
     } catch (err) {

@@ -1,8 +1,14 @@
-const { pool } = require('../database');
+const { getPrisma } = require('../database/prisma');
+const { createSqlBridge } = require('../database/sqlBridge');
 
-/** Puerto de acceso a datos (DIP). Por defecto usa PostgreSQL. */
+/**
+ * Data access port (DIP).
+ * Returns a pg-compatible bridge over Prisma for legacy repositories.
+ */
 function createDatabase(deps = {}) {
-  return deps.db || pool;
+  if (deps.db) return deps.db;
+  const prisma = deps.prisma || getPrisma();
+  return createSqlBridge(prisma);
 }
 
 module.exports = { createDatabase };

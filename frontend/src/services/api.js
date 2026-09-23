@@ -12,6 +12,8 @@ api.interceptors.request.use((config) => {
   const farmId = localStorage.getItem('farmId');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   if (farmId) config.headers['x-farm-id'] = farmId;
+  const speciesId = localStorage.getItem('speciesId');
+  if (speciesId) config.headers['x-species-id'] = speciesId;
   return config;
 });
 

@@ -163,7 +163,7 @@ const EventosHub = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/alerts')
+    api.get('/cuyes/alerts')
       .then((res) => {
         const data = res.data;
         setAlertasCount({

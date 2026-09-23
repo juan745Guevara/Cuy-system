@@ -16,8 +16,8 @@ const Ranking = () => {
   const load = useCallback(async () => {
     try {
       const [r, c] = await Promise.all([
-        api.get('/ranking', { params: { sexo } }),
-        api.get('/ranking/config'),
+        api.get('/cuyes/ranking', { params: { sexo } }),
+        api.get('/cuyes/ranking/config'),
       ]);
       setRanking(r.data.ranking || []);
       setConfig(r.data.config || c.data);
@@ -34,7 +34,7 @@ const Ranking = () => {
     e.preventDefault();
     setError('');
     try {
-      const { data } = await api.put('/ranking/config', config);
+      const { data } = await api.put('/cuyes/ranking/config', config);
       setConfig(data);
       setOk('Ponderación guardada');
       load();
@@ -45,7 +45,7 @@ const Ranking = () => {
 
   const mark = async (id, accion) => {
     try {
-      await api.post(`/ranking/${id}/mark`, { accion });
+      await api.post(`/cuyes/ranking/${id}/mark`, { accion });
       setOk(`Marcado como ${accion}`);
       load();
     } catch (err) {

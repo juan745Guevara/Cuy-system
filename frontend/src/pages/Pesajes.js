@@ -30,9 +30,9 @@ const Pesajes = () => {
   const load = useCallback(async () => {
     try {
       const [a, j, r] = await Promise.all([
-        api.get('/animals', { params: { estado: 'activo' } }),
-        api.get('/cages'),
-        api.get('/weighings/ranges').catch(() => ({ data: null })),
+        api.get('/cuyes/animals', { params: { estado: 'activo' } }),
+        api.get('/cuyes/cages'),
+        api.get('/cuyes/weighings/ranges').catch(() => ({ data: null })),
       ]);
       setAnimales(a.data.data || a.data);
       setJaulas(j.data);
@@ -55,7 +55,7 @@ const Pesajes = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/weighings', {
+      await api.post('/cuyes/weighings', {
         id_animal: Number(form.id_animal),
         fecha: form.fecha,
         peso_gramos: Number(form.peso_gramos),
@@ -79,7 +79,7 @@ const Pesajes = () => {
   const cargarJaula = async () => {
     if (!form.id_jaula) return;
     try {
-      const { data } = await api.get(`/cages/${form.id_jaula}/animals`);
+      const { data } = await api.get(`/cuyes/cages/${form.id_jaula}/animals`);
       setLoteAnimales(data);
       setPesosLote({});
     } catch (err) {
@@ -95,7 +95,7 @@ const Pesajes = () => {
       .filter(([, w]) => w !== '' && w != null)
       .map(([id, w]) => ({ id_animal: Number(id), peso_gramos: Number(w) }));
     try {
-      const { data } = await api.post('/weighings/batch', {
+      const { data } = await api.post('/cuyes/weighings/batch', {
         fecha: form.fecha,
         pesajes,
         confirmar_fuera_rango: confirmar,
@@ -117,7 +117,7 @@ const Pesajes = () => {
   const verEvolucion = async () => {
     if (!form.id_animal) return;
     try {
-      const { data } = await api.get(`/weighings/animal/${form.id_animal}`);
+      const { data } = await api.get(`/cuyes/weighings/animal/${form.id_animal}`);
       setHistorial(data);
       setPromedio([]);
     } catch (err) {
@@ -128,7 +128,7 @@ const Pesajes = () => {
   const verPromedio = async () => {
     if (!form.id_jaula) return;
     try {
-      const { data } = await api.get('/weighings/average', {
+      const { data } = await api.get('/cuyes/weighings/average', {
         params: { id_jaula: form.id_jaula },
       });
       setPromedio(data);

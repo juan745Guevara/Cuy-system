@@ -40,12 +40,12 @@ const Movimientos = () => {
   const load = useCallback(async () => {
     try {
       const [a, j, ar, m, sc, fa, g] = await Promise.all([
-        api.get('/animals', { params: { estado: 'activo' } }),
-        api.get('/cages'),
-        api.get('/areas'),
-        api.get('/movements'),
-        api.get('/movements/overcapacity'),
-        api.get('/movements/out-of-area'),
+        api.get('/cuyes/animals', { params: { estado: 'activo' } }),
+        api.get('/cuyes/cages'),
+        api.get('/cuyes/areas'),
+        api.get('/cuyes/movements'),
+        api.get('/cuyes/movements/overcapacity'),
+        api.get('/cuyes/movements/out-of-area'),
         api.get('/farms').catch(() => ({ data: [] })),
       ]);
       setAnimals(a.data.data || a.data);
@@ -100,7 +100,7 @@ const Movimientos = () => {
     setError('');
     setOk('');
     try {
-      const { data } = await api.post('/movements/relocate', {
+      const { data } = await api.post('/cuyes/movements/relocate', {
         fecha: form.fecha,
         id_jaula_destino: Number(form.id_jaula_destino),
         ids_animales: form.ids_animales,
@@ -127,7 +127,7 @@ const Movimientos = () => {
     setError('');
     setOk('');
     try {
-      const { data } = await api.post('/movements/transfer', {
+      const { data } = await api.post('/cuyes/movements/transfer', {
         fecha: form.fecha,
         id_granja_destino: Number(form.id_granja_destino),
         id_jaula_destino: Number(form.id_jaula_destino),
@@ -160,7 +160,7 @@ const Movimientos = () => {
     setDestCages([]);
     if (!id) return;
     try {
-      const { data } = await api.get(`/movements/destination-cages/${id}`);
+      const { data } = await api.get(`/cuyes/movements/destination-cages/${id}`);
       setDestCages(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron cargar jaulas destino');
@@ -170,7 +170,7 @@ const Movimientos = () => {
   const loadHistory = async () => {
     if (!form.id_animal_hist) return;
     try {
-      const { data } = await api.get(`/movements/animal/${form.id_animal_hist}`);
+      const { data } = await api.get(`/cuyes/movements/animal/${form.id_animal_hist}`);
       setHistory(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar historial');
@@ -180,7 +180,7 @@ const Movimientos = () => {
   const loadCageOccupancy = async () => {
     if (!form.id_jaula_hist) return;
     try {
-      const { data } = await api.get(`/movements/cage/${form.id_jaula_hist}`, {
+      const { data } = await api.get(`/cuyes/movements/cage/${form.id_jaula_hist}`, {
         params: { fecha: form.fecha_jaula },
       });
       setCageOccupancy(data);

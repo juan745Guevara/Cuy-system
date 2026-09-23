@@ -31,10 +31,10 @@ const Inventario = () => {
     setError('');
     try {
       const [p, r, a, c] = await Promise.all([
-        api.get('/inventory/population'),
-        api.get('/inventory/monthly-summary', { params: { anio, mes } }),
-        api.get('/inventory/by-area'),
-        api.get('/inventory/consolidated', { params: { anio, mes } }),
+        api.get('/cuyes/inventory/population'),
+        api.get('/cuyes/inventory/monthly-summary', { params: { anio, mes } }),
+        api.get('/cuyes/inventory/by-area'),
+        api.get('/cuyes/inventory/consolidated', { params: { anio, mes } }),
       ]);
       setPoblacion(p.data);
       setResumen(r.data);

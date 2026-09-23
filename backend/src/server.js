@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { createSharedDeps } = require('./shared/deps');
-const cuyesAreaRules = require('./modules/cuyes/domain/areaRules.adapter');
 
 if (!process.env.JWT_SECRET) {
   console.error(
@@ -27,13 +26,10 @@ app.use(
 );
 app.use(express.json());
 
-const deps = createSharedDeps({ areaRules: cuyesAreaRules });
+const deps = createSharedDeps();
 
-// Platform (auth, users, farms, audit)
-app.use('/api/v1', require('./core')(deps));
-
-// Cuy module (species operations)
-app.use('/api/v1', require('./modules/cuyes')(deps));
+app.use('/api/v1', require('./platform')(deps));
+app.use('/api/v1/cuyes', require('./modules/cuyes')(deps));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Animal Control System - UNAS' });

@@ -216,12 +216,12 @@ const Dashboard = () => {
     setLoading(true);
     const now = new Date();
     Promise.all([
-      api.get('/inventory/population').catch(() => ({ data: null })),
-      api.get('/inventory/monthly-summary', {
+      api.get('/cuyes/inventory/population').catch(() => ({ data: null })),
+      api.get('/cuyes/inventory/monthly-summary', {
         params: { anio: now.getFullYear(), mes: now.getMonth() + 1 },
       }).catch(() => ({ data: null })),
-      api.get('/alerts').catch(() => ({ data: null })),
-      api.get('/cages/occupancy').catch(() => ({ data: null })),
+      api.get('/cuyes/alerts').catch(() => ({ data: null })),
+      api.get('/cuyes/cages/occupancy').catch(() => ({ data: null })),
     ])
       .then(([p, r, a, o]) => {
         setPob(p.data);

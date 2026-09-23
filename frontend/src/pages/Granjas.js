@@ -28,7 +28,7 @@ const Granjas = () => {
       const g = await api.get('/farms');
       setGranjas(g.data);
       if (esSuper) {
-        const e = await api.get('/catalogs/species');
+        const e = await api.get('/species');
         setEspecies(e.data);
       }
       if (puedeAsignar) {

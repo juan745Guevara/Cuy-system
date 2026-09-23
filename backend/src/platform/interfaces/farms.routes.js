@@ -11,7 +11,7 @@ function createFarmsRoutes(service) {
     authRequired,
     loadUserFarms,
     asyncHandler(async (req, res) => {
-      sendResult(res, service.list(req.userFarms));
+      sendResult(res, service.list(req.userFarms, req.query));
     })
   );
 

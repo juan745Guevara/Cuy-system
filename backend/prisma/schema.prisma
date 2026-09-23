@@ -1,0 +1,500 @@
+// Prisma schema — maps existing PostgreSQL tables (Spanish column names preserved).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id            Int       @id @default(autoincrement())
+  nombre        String    @db.VarChar(100)
+  email         String    @unique @db.VarChar(150)
+  password_hash String    @db.VarChar(255)
+  rol           String    @db.VarChar(20)
+  activo        Boolean?  @default(true)
+  created_by    Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  creador              Usuario?         @relation("UsuarioCreador", fields: [created_by], references: [id])
+  usuarios_creados     Usuario[]        @relation("UsuarioCreador")
+  granjas              UsuarioGranja[]
+  audit_logs           AuditLog[]
+  animales_creados     Animal[]         @relation("AnimalCreatedBy")
+  empadres_creados     Empadre[]        @relation("EmpadreCreatedBy")
+  partos_creados       Parto[]          @relation("PartoCreatedBy")
+  destetes_creados     Destete[]        @relation("DesteteCreatedBy")
+  mortalidad_creados   Mortalidad[]     @relation("MortalidadCreatedBy")
+  ventas_creados       Venta[]          @relation("VentaCreatedBy")
+  movimientos_creados  Movimiento[]     @relation("MovimientoCreatedBy")
+  pesajes_creados      Pesaje[]         @relation("PesajeCreatedBy")
+  tratamientos_creados Tratamiento[]    @relation("TratamientoCreatedBy")
+  alertas_creados      AlertaDescarte[] @relation("AlertaCreatedBy")
+
+  @@map("usuarios")
+}
+
+model Especie {
+  id     Int      @id @default(autoincrement())
+  nombre String   @unique @db.VarChar(50)
+  activo Boolean? @default(true)
+
+  granjas     Granja[]
+  razas       Raza[]
+  categorias  Categoria[]
+
+  @@map("especies")
+}
+
+model Granja {
+  id           Int       @id @default(autoincrement())
+  nombre       String    @unique @db.VarChar(100)
+  id_especie   Int
+  ubicacion    String?   @db.VarChar(200)
+  responsable  String?   @db.VarChar(100)
+  fecha_inicio DateTime? @db.Date
+  activa       Boolean?  @default(true)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  especie           Especie          @relation(fields: [id_especie], references: [id])
+  usuarios          UsuarioGranja[]
+  areas             Area[]
+  animales          Animal[]
+  empadres          Empadre[]
+  partos            Parto[]
+  mortalidad        Mortalidad[]
+  ventas            Venta[]
+  movimientos_origen  Movimiento[]   @relation("MovimientoOrigen")
+  movimientos_destino Movimiento[]   @relation("MovimientoDestino")
+  pesajes           Pesaje[]
+  tratamientos      Tratamiento[]
+  alerta_config     AlertaConfig[]
+  peso_rangos       PesoRango[]
+  alertas_descarte  AlertaDescarte[]
+  ranking_config    RankingConfig?
+  audit_logs        AuditLog[]
+
+  @@map("granjas")
+}
+
+model UsuarioGranja {
+  id         Int @id @default(autoincrement())
+  id_usuario Int
+  id_granja  Int
+
+  usuario Usuario @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  granja  Granja  @relation(fields: [id_granja], references: [id], onDelete: Cascade)
+
+  @@unique([id_usuario, id_granja])
+  @@map("usuario_granjas")
+}
+
+model Area {
+  id         Int       @id @default(autoincrement())
+  id_granja  Int
+  nombre     String    @db.VarChar(100)
+  proposito  String    @db.VarChar(50)
+  activa     Boolean?  @default(true)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  granja       Granja        @relation(fields: [id_granja], references: [id], onDelete: Cascade)
+  jaulas       Jaula[]
+  tratamientos Tratamiento[]
+
+  @@unique([id_granja, nombre])
+  @@map("areas")
+}
+
+model Jaula {
+  id               Int       @id @default(autoincrement())
+  id_area          Int
+  codigo           String    @db.VarChar(50)
+  capacidad_maxima Int?
+  activa           Boolean?  @default(true)
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  area                Area         @relation(fields: [id_area], references: [id], onDelete: Cascade)
+  animales            Animal[]
+  empadres            Empadre[]
+  mortalidad          Mortalidad[]
+  movimientos_origen  Movimiento[] @relation("MovOrigenJaula")
+  movimientos_destino Movimiento[] @relation("MovDestinoJaula")
+  tratamientos        Tratamiento[]
+
+  @@unique([id_area, codigo])
+  @@map("jaulas")
+}
+
+model Raza {
+  id         Int      @id @default(autoincrement())
+  id_especie Int
+  nombre     String   @db.VarChar(100)
+  activa     Boolean? @default(true)
+
+  especie  Especie  @relation(fields: [id_especie], references: [id])
+  animales Animal[]
+
+  @@unique([id_especie, nombre])
+  @@map("razas")
+}
+
+model Categoria {
+  id             Int      @id @default(autoincrement())
+  id_especie     Int
+  nombre         String   @db.VarChar(100)
+  proposito_area String?  @db.VarChar(50)
+  activa         Boolean? @default(true)
+
+  especie  Especie  @relation(fields: [id_especie], references: [id])
+  animales Animal[]
+
+  @@unique([id_especie, nombre])
+  @@map("categorias")
+}
+
+model Animal {
+  id                Int       @id @default(autoincrement())
+  id_granja         Int
+  codigo            String    @db.VarChar(50)
+  codigo_norm       String    @db.VarChar(50)
+  sexo              String    @db.Char(1)
+  id_raza           Int?
+  id_categoria      Int?
+  id_jaula          Int?
+  fecha_nacimiento  DateTime? @db.Date
+  estado            String?   @default("activo") @db.VarChar(20)
+  fecha_baja        DateTime? @db.Date
+  motivo_baja       String?
+  id_parto_origen   Int?
+  created_by        Int?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  granja              Granja                 @relation(fields: [id_granja], references: [id])
+  raza                Raza?                  @relation(fields: [id_raza], references: [id])
+  categoria           Categoria?             @relation(fields: [id_categoria], references: [id])
+  jaula               Jaula?                 @relation(fields: [id_jaula], references: [id])
+  parto_origen        Parto?                 @relation("AnimalPartoOrigen", fields: [id_parto_origen], references: [id])
+  creador             Usuario?               @relation("AnimalCreatedBy", fields: [created_by], references: [id])
+  particularidades    AnimalParticularidad[]
+  empadres_macho      Empadre[]              @relation("EmpadreMacho")
+  empadre_hembras     EmpadreHembra[]
+  partos              Parto[]                @relation("PartoHembra")
+  mortalidad          Mortalidad[]
+  ventas              Venta[]
+  movimientos         Movimiento[]
+  pesajes             Pesaje[]
+  tratamientos        Tratamiento[]
+
+  @@unique([id_granja, codigo_norm])
+  @@index([codigo_norm], map: "idx_animales_codigo_norm")
+  @@index([id_granja, estado], map: "idx_animales_granja_estado")
+  @@map("animales")
+}
+
+model AnimalParticularidad {
+  id         Int       @id @default(autoincrement())
+  id_animal  Int
+  fecha      DateTime  @default(now()) @db.Date
+  texto      String
+  created_by Int?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  animal Animal @relation(fields: [id_animal], references: [id], onDelete: Cascade)
+
+  @@map("animal_particularidades")
+}
+
+model Empadre {
+  id                 Int       @id @default(autoincrement())
+  id_granja          Int
+  id_macho           Int?
+  id_jaula           Int?
+  fecha_empadre      DateTime  @db.Date
+  peso_antes         Decimal?  @db.Decimal(10, 2)
+  peso_despues       Decimal?  @db.Decimal(10, 2)
+  cantidad_hembras   Int?
+  cantidad_prenadas  Int?
+  notas              String?
+  created_by         Int?
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+  updated_at         DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  granja   Granja          @relation(fields: [id_granja], references: [id])
+  macho    Animal?         @relation("EmpadreMacho", fields: [id_macho], references: [id])
+  jaula    Jaula?          @relation(fields: [id_jaula], references: [id])
+  creador  Usuario?        @relation("EmpadreCreatedBy", fields: [created_by], references: [id])
+  hembras  EmpadreHembra[]
+  partos   Parto[]
+
+  @@map("empadres")
+}
+
+model EmpadreHembra {
+  id          Int     @id @default(autoincrement())
+  id_empadre  Int
+  id_hembra   Int
+  resultado   String? @default("abierto") @db.VarChar(20)
+
+  empadre Empadre @relation(fields: [id_empadre], references: [id], onDelete: Cascade)
+  hembra  Animal  @relation(fields: [id_hembra], references: [id])
+
+  @@unique([id_empadre, id_hembra])
+  @@map("empadre_hembras")
+}
+
+model Parto {
+  id          Int       @id @default(autoincrement())
+  id_granja   Int
+  id_hembra   Int
+  id_empadre  Int?
+  fecha_parto DateTime  @db.Date
+  vivos_m     Int?      @default(0)
+  vivos_h     Int?      @default(0)
+  muertos     Int?      @default(0)
+  peso_m1     Decimal?  @db.Decimal(10, 2)
+  peso_m2     Decimal?  @db.Decimal(10, 2)
+  peso_m3     Decimal?  @db.Decimal(10, 2)
+  peso_h1     Decimal?  @db.Decimal(10, 2)
+  peso_h2     Decimal?  @db.Decimal(10, 2)
+  peso_h3     Decimal?  @db.Decimal(10, 2)
+  created_by  Int?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  granja          Granja    @relation(fields: [id_granja], references: [id])
+  hembra          Animal    @relation("PartoHembra", fields: [id_hembra], references: [id])
+  empadre         Empadre?  @relation(fields: [id_empadre], references: [id])
+  creador         Usuario?  @relation("PartoCreatedBy", fields: [created_by], references: [id])
+  destetes        Destete[]
+  animales_origen Animal[]  @relation("AnimalPartoOrigen")
+
+  @@map("partos")
+}
+
+model Destete {
+  id            Int       @id @default(autoincrement())
+  id_parto      Int
+  fecha_destete DateTime  @db.Date
+  destetados_m  Int?      @default(0)
+  destetados_h  Int?      @default(0)
+  muertos       Int?      @default(0)
+  peso_m1       Decimal?  @db.Decimal(10, 2)
+  peso_m2       Decimal?  @db.Decimal(10, 2)
+  peso_m3       Decimal?  @db.Decimal(10, 2)
+  peso_h1       Decimal?  @db.Decimal(10, 2)
+  peso_h2       Decimal?  @db.Decimal(10, 2)
+  peso_h3       Decimal?  @db.Decimal(10, 2)
+  created_by    Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+
+  parto   Parto    @relation(fields: [id_parto], references: [id], onDelete: Cascade)
+  creador Usuario? @relation("DesteteCreatedBy", fields: [created_by], references: [id])
+
+  @@map("destetes")
+}
+
+model Mortalidad {
+  id             Int       @id @default(autoincrement())
+  id_granja      Int
+  id_animal      Int?
+  fecha          DateTime  @db.Date
+  clasificacion  String?   @db.VarChar(50)
+  categoria      String?   @db.VarChar(50)
+  cantidad       Int
+  causa          String?
+  id_jaula       Int?
+  anulado        Boolean?  @default(false)
+  motivo_anulacion String?
+  created_by     Int?
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+
+  granja  Granja  @relation(fields: [id_granja], references: [id])
+  animal  Animal? @relation(fields: [id_animal], references: [id])
+  jaula   Jaula?  @relation(fields: [id_jaula], references: [id])
+  creador Usuario? @relation("MortalidadCreatedBy", fields: [created_by], references: [id])
+
+  @@map("mortalidad")
+}
+
+model Venta {
+  id            Int       @id @default(autoincrement())
+  id_granja     Int
+  id_animal     Int?
+  fecha         DateTime  @db.Date
+  clasificacion String?   @db.VarChar(50)
+  categoria     String?   @db.VarChar(50)
+  cantidad      Int
+  comprador     String?   @db.VarChar(100)
+  precio        Decimal?  @db.Decimal(10, 2)
+  anulado       Boolean?  @default(false)
+  motivo_anulacion String?
+  created_by    Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+
+  granja  Granja  @relation(fields: [id_granja], references: [id])
+  animal  Animal? @relation(fields: [id_animal], references: [id])
+  creador Usuario? @relation("VentaCreatedBy", fields: [created_by], references: [id])
+
+  @@map("ventas")
+}
+
+model AuditLog {
+  id          Int       @id @default(autoincrement())
+  id_usuario  Int?
+  accion      String    @db.VarChar(100)
+  detalle     String?
+  entidad     String?   @db.VarChar(80)
+  id_entidad  Int?
+  id_granja   Int?
+  antes       Json?
+  despues     Json?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+
+  usuario Usuario? @relation(fields: [id_usuario], references: [id])
+  granja  Granja?  @relation(fields: [id_granja], references: [id])
+
+  @@map("audit_log")
+}
+
+model Movimiento {
+  id                 Int       @id @default(autoincrement())
+  tipo               String    @db.VarChar(20)
+  id_animal          Int
+  id_granja_origen   Int?
+  id_granja_destino  Int?
+  id_jaula_origen    Int?
+  id_jaula_destino   Int?
+  fecha              DateTime  @db.Date
+  motivo             String?
+  excedio_capacidad  Boolean?  @default(false)
+  aviso_area         Boolean?  @default(false)
+  created_by         Int?
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+
+  animal          Animal  @relation(fields: [id_animal], references: [id])
+  granja_origen   Granja? @relation("MovimientoOrigen", fields: [id_granja_origen], references: [id])
+  granja_destino  Granja? @relation("MovimientoDestino", fields: [id_granja_destino], references: [id])
+  jaula_origen    Jaula?  @relation("MovOrigenJaula", fields: [id_jaula_origen], references: [id])
+  jaula_destino   Jaula?  @relation("MovDestinoJaula", fields: [id_jaula_destino], references: [id])
+  creador         Usuario? @relation("MovimientoCreatedBy", fields: [created_by], references: [id])
+
+  @@index([id_animal], map: "idx_movimientos_animal")
+  @@map("movimientos")
+}
+
+model Pesaje {
+  id           Int       @id @default(autoincrement())
+  id_granja    Int
+  id_animal    Int
+  fecha        DateTime  @db.Date
+  peso_gramos  Decimal   @db.Decimal(10, 2)
+  fuera_rango  Boolean?  @default(false)
+  created_by   Int?
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+
+  granja  Granja  @relation(fields: [id_granja], references: [id])
+  animal  Animal  @relation(fields: [id_animal], references: [id])
+  creador Usuario? @relation("PesajeCreatedBy", fields: [created_by], references: [id])
+
+  @@index([id_animal], map: "idx_pesajes_animal")
+  @@map("pesajes")
+}
+
+model Tratamiento {
+  id            Int       @id @default(autoincrement())
+  id_granja     Int
+  id_animal     Int?
+  id_jaula      Int?
+  id_area       Int?
+  tipo          String    @db.VarChar(20)
+  producto      String    @db.VarChar(150)
+  dosis         String?   @db.VarChar(100)
+  via           String?   @db.VarChar(50)
+  fecha_inicio  DateTime  @db.Date
+  duracion_dias Int
+  fecha_termino DateTime  @db.Date
+  diagnostico   String?
+  responsable   String?   @db.VarChar(100)
+  estado        String?   @default("en_curso") @db.VarChar(20)
+  motivo_cierre String?
+  created_by    Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+
+  granja  Granja  @relation(fields: [id_granja], references: [id])
+  animal  Animal? @relation(fields: [id_animal], references: [id])
+  jaula   Jaula?  @relation(fields: [id_jaula], references: [id])
+  area    Area?   @relation(fields: [id_area], references: [id])
+  creador Usuario? @relation("TratamientoCreatedBy", fields: [created_by], references: [id])
+
+  @@index([id_granja, estado], map: "idx_tratamientos_granja")
+  @@map("tratamientos")
+}
+
+model AlertaConfig {
+  id        Int      @id @default(autoincrement())
+  id_granja Int
+  tipo      String   @db.VarChar(50)
+  dias      Int      @default(0)
+  activo    Boolean? @default(true)
+
+  granja Granja @relation(fields: [id_granja], references: [id], onDelete: Cascade)
+
+  @@unique([id_granja, tipo])
+  @@map("alerta_config")
+}
+
+model PesoRango {
+  id         Int       @id @default(autoincrement())
+  id_granja  Int
+  categoria  String    @db.VarChar(50)
+  min        Int
+  max        Int
+  updated_by Int?
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+
+  granja Granja @relation(fields: [id_granja], references: [id], onDelete: Cascade)
+
+  @@unique([id_granja, categoria])
+  @@map("peso_rangos")
+}
+
+model AlertaDescarte {
+  id            Int       @id @default(autoincrement())
+  id_granja     Int
+  tipo          String    @db.VarChar(50)
+  id_animal     Int?
+  id_referencia Int?
+  motivo        String?
+  created_by    Int?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+
+  granja  Granja   @relation(fields: [id_granja], references: [id])
+  creador Usuario? @relation("AlertaCreatedBy", fields: [created_by], references: [id])
+
+  @@map("alertas_descarte")
+}
+
+model RankingConfig {
+  id                 Int       @id @default(autoincrement())
+  id_granja          Int       @unique
+  peso_partos        Decimal?  @default(20) @db.Decimal(6, 2)
+  peso_camada        Decimal?  @default(25) @db.Decimal(6, 2)
+  peso_destete       Decimal?  @default(20) @db.Decimal(6, 2)
+  peso_mortalidad    Decimal?  @default(15) @db.Decimal(6, 2)
+  peso_peso_nac      Decimal?  @default(10) @db.Decimal(6, 2)
+  peso_peso_dest     Decimal?  @default(10) @db.Decimal(6, 2)
+  peso_prenez_macho  Decimal?  @default(30) @db.Decimal(6, 2)
+  updated_at         DateTime? @default(now()) @db.Timestamp(6)
+
+  granja Granja @relation(fields: [id_granja], references: [id], onDelete: Cascade)
+
+  @@map("ranking_config")
+}

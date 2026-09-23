@@ -35,9 +35,9 @@ const Destetes = () => {
   const load = useCallback(async () => {
     try {
       const [d, p, j] = await Promise.all([
-        api.get('/weanings'),
-        api.get('/births'),
-        api.get('/cages'),
+        api.get('/cuyes/weanings'),
+        api.get('/cuyes/births'),
+        api.get('/cuyes/cages'),
       ]);
       setLista(d.data);
       setPartos(p.data);
@@ -71,7 +71,7 @@ const Destetes = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/weanings', {
+      await api.post('/cuyes/weanings', {
         id_parto: Number(form.id_parto),
         fecha_destete: form.fecha_destete,
         destetados_m: Number(form.destetados_m) || 0,

@@ -38,10 +38,10 @@ const Reproductoras = () => {
   const loadBase = useCallback(async () => {
     try {
       const [r, c, j, a] = await Promise.all([
-        api.get('/catalogs/breeds'),
-        api.get('/catalogs/categories'),
-        api.get('/cages'),
-        api.get('/animals', { params: { sexo: 'H', estado: 'activo' } }),
+        api.get('/cuyes/catalogs/breeds'),
+        api.get('/cuyes/catalogs/categories'),
+        api.get('/cuyes/cages'),
+        api.get('/cuyes/animals', { params: { sexo: 'H', estado: 'activo' } }),
       ]);
       setRazas(r.data);
       setCategorias(c.data);
@@ -68,7 +68,7 @@ const Reproductoras = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/breedings/breeding-females', {
+      await api.post('/cuyes/breedings/breeding-females', {
         codigo: form.codigo,
         id_raza: form.id_raza ? Number(form.id_raza) : null,
         id_categoria: form.id_categoria ? Number(form.id_categoria) : null,
@@ -93,7 +93,7 @@ const Reproductoras = () => {
   const verFicha = async (id) => {
     setError('');
     try {
-      const { data } = await api.get(`/breedings/breeding-females/${id}`);
+      const { data } = await api.get(`/cuyes/breedings/breeding-females/${id}`);
       setFicha(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo cargar ficha');
@@ -105,7 +105,7 @@ const Reproductoras = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/breedings/${idEmpadre}/females/${idHembra}`, { resultado });
+      await api.patch(`/cuyes/breedings/${idEmpadre}/females/${idHembra}`, { resultado });
       setOk(`Resultado: ${resultado}`);
       verFicha(idHembra);
       if (resultado === 'murio') loadBase();
@@ -122,7 +122,7 @@ const Reproductoras = () => {
         : animal?.codigo
           ? { codigo: animal.codigo }
           : {};
-      const res = await api.get('/reports/females', { responseType: 'blob', params });
+      const res = await api.get('/cuyes/reports/females', { responseType: 'blob', params });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url;

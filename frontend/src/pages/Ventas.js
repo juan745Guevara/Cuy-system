@@ -34,10 +34,10 @@ const Ventas = () => {
   const load = useCallback(async () => {
     try {
       const [v, a, c, r] = await Promise.all([
-        api.get('/sales'),
-        api.get('/animals', { params: { estado: 'activo' } }),
-        api.get('/catalogs/categories'),
-        api.get('/catalogs/breeds'),
+        api.get('/cuyes/sales'),
+        api.get('/cuyes/animals', { params: { estado: 'activo' } }),
+        api.get('/cuyes/catalogs/categories'),
+        api.get('/cuyes/catalogs/breeds'),
       ]);
       setLista(v.data);
       setAnimales(a.data.data || a.data);
@@ -50,7 +50,7 @@ const Ventas = () => {
 
   const loadDescartes = useCallback(async () => {
     try {
-      const d = await api.get('/sales/discards');
+      const d = await api.get('/cuyes/sales/discards');
       setDescartes(d.data);
       setSel(Object.fromEntries(d.data.map((g) => [g.categoria, true])));
     } catch (err) {
@@ -79,7 +79,7 @@ const Ventas = () => {
       return;
     }
     try {
-      const r = await api.post('/sales/discards', {
+      const r = await api.post('/cuyes/sales/discards', {
         fecha: dForm.fecha,
         comprador: dForm.comprador || null,
         precio: dForm.precio ? Number(dForm.precio) : null,
@@ -104,7 +104,7 @@ const Ventas = () => {
       return;
     }
     try {
-      await api.post('/sales', {
+      await api.post('/cuyes/sales', {
         fecha: form.fecha,
         id_animal: form.id_animal ? Number(form.id_animal) : null,
         clasificacion: form.clasificacion || null,

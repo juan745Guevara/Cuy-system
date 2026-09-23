@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
       setGranjaActiva(data.granjas[0].id);
     } else {
       localStorage.removeItem('farmId');
+      localStorage.removeItem('speciesId');
       setGranjaActiva(null);
     }
   }, []);
@@ -64,12 +65,20 @@ export const AuthProvider = ({ children }) => {
     setGranjaActiva(null);
     localStorage.removeItem('token');
     localStorage.removeItem('farmId');
+    localStorage.removeItem('speciesId');
   }, []);
 
   const seleccionarGranja = (id) => {
+    const farm = granjas.find((g) => Number(g.id) === Number(id));
     setGranjaActiva(id);
-    if (id == null) localStorage.removeItem('farmId');
-    else localStorage.setItem('farmId', String(id));
+    if (id == null) {
+      localStorage.removeItem('farmId');
+      localStorage.removeItem('speciesId');
+    }
+    else {
+      localStorage.setItem('farmId', String(id));
+      if (farm?.id_especie) localStorage.setItem('speciesId', String(farm.id_especie));
+    }
   };
 
   // Caducidad por inactividad (30 min)

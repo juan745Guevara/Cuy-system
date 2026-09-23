@@ -15,8 +15,8 @@ const GranjasHub = () => {
 
   useEffect(() => {
     Promise.all([
-      api.get('/cages/occupancy').catch(() => ({ data: null })),
-      api.get('/inventory/population').catch(() => ({ data: null })),
+      api.get('/cuyes/cages/occupancy').catch(() => ({ data: null })),
+      api.get('/cuyes/inventory/population').catch(() => ({ data: null })),
     ]).then(([o, p]) => {
       setOcupacion(o.data);
       setPob(p.data);

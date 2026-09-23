@@ -1,8 +1,9 @@
 const express = require('express');
 const { composeModule } = require('../../shared/kernel/composeModule');
 
-function createCoreRouter(deps) {
+function createPlatformRouter(deps) {
   const router = express.Router();
+
   router.use('/auth', composeModule({
     createRepository: require('../infrastructure/auth.repository').createAuthRepository,
     createService: require('../application/auth.service').createAuthService,
@@ -24,13 +25,21 @@ function createCoreRouter(deps) {
     deps,
   }));
 
+  router.use('/species', composeModule({
+    createRepository: require('../infrastructure/species.repository').createSpeciesRepository,
+    createService: require('../application/species.service').createSpeciesService,
+    createRoutes: require('../interfaces/species.routes').createSpeciesRoutes,
+    deps,
+  }));
+
   router.use('/audit', composeModule({
     createRepository: require('../infrastructure/audit.repository').createAuditRepository,
     createService: require('../application/audit.service').createAuditService,
     createRoutes: require('../interfaces/audit.routes').createAuditRoutes,
     deps,
   }));
+
   return router;
 }
 
-module.exports = { createCoreRouter };
+module.exports = { createPlatformRouter };
