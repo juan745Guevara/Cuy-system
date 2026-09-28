@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from '@/navigation';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/ui';
 
@@ -28,7 +30,7 @@ const mainNavItems = [
         <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
     ),
-    matchPaths: ['/eventos', '/breedings', '/births', '/weanings', '/mortality', '/weighings', '/sanidad', '/alerts', '/ranking'],
+    matchPaths: ['/eventos', '/empadres', '/partos', '/destetes', '/mortalidad', '/pesajes', '/sanidad', '/alertas', '/ranking'],
   },
   {
     to: '/buscar',
@@ -42,7 +44,7 @@ const mainNavItems = [
     matchPaths: ['/buscar'],
   },
   {
-    to: '/sales',
+    to: '/ventas',
     label: 'Ventas',
     icon: (
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -50,7 +52,7 @@ const mainNavItems = [
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
     ),
-    matchPaths: ['/sales'],
+    matchPaths: ['/ventas'],
   },
   {
     to: '/registro',
@@ -63,10 +65,10 @@ const mainNavItems = [
         <line x1="22" y1="11" x2="16" y2="11" />
       </svg>
     ),
-    matchPaths: ['/registro', '/animals', '/breeding-females', '/breeding-males', '/movements'],
+    matchPaths: ['/registro', '/animales', '/reproductoras', '/reproductores', '/movimientos'],
   },
   {
-    to: '/farms-panel',
+    to: '/granjas-panel',
     label: 'Granjas',
     icon: (
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -74,7 +76,7 @@ const mainNavItems = [
         <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
-    matchPaths: ['/farms-panel', '/areas', '/cages', '/inventory'],
+    matchPaths: ['/granjas-panel', '/areas', '/jaulas', '/inventario'],
   },
   {
     to: '/configuracion',
@@ -85,33 +87,33 @@ const mainNavItems = [
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
     ),
-    matchPaths: ['/configuracion', '/users', '/catalogs', '/audit', '/farms'],
+    matchPaths: ['/configuracion', '/usuarios', '/catalogos', '/auditoria', '/granjas'],
   },
 ];
 
 // Mapeo de subpáginas → hub de origen (usado cuando no hay state de navegación)
-const HUB_PATHS = ['/dashboard', '/eventos', '/buscar', '/sales', '/registro', '/farms-panel', '/configuracion'];
+const HUB_PATHS = ['/dashboard', '/eventos', '/buscar', '/ventas', '/registro', '/granjas-panel', '/configuracion'];
 
 const SUBPAGE_HUB = {
-  '/breedings': '/eventos',
-  '/births': '/eventos',
-  '/weanings': '/eventos',
-  '/mortality': '/eventos',
-  '/weighings': '/eventos',
+  '/empadres': '/eventos',
+  '/partos': '/eventos',
+  '/destetes': '/eventos',
+  '/mortalidad': '/eventos',
+  '/pesajes': '/eventos',
   '/sanidad': '/eventos',
-  '/alerts': '/configuracion',
+  '/alertas': '/configuracion',
   '/ranking': '/eventos',
-  '/animals': '/registro',
-  '/breeding-females': '/registro',
-  '/breeding-males': '/registro',
-  '/movements': '/registro',
-  '/areas': '/farms-panel',
-  '/cages': '/farms-panel',
-  '/inventory': '/farms-panel',
-  '/users': '/configuracion',
-  '/catalogs': '/configuracion',
-  '/audit': '/configuracion',
-  '/farms': '/configuracion',
+  '/animales': '/registro',
+  '/reproductoras': '/registro',
+  '/reproductores': '/registro',
+  '/movimientos': '/registro',
+  '/areas': '/granjas-panel',
+  '/jaulas': '/granjas-panel',
+  '/inventario': '/granjas-panel',
+  '/usuarios': '/configuracion',
+  '/catalogos': '/configuracion',
+  '/auditoria': '/configuracion',
+  '/granjas': '/configuracion',
 };
 
 const initiales = (nombre) =>
@@ -122,7 +124,7 @@ const initiales = (nombre) =>
     .map((p) => p.charAt(0).toUpperCase())
     .join('');
 
-const Layout = () => {
+const Layout = ({ children }) => {
   const { user, granjas, granjaActiva, seleccionarGranja, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -594,7 +596,7 @@ const Layout = () => {
             </button>
           </div>
         )}
-        <Outlet />
+        {children}
       </main>
     </div>
   );

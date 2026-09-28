@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
@@ -6,11 +8,17 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [granjas, setGranjas] = useState([]);
-  const [granjaActiva, setGranjaActiva] = useState(
-    () => Number(localStorage.getItem('farmId')) || null
-  );
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
-  const [loading, setLoading] = useState(!!localStorage.getItem('token'));
+  const [granjaActiva, setGranjaActiva] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    const storedFarm = Number(localStorage.getItem('farmId')) || null;
+    setToken(storedToken);
+    setGranjaActiva(storedFarm);
+    if (!storedToken) setLoading(false);
+  }, []);
 
   const applySession = useCallback((data) => {
     localStorage.setItem('token', data.token);

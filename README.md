@@ -29,7 +29,7 @@ Cada feature sigue capas **routes → service → repository**. Los repositorios
 
 ### Frontend (`frontend/src/`)
 
-React + React Router. Páginas agrupadas en hubs (granjas, eventos, configuración). Las llamadas al módulo cuyes usan prefijo `/cuyes/`; la plataforma usa rutas directas (`/auth`, `/farms`, `/species`).
+Next.js App Router (`app/`). Vistas en `src/views/`; hubs para granjas, eventos y configuración. API: prefijo `/cuyes/` para operaciones; plataforma sin prefijo (`/auth`, `/farms`, `/species`). Variable `NEXT_PUBLIC_API_URL`.
 
 ### API (resumen)
 
@@ -44,7 +44,7 @@ Headers requeridos en operaciones de granja: `Authorization`, `x-species-id`, `x
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | React 18, axios, React Router |
+| Frontend | Next.js 15 (React 18), axios |
 | Backend | Node.js, Express |
 | ORM | Prisma 6 + PostgreSQL |
 | Auth | JWT, bcrypt |
@@ -76,6 +76,7 @@ cd backend && npm run dev
 
 # Terminal 2 — UI (puerto 3000)
 cd frontend && npm install && npm run dev
+# Opcional: frontend/.env con NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ```
 
 ### Producción
@@ -103,7 +104,7 @@ Cuy-system/
 │       ├── platform/             Núcleo compartido
 │       ├── modules/cuyes/        Módulo cuyes
 │       └── shared/               DB, middleware, kernel
-├── frontend/                     SPA React
+├── frontend/                     Next.js App Router (React)
 └── docs/                         Requisitos, backlog, guías
 ```
 
