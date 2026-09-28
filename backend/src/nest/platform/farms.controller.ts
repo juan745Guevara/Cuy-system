@@ -26,8 +26,8 @@ export class FarmsController {
 
   @Get()
   @UseGuards(JwtAuthGuard, LoadUserFarmsGuard)
-  list(@UserFarms() userFarms: UserFarm[], @Query() query: Record<string, string>) {
-    return unwrapServiceResult(this.farmsService.list(userFarms, query));
+  list(@UserFarms() userFarms: UserFarm[]) {
+    return unwrapServiceResult(this.farmsService.list(userFarms));
   }
 
   @Post()

@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { RequestMethod } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   if (!process.env.JWT_SECRET) {
@@ -21,6 +21,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({ origin: allowedOrigins });
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   app.setGlobalPrefix('api/v1', {
     exclude: [{ path: 'api/health', method: RequestMethod.GET }],

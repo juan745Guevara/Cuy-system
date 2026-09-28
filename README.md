@@ -19,12 +19,11 @@ Diseñado como plataforma **multigranja y modular por especie**: un núcleo comp
 ### Backend (`backend/src/`)
 
 ```
-main.ts, app.module.ts   Entrada NestJS (plataforma en TypeScript)
-nest/                    Guards, PrismaModule, controllers plataforma
-shared/                  Kernel técnico (Prisma JS, middleware, ServiceResult)
-platform/                Servicios JS de auth, usuarios, granjas, especies, audit
-modules/cuyes/           Dominio y servicios JS (repos + application)
-nest/cuyes/              Controllers Nest                              →  /api/v1/cuyes/*
+main.ts, app.module.ts   Entrada NestJS
+nest/platform/           Controllers + servicios/repos TypeScript (auth, users, farms…)
+nest/cuyes/              Controllers Nest + migración progresiva a TS (areas, mortality…)
+modules/cuyes/           Servicios JS restantes (application + infrastructure)
+shared/                  Prisma, SQL bridge, helpers, audit
 ```
 
 Cada feature sigue capas **routes → service → repository**. Los repositorios usan **Prisma ORM**; consultas complejas (reportes, historial) usan SQL raw vía puente Prisma.

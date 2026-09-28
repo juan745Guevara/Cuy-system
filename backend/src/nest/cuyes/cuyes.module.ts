@@ -16,6 +16,7 @@ import { WeaningsController } from './weanings.controller';
 import { AlertsController } from './alerts.controller';
 import { RankingController } from './ranking.controller';
 import { cuyesProviders } from './cuyes.providers';
+import { CuyesDepsService } from './cuyes-deps.service';
 import { SpeciesGuard } from '../shared/guards/species.guard';
 
 @Module({
@@ -38,5 +39,6 @@ import { SpeciesGuard } from '../shared/guards/species.guard';
     RankingController,
   ],
   providers: [...cuyesProviders, SpeciesGuard],
+  exports: [CuyesDepsService],
 })
 export class CuyesModule {}

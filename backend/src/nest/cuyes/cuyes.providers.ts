@@ -1,14 +1,20 @@
 import { Provider } from '@nestjs/common';
-import { SharedDepsService } from '../shared/deps/shared-deps.service';
-import { CUYES_SERVICE_TOKENS } from './cuyes.tokens';
+import {
+  CUYES_SERVICE_TOKENS,
+  AREAS_SERVICE,
+  MORTALITY_SERVICE,
+} from './cuyes.tokens';
+import { CuyesDepsService } from './cuyes-deps.service';
+import { AreasRepository } from './repositories/areas.repository';
+import { AreasService } from './services/areas.service';
+import { MortalityRepository } from './repositories/mortality.repository';
+import { MortalityService } from './services/mortality.service';
 
 const CUYES_MODULE_NAMES = [
-  'areas',
   'cages',
   'animals',
   'catalogs',
   'movements',
-  'mortality',
   'sales',
   'inventory',
   'weighings',
@@ -25,10 +31,8 @@ function pascal(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-function createCuyesService(deps: SharedDepsService, name: string) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const cuyesAreaRules = require('../../modules/cuyes/domain/areaRules.adapter');
-  const d = { ...deps.toDeps(), areaRules: cuyesAreaRules };
+function createCuyesService(deps: CuyesDepsService, name: string) {
+  const d = deps.toDeps();
   const Pascal = pascal(name);
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { [`create${Pascal}Repository`]: createRepository } = require(
@@ -42,8 +46,19 @@ function createCuyesService(deps: SharedDepsService, name: string) {
   return createService({ repository, ...d });
 }
 
-export const cuyesProviders: Provider[] = CUYES_MODULE_NAMES.map((name) => ({
+const legacyCuyesProviders: Provider[] = CUYES_MODULE_NAMES.map((name) => ({
   provide: CUYES_SERVICE_TOKENS[name],
-  useFactory: (deps: SharedDepsService) => createCuyesService(deps, name),
-  inject: [SharedDepsService],
+  useFactory: (deps: CuyesDepsService) => createCuyesService(deps, name),
+  inject: [CuyesDepsService],
 }));
+
+export const cuyesProviders: Provider[] = [
+  CuyesDepsService,
+  AreasRepository,
+  AreasService,
+  { provide: AREAS_SERVICE, useExisting: AreasService },
+  MortalityRepository,
+  MortalityService,
+  { provide: MORTALITY_SERVICE, useExisting: MortalityService },
+  ...legacyCuyesProviders,
+];
