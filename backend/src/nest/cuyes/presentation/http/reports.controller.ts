@@ -1,9 +1,8 @@
-import { Controller, Get, Inject, Query, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
-import { sendExportResponse } from '../../../shared/http/service-result';
+import { exportToStreamableFile } from '../../../shared/http/service-result';
 import { CuyesFarmScope } from '../cuyes-scope.decorator';
 import { REPORTS_SERVICE } from '../../cuyes.tokens';
 
@@ -16,27 +15,23 @@ export class ReportsController {
   async exportFemales(
     @FarmId() farmId: number,
     @Query() query: Record<string, string>,
-    @Res() res: Response,
   ) {
-    sendExportResponse(
-      res,
+    return exportToStreamableFile(
       await this.service.exportFemales({ farmId, query }),
     );
   }
 
   @Get('males')
-  async exportMales(@FarmId() farmId: number, @Res() res: Response) {
-    sendExportResponse(res, await this.service.exportMales(farmId));
+  async exportMales(@FarmId() farmId: number) {
+    return exportToStreamableFile(await this.service.exportMales(farmId));
   }
 
   @Get('monthly-inventory')
   async exportMonthlyInventory(
     @FarmId() farmId: number,
     @Query() query: Record<string, string>,
-    @Res() res: Response,
   ) {
-    sendExportResponse(
-      res,
+    return exportToStreamableFile(
       await this.service.exportMonthlyInventory({ farmId, query }),
     );
   }
@@ -45,10 +40,8 @@ export class ReportsController {
   async exportAnimals(
     @FarmId() farmId: number,
     @Query() query: Record<string, string>,
-    @Res() res: Response,
   ) {
-    sendExportResponse(
-      res,
+    return exportToStreamableFile(
       await this.service.exportAnimals({ farmId, query }),
     );
   }
@@ -57,10 +50,8 @@ export class ReportsController {
   async exportConsolidated(
     @CurrentUser() user: AuthUser,
     @Query() query: Record<string, string>,
-    @Res() res: Response,
   ) {
-    sendExportResponse(
-      res,
+    return exportToStreamableFile(
       await this.service.exportConsolidated({ user, query }),
     );
   }

@@ -1,8 +1,8 @@
-require('dotenv').config();
-const bcrypt = require('bcryptjs');
-const { pool } = require('../database');
+import bcrypt from 'bcryptjs';
+import { createPgPool } from './pg-pool';
 
 async function seed() {
+  const pool = createPgPool();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -17,13 +17,13 @@ async function seed() {
          ('Encargado Cuyes', 'encargado@unas.edu.pe', $1, 'encargado')
        ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash
        RETURNING id, email, rol`,
-      [hash]
+      [hash],
     );
 
     const { rows: esp } = await client.query(
       `INSERT INTO especies (nombre) VALUES ('cuyes')
        ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre
-       RETURNING id`
+       RETURNING id`,
     );
     const idEspecie = esp[0].id;
 
@@ -41,7 +41,7 @@ async function seed() {
       await client.query(
         `INSERT INTO razas (id_especie, nombre) VALUES ($1, $2)
          ON CONFLICT (id_especie, nombre) DO NOTHING`,
-        [idEspecie, nombre]
+        [idEspecie, nombre],
       );
     }
 
@@ -58,7 +58,7 @@ async function seed() {
         `INSERT INTO categorias (id_especie, nombre, proposito_area)
          VALUES ($1, $2, $3)
          ON CONFLICT (id_especie, nombre) DO UPDATE SET proposito_area = EXCLUDED.proposito_area`,
-        [idEspecie, nombre, proposito]
+        [idEspecie, nombre, proposito],
       );
     }
 
@@ -67,17 +67,17 @@ async function seed() {
        VALUES ('Granja Cuyes 1', $1, 'UNAS - Facultad de Zootecnia', 'Encargado Cuyes', CURRENT_DATE)
        ON CONFLICT (nombre) DO UPDATE SET ubicacion = EXCLUDED.ubicacion
        RETURNING id`,
-      [idEspecie]
+      [idEspecie],
     );
     const farmId = granjas[0].id;
 
-    const admin = users.find((u) => u.rol === 'admin');
-    const encargado = users.find((u) => u.rol === 'encargado');
+    const admin = users.find((u: { rol: string }) => u.rol === 'admin');
+    const encargado = users.find((u: { rol: string }) => u.rol === 'encargado');
     for (const u of [admin, encargado].filter(Boolean)) {
       await client.query(
         `INSERT INTO usuario_granjas (id_usuario, id_granja) VALUES ($1, $2)
          ON CONFLICT DO NOTHING`,
-        [u.id, farmId]
+        [u.id, farmId],
       );
     }
 
@@ -95,7 +95,7 @@ async function seed() {
         `INSERT INTO areas (id_granja, nombre, proposito)
          VALUES ($1, $2, $3)
          ON CONFLICT (id_granja, nombre) DO NOTHING`,
-        [farmId, nombre, proposito]
+        [farmId, nombre, proposito],
       );
     }
 
@@ -113,7 +113,7 @@ async function seed() {
   }
 }
 
-seed().catch((err) => {
+seed().catch((err: Error) => {
   console.error('Seed failed:', err.message);
   process.exit(1);
 });

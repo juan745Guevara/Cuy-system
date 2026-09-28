@@ -2,14 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Inject,
   Param,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
 import { JwtAuthGuard } from '../../../shared/guards/jwt-auth.guard';
 import { LoadUserFarmsGuard } from '../../../shared/guards/load-user-farms.guard';
 import { RolesGuard } from '../../../shared/guards/roles.guard';
@@ -29,10 +28,10 @@ export class UsersController {
   @UseGuards(LoadUserFarmsGuard)
   async create(
     @CurrentUser() user: AuthUser,
-    @Req() req: Request,
+    @Headers('x-farm-id') farmIdHeader: string | undefined,
     @Body() body: Record<string, unknown>,
   ) {
-    const farmId = Number(req.headers['x-farm-id']) || undefined;
+    const farmId = Number(farmIdHeader) || undefined;
     return unwrapServiceResult(
       await this.usersService.create({ user, farmId, body }),
     );
@@ -47,11 +46,11 @@ export class UsersController {
   @UseGuards(LoadUserFarmsGuard)
   async update(
     @CurrentUser() user: AuthUser,
-    @Req() req: Request,
+    @Headers('x-farm-id') farmIdHeader: string | undefined,
     @Param('id') id: string,
     @Body() body: Record<string, unknown>,
   ) {
-    const farmId = Number(req.headers['x-farm-id']) || undefined;
+    const farmId = Number(farmIdHeader) || undefined;
     return unwrapServiceResult(
       await this.usersService.update({
         user,

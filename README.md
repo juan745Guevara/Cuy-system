@@ -23,7 +23,7 @@ main.ts, app.module.ts   Entrada NestJS
 nest/shared/             Cross-cutting (Prisma, guards, audit, SQL bridge)
 nest/platform/           Módulo plataforma (Clean Architecture)
 nest/cuyes/              Módulo cuyes (Clean Architecture)
-shared/config/           migrate/seed CLI (fuera del runtime Nest)
+database/ + scripts/db/  Migración SQL y seed (CLI TypeScript, fuera del runtime Nest)
 ```
 
 Cada módulo (`platform`, `cuyes`) sigue **Clean Architecture**:
@@ -114,7 +114,8 @@ Cuy-system/
 │   ├── prisma/schema.prisma      Esquema ORM
 │   └── src/
 │       ├── nest/                 API Nest (platform, cuyes, shared)
-│       └── shared/config/        migrate.js, seed.js, schema.sql
+│       ├── database/schema.sql   SQL inicial (db:migrate)
+│       └── scripts/db/           migrate.ts, seed.ts
 ├── frontend/                     Next.js App Router (React)
 └── docs/                         Requisitos, backlog, guías
 ```

@@ -1,6 +1,7 @@
 node_modules/
 build/
 backend/dist/
+backend/dist-scripts/
 *.tsbuildinfo
 .next/
 out/
