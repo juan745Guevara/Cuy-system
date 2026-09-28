@@ -20,13 +20,24 @@ Diseñado como plataforma **multigranja y modular por especie**: un núcleo comp
 
 ```
 main.ts, app.module.ts   Entrada NestJS
-nest/platform/           Plataforma (auth, users, farms, species, audit)
-nest/cuyes/              Módulo cuyes (controllers, servicios, repos, domain)
-nest/shared/             Prisma, guards, SQL bridge, audit, helpers
-shared/config/           Scripts SQL migrate/seed (CLI, fuera del runtime Nest)
+nest/shared/             Cross-cutting (Prisma, guards, audit, SQL bridge)
+nest/platform/           Módulo plataforma (Clean Architecture)
+nest/cuyes/              Módulo cuyes (Clean Architecture)
+shared/config/           migrate/seed CLI (fuera del runtime Nest)
 ```
 
-Cada feature sigue capas **routes → service → repository**. Los repositorios usan **Prisma ORM**; consultas complejas (reportes, historial) usan SQL raw vía puente Prisma.
+Cada módulo (`platform`, `cuyes`) sigue **Clean Architecture**:
+
+| Capa | Carpeta | Responsabilidad |
+|------|---------|-----------------|
+| **Domain** | `domain/` | Reglas de negocio, `domain/ports/*RepositoryPort` (contratos) |
+| **Application** | `application/` | Casos de uso (`services/`), orquestación, `ServiceResult` |
+| **Infrastructure** | `infrastructure/persistence/` | Adaptadores Prisma/SQL (implementan los ports) |
+| **Presentation** | `presentation/http/` | Controllers HTTP Nest |
+
+Los casos de uso dependen de **ports**, no de implementaciones concretas. Nest enlaza `{ provide: XRepositoryPort, useExisting: XRepository }`.
+
+Los repositorios usan **Prisma** y, donde hace falta, SQL raw vía puente en `nest/shared/database/sql-bridge.ts`.
 
 ### Frontend (`frontend/src/`)
 

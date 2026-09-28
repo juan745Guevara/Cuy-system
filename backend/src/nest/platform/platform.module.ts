@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AuthController } from './auth.controller';
-import { UsersController } from './users.controller';
-import { FarmsController } from './farms.controller';
-import { SpeciesController } from './species.controller';
-import { AuditController } from './audit.controller';
+import { AuthController } from './presentation/http/auth.controller';
+import { UsersController } from './presentation/http/users.controller';
+import { FarmsController } from './presentation/http/farms.controller';
+import { SpeciesController } from './presentation/http/species.controller';
+import { AuditController } from './presentation/http/audit.controller';
 import { platformProviders } from './platform.providers';
 
 @Module({
