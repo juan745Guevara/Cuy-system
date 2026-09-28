@@ -4,7 +4,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './nest/shared/prisma/prisma.module';
 import { SharedDepsModule } from './nest/shared/deps/shared-deps.module';
 import { PlatformModule } from './nest/platform/platform.module';
-import { LegacyBootstrapModule } from './nest/legacy/legacy.module';
+import { CuyesModule } from './nest/cuyes/cuyes.module';
 import { HealthController } from './nest/health.controller';
 
 @Module({
@@ -13,7 +13,7 @@ import { HealthController } from './nest/health.controller';
     PrismaModule,
     SharedDepsModule,
     PlatformModule,
-    LegacyBootstrapModule,
+    CuyesModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

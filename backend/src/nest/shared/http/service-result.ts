@@ -41,3 +41,25 @@ export function unwrapServiceResult(result: ServiceResult) {
 
   throw new HttpException(body, (result.status as number) || 400);
 }
+
+/** Excel/binary exports from legacy report services. */
+export function sendExportResponse(
+  res: { setHeader: (k: string, v: string) => void; send: (b: unknown) => void },
+  result: ServiceResult,
+) {
+  if (!result.ok) {
+    unwrapServiceResult(result);
+    return;
+  }
+  const data = result.data as {
+    buffer: Buffer;
+    filename: string;
+    contentType: string;
+  };
+  res.setHeader('Content-Type', data.contentType);
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="${data.filename}"`,
+  );
+  res.send(data.buffer);
+}

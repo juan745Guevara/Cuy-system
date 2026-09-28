@@ -23,8 +23,8 @@ main.ts, app.module.ts   Entrada NestJS (plataforma en TypeScript)
 nest/                    Guards, PrismaModule, controllers plataforma
 shared/                  Kernel técnico (Prisma JS, middleware, ServiceResult)
 platform/                Servicios JS de auth, usuarios, granjas, especies, audit
-modules/cuyes/           Router Express legacy                         →  /api/v1/cuyes/*
-server.js                Express legacy (`npm run dev:legacy`)
+modules/cuyes/           Dominio y servicios JS (repos + application)
+nest/cuyes/              Controllers Nest                              →  /api/v1/cuyes/*
 ```
 
 Cada feature sigue capas **routes → service → repository**. Los repositorios usan **Prisma ORM**; consultas complejas (reportes, historial) usan SQL raw vía puente Prisma.
@@ -47,7 +47,7 @@ Headers requeridos en operaciones de granja: `Authorization`, `x-species-id`, `x
 | Capa | Tecnología |
 |------|------------|
 | Frontend | Next.js 15 (React 18), axios |
-| Backend | NestJS 12 (TypeScript) + servicios Express legacy |
+| Backend | NestJS 12 (TypeScript); lógica de dominio aún en JS |
 | ORM | Prisma 6 + PostgreSQL |
 | Auth | JWT, bcrypt |
 | Despliegue | Docker (objetivo) |
@@ -117,7 +117,6 @@ Cuy-system/
 |---------|-------------|
 | `npm run build` | Compilar Nest (`dist/`) |
 | `npm run dev` | API Nest en watch |
-| `npm run dev:legacy` | API Express legacy (nodemon) |
 | `npm run db:migrate` | Migración SQL inicial |
 | `npm run db:seed` | Seed de datos |
 | `npm run db:generate` | Generar cliente Prisma |

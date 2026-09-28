@@ -7,8 +7,6 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main.js",
-    "dev:legacy": "nodemon src/server.js",
-    "start:legacy": "node src/server.js",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "node src/shared/config/migrate.js",
