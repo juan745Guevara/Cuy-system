@@ -1,17 +1,6 @@
-import { applyDecorators, UseGuards } from '@nestjs/common';
-import { SpeciesGuard } from '../../shared/guards/species.guard';
-import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
-import { LoadUserFarmsGuard } from '../../shared/guards/load-user-farms.guard';
-import { FarmAccessGuard } from '../../shared/guards/farm-access.guard';
+import { FarmScope } from '../../shared/decorators/farm-scope.decorator';
 
-/** Cuyes farm-scoped routes (species + JWT + farm access). */
+/** @deprecated Use FarmScope — cuyes routes share the same farm + species guards. */
 export function CuyesFarmScope() {
-  return applyDecorators(
-    UseGuards(
-      SpeciesGuard,
-      JwtAuthGuard,
-      LoadUserFarmsGuard,
-      FarmAccessGuard,
-    ),
-  );
+  return FarmScope();
 }

@@ -5,7 +5,7 @@ import {
   RANGOS_DEFAULT,
   CATEGORIAS_RANGO,
   ESPECIE_ABS,
-} from '../../infrastructure/persistence/weighings.repository';
+} from '../../domain/weighings.constants';
 import { CuyesDepsService } from '../cuyes-deps.service';
 
 function hoyISO() {

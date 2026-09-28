@@ -1,2 +1,0 @@
-export * from './area-purpose';
-export { cuyesAreaRules } from './cuyes-area-rules';

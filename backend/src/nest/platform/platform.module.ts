@@ -4,6 +4,7 @@ import { UsersController } from './presentation/http/users.controller';
 import { FarmsController } from './presentation/http/farms.controller';
 import { SpeciesController } from './presentation/http/species.controller';
 import { AuditController } from './presentation/http/audit.controller';
+import { AreasController } from './presentation/http/areas.controller';
 import { platformProviders } from './platform.providers';
 
 @Module({
@@ -13,6 +14,7 @@ import { platformProviders } from './platform.providers';
     FarmsController,
     SpeciesController,
     AuditController,
+    AreasController,
   ],
   providers: [...platformProviders],
 })

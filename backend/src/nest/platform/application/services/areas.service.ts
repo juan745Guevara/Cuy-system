@@ -1,21 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
 import { AreasRepositoryPort } from '../../domain/ports/areas.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
+import { AreaRulesRegistry } from '../../../shared/species/area-rules-registry.service';
 
 @Injectable()
 export class AreasService {
   constructor(
     private readonly repository: AreasRepositoryPort,
-    private readonly cuyesDeps: CuyesDepsService,
+    private readonly sharedDeps: SharedDepsService,
+    private readonly areaRulesRegistry: AreaRulesRegistry,
   ) {}
 
-  private areaRules() {
-    return this.cuyesDeps.toDeps().areaRules;
-  }
-
   private get audit() {
-    return this.cuyesDeps.toDeps().audit;
+    return this.sharedDeps.audit;
   }
 
   async list(farmId: number) {
@@ -29,20 +27,22 @@ export class AreasService {
   async create({
     farmId,
     userId,
+    speciesNombre,
     body,
   }: {
     farmId: number;
     userId: number;
+    speciesNombre?: string;
     body: Record<string, unknown>;
   }) {
     const { nombre, proposito, jaula_ids = [] } = body || {};
     if (!nombre || !proposito) {
       return fail('name and purpose are required');
     }
-    const rules = this.areaRules();
+    const rules = this.areaRulesRegistry.forSpecies(speciesNombre);
     const PURPOSES = rules.getPurposes();
     const prop = rules.normalizePurpose(proposito);
-    if (!prop || !(PURPOSES as readonly string[]).includes(prop)) {
+    if (!prop || !(PURPOSES as readonly string[]).includes(String(prop))) {
       return fail('Invalid purpose', 400, { propositos: PURPOSES });
     }
     const jaulaIds = (Array.isArray(jaula_ids) ? jaula_ids : [])
@@ -52,7 +52,7 @@ export class AreasService {
       const area = await this.repository.createWithJaulas({
         farmId,
         nombre: String(nombre),
-        proposito: prop,
+        proposito: String(prop),
         jaulaIds,
       });
       await this.audit.write({

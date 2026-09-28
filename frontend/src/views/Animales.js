@@ -106,7 +106,7 @@ const Animales = () => {
         api.get('/cuyes/catalogs/breeds'),
         api.get('/cuyes/catalogs/categories'),
         api.get('/cuyes/cages'),
-        api.get('/cuyes/areas'),
+        api.get('/areas'),
       ]);
       setRazas(r.data);
       setCategorias(c.data);

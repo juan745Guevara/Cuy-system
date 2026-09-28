@@ -1,11 +1,15 @@
 import { Provider, Type } from '@nestjs/common';
 import {
+  AREAS_SERVICE,
   AUTH_SERVICE,
   AUDIT_SERVICE,
   FARMS_SERVICE,
   SPECIES_SERVICE,
   USERS_SERVICE,
 } from './platform.tokens';
+import { AreasService } from './application/services/areas.service';
+import { AreasRepositoryPort } from './domain/ports/areas.repository.port';
+import { AreasRepository } from './infrastructure/persistence/areas.repository';
 import { AuthService } from './application/services/auth.service';
 import { UsersService } from './application/services/users.service';
 import { FarmsService } from './application/services/farms.service';
@@ -28,6 +32,7 @@ function bindRepo(Port: any, Repository: Type<unknown>): Provider[] {
 }
 
 const tokenAliases: Provider[] = [
+  { provide: AREAS_SERVICE, useExisting: AreasService },
   { provide: AUTH_SERVICE, useExisting: AuthService },
   { provide: USERS_SERVICE, useExisting: UsersService },
   { provide: FARMS_SERVICE, useExisting: FarmsService },
@@ -36,6 +41,8 @@ const tokenAliases: Provider[] = [
 ];
 
 export const platformProviders: Provider[] = [
+  ...bindRepo(AreasRepositoryPort, AreasRepository),
+  AreasService,
   ...bindRepo(AuthRepositoryPort, AuthRepository),
   ...bindRepo(UsersRepositoryPort, UsersRepository),
   ...bindRepo(FarmsRepositoryPort, FarmsRepository),

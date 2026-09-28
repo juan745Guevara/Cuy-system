@@ -1,4 +1,3 @@
-export const AREAS_SERVICE = Symbol('CUYES_AREAS_SERVICE');
 export const CAGES_SERVICE = Symbol('CUYES_CAGES_SERVICE');
 export const ANIMALS_SERVICE = Symbol('CUYES_ANIMALS_SERVICE');
 export const CATALOGS_SERVICE = Symbol('CUYES_CATALOGS_SERVICE');
@@ -16,7 +15,6 @@ export const ALERTS_SERVICE = Symbol('CUYES_ALERTS_SERVICE');
 export const RANKING_SERVICE = Symbol('CUYES_RANKING_SERVICE');
 
 export const CUYES_SERVICE_TOKENS = {
-  areas: AREAS_SERVICE,
   cages: CAGES_SERVICE,
   animals: ANIMALS_SERVICE,
   catalogs: CATALOGS_SERVICE,

@@ -1,6 +1,5 @@
 import { Provider, Type } from '@nestjs/common';
 import {
-  AREAS_SERVICE,
   MORTALITY_SERVICE,
   SALES_SERVICE,
   WEANINGS_SERVICE,
@@ -18,9 +17,6 @@ import {
   RANKING_SERVICE,
 } from './cuyes.tokens';
 import { CuyesDepsService } from './application/cuyes-deps.service';
-import { AreasRepositoryPort } from './domain/ports/areas.repository.port';
-import { AreasRepository } from './infrastructure/persistence/areas.repository';
-import { AreasService } from './application/services/areas.service';
 import { MortalityRepositoryPort } from './domain/ports/mortality.repository.port';
 import { MortalityRepository } from './infrastructure/persistence/mortality.repository';
 import { MortalityService } from './application/services/mortality.service';
@@ -84,7 +80,6 @@ function migrated(
 
 export const cuyesProviders: Provider[] = [
   CuyesDepsService,
-  ...migrated(AREAS_SERVICE, AreasRepositoryPort, AreasRepository, AreasService),
   ...migrated(MORTALITY_SERVICE, MortalityRepositoryPort, MortalityRepository, MortalityService),
   ...migrated(SALES_SERVICE, SalesRepositoryPort, SalesRepository, SalesService),
   ...migrated(WEANINGS_SERVICE, WeaningsRepositoryPort, WeaningsRepository, WeaningsService),

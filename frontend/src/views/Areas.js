@@ -28,7 +28,7 @@ const Areas = () => {
   const load = useCallback(async () => {
     setError('');
     try {
-      const [a, r] = await Promise.all([api.get('/cuyes/areas'), api.get('/cuyes/areas/summary')]);
+      const [a, r] = await Promise.all([api.get('/areas'), api.get('/areas/summary')]);
       setAreas(a.data);
       setResumen(r.data);
     } catch (err) {
@@ -47,7 +47,7 @@ const Areas = () => {
     const prop =
       proposito === 'otro' ? (propositoOtro.trim() || 'otro') : proposito;
     try {
-      await api.post('/cuyes/areas', { nombre, proposito: prop });
+      await api.post('/areas', { nombre, proposito: prop });
       setOk(`Área "${nombre}" creada`);
       setNombre('');
       setPropositoOtro('');
@@ -61,7 +61,7 @@ const Areas = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/cuyes/areas/${id}/deactivate`);
+      await api.patch(`/areas/${id}/deactivate`);
       setOk(`Área "${nom}" desactivada`);
       load();
     } catch (err) {

@@ -1,5 +1,5 @@
 /**
- * Category ↔ area purpose mapping (cuy module).
+ * Category ↔ area purpose mapping (cuy species).
  * Canonical codes used in seed, areas and validation.
  */
 export const PURPOSES = [

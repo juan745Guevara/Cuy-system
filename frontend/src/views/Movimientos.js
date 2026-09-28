@@ -44,7 +44,7 @@ const Movimientos = () => {
       const [a, j, ar, m, sc, fa, g] = await Promise.all([
         api.get('/cuyes/animals', { params: { estado: 'activo' } }),
         api.get('/cuyes/cages'),
-        api.get('/cuyes/areas'),
+        api.get('/areas'),
         api.get('/cuyes/movements'),
         api.get('/cuyes/movements/overcapacity'),
         api.get('/cuyes/movements/out-of-area'),

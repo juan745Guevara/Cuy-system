@@ -29,7 +29,7 @@ const BusquedaGlobal = () => {
       const [anRes, jRes, arRes, vRes, empRes, pRes, mRes, uRes] = await Promise.allSettled([
         api.get('/cuyes/animals'),
         api.get('/cuyes/cages'),
-        api.get('/cuyes/areas'),
+        api.get('/areas'),
         api.get('/cuyes/sales'),
         api.get('/cuyes/breedings'),
         api.get('/cuyes/births'),

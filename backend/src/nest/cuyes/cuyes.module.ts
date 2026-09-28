@@ -1,5 +1,4 @@
-import { Module } from '@nestjs/common';
-import { AreasController } from './presentation/http/areas.controller';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { CagesController } from './presentation/http/cages.controller';
 import { AnimalsController } from './presentation/http/animals.controller';
 import { CatalogsController } from './presentation/http/catalogs.controller';
@@ -17,11 +16,11 @@ import { AlertsController } from './presentation/http/alerts.controller';
 import { RankingController } from './presentation/http/ranking.controller';
 import { cuyesProviders } from './cuyes.providers';
 import { CuyesDepsService } from './application/cuyes-deps.service';
-import { SpeciesGuard } from '../shared/guards/species.guard';
+import { AreaRulesRegistry } from '../shared/species/area-rules-registry.service';
+import { cuyesAreaRules } from '../shared/species/cuyes/cuyes-area-rules';
 
 @Module({
   controllers: [
-    AreasController,
     CagesController,
     AnimalsController,
     CatalogsController,
@@ -38,7 +37,13 @@ import { SpeciesGuard } from '../shared/guards/species.guard';
     AlertsController,
     RankingController,
   ],
-  providers: [...cuyesProviders, SpeciesGuard],
+  providers: [...cuyesProviders],
   exports: [CuyesDepsService],
 })
-export class CuyesModule {}
+export class CuyesModule implements OnModuleInit {
+  constructor(private readonly areaRulesRegistry: AreaRulesRegistry) {}
+
+  onModuleInit() {
+    this.areaRulesRegistry.register('cuyes', cuyesAreaRules);
+  }
+}

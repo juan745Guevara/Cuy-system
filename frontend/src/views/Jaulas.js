@@ -22,7 +22,7 @@ const Jaulas = () => {
     try {
       const [j, a, o] = await Promise.all([
         api.get('/cuyes/cages'),
-        api.get('/cuyes/areas'),
+        api.get('/areas'),
         api.get('/cuyes/cages/occupancy'),
       ]);
       setJaulas(j.data);

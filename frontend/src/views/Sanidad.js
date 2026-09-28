@@ -40,7 +40,7 @@ const Sanidad = () => {
         api.get('/cuyes/treatments'),
         api.get('/cuyes/treatments/in-progress', { params: paramsCurso }),
         api.get('/cuyes/animals', { params: { estado: 'activo' } }),
-        api.get('/cuyes/areas'),
+        api.get('/areas'),
         api.get('/cuyes/cages'),
       ]);
       setLista(t.data);

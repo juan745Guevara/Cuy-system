@@ -1,13 +1,15 @@
 import { AreasRepositoryPort } from '../../domain/ports/areas.repository.port';
 import { Injectable } from '@nestjs/common';
-import { CuyesDepsService } from '../../application/cuyes-deps.service';
+import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
 
 @Injectable()
 export class AreasRepository extends AreasRepositoryPort {
-  constructor(private readonly cuyesDeps: CuyesDepsService) { super(); }
+  constructor(private readonly sharedDeps: SharedDepsService) {
+    super();
+  }
 
   private get db() {
-    return this.cuyesDeps.toDeps().db;
+    return this.sharedDeps.db;
   }
 
   async list(farmId: number) {
