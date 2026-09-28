@@ -3,8 +3,7 @@ import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { TreatmentsRepository } from '../repositories/treatments.repository';
 import { CuyesDepsService } from '../cuyes-deps.service';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isValidDateStr, esFechaFutura } = require('../../../shared/utils/helpers');
+import { isValidDateStr, esFechaFutura } from '../../shared/utils/helpers';
 
 function addDays(fechaISO: string, dias: number) {
   const d = new Date(`${fechaISO}T00:00:00`);

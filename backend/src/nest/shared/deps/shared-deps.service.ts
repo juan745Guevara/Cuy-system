@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { createSqlBridge } from '../../../shared/database/sqlBridge';
-import { createAuditLogger } from '../../../shared/contracts/auditLogger';
-import { createNoOpAreaRules } from '../../../shared/species/areaRulesPort';
+import { createSqlBridge, SqlBridge } from '../database/sql-bridge';
+import { AuditLogService } from '../audit/audit-log.service';
+import { createNoOpAreaRules, AreaRulesPort } from '../species/area-rules.port';
 
-/** Nest-facing wrapper around legacy shared deps (Prisma + audit + SQL bridge). */
+/** Nest-facing shared deps (Prisma + audit + SQL bridge). */
 @Injectable()
 export class SharedDepsService {
-  readonly prisma;
-  readonly db;
-  readonly audit;
-  readonly areaRules;
+  readonly prisma: PrismaService;
+  readonly db: SqlBridge;
+  readonly audit: AuditLogService;
+  readonly areaRules: AreaRulesPort;
 
-  constructor(prismaService: PrismaService) {
+  constructor(prismaService: PrismaService, auditLog: AuditLogService) {
     this.prisma = prismaService;
     this.db = createSqlBridge(prismaService);
-    this.audit = createAuditLogger({ prisma: prismaService });
+    this.audit = auditLog;
     this.areaRules = createNoOpAreaRules();
   }
 

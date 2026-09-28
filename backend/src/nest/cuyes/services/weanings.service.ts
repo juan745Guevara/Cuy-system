@@ -3,8 +3,7 @@ import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { WeaningsRepository } from '../repositories/weanings.repository';
 import { CuyesDepsService } from '../cuyes-deps.service';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isValidDateStr, promedioPesos, esFechaFutura } = require('../../../shared/utils/helpers');
+import { isValidDateStr, promedioPesos, esFechaFutura } from '../../shared/utils/helpers';
 
 @Injectable()
 export class WeaningsService {

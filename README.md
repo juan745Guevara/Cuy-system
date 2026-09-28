@@ -20,10 +20,10 @@ Diseñado como plataforma **multigranja y modular por especie**: un núcleo comp
 
 ```
 main.ts, app.module.ts   Entrada NestJS
-nest/platform/           Controllers + servicios/repos TypeScript (auth, users, farms…)
-nest/cuyes/              Controllers, servicios y repositorios cuyes (TypeScript)
-modules/cuyes/domain/    Reglas de dominio cuyes (areaRules, areaPurpose)
-shared/                  Prisma, SQL bridge, helpers, audit
+nest/platform/           Plataforma (auth, users, farms, species, audit)
+nest/cuyes/              Módulo cuyes (controllers, servicios, repos, domain)
+nest/shared/             Prisma, guards, SQL bridge, audit, helpers
+shared/config/           Scripts SQL migrate/seed (CLI, fuera del runtime Nest)
 ```
 
 Cada feature sigue capas **routes → service → repository**. Los repositorios usan **Prisma ORM**; consultas complejas (reportes, historial) usan SQL raw vía puente Prisma.
@@ -102,9 +102,8 @@ Cuy-system/
 ├── backend/
 │   ├── prisma/schema.prisma      Esquema ORM
 │   └── src/
-│       ├── nest/                 API Nest (platform + cuyes + guards)
-│       ├── modules/cuyes/domain/ Reglas de dominio cuyes (JS)
-│       └── shared/               DB, Prisma bridge, kernel
+│       ├── nest/                 API Nest (platform, cuyes, shared)
+│       └── shared/config/        migrate.js, seed.js, schema.sql
 ├── frontend/                     Next.js App Router (React)
 └── docs/                         Requisitos, backlog, guías
 ```

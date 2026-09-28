@@ -3,13 +3,12 @@ import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { BirthsRepository } from '../repositories/births.repository';
 import { CuyesDepsService } from '../cuyes-deps.service';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const {
+import {
   normalizeCodigo,
   isValidDateStr,
   promedioPesos,
   esFechaFutura,
-} = require('../../../shared/utils/helpers');
+} from '../../shared/utils/helpers';
 
 @Injectable()
 export class BirthsService {

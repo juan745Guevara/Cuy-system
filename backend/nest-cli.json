@@ -4,10 +4,7 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "assets": [
-      { "include": "modules/cuyes/domain/**/*.js", "watchAssets": true },
-      { "include": "shared/**/*.js", "watchAssets": true }
-    ],
+    "assets": [],
     "watchAssets": true
   }
 }

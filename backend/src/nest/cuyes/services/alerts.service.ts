@@ -65,7 +65,10 @@ export class AlertsService {
 
   async list(farmId: number) {
     const config = await this.loadConfig(farmId);
-    const byTipo = Object.fromEntries(config.map((c: { tipo: string }) => [c.tipo, c]));
+    const byTipo = Object.fromEntries(config.map((c) => [c.tipo, c])) as Record<
+      string,
+      { tipo: string; dias: number; activo: boolean }
+    >;
     const hoy = hoyISO();
     const alertas: Array<Record<string, unknown>> = [];
 

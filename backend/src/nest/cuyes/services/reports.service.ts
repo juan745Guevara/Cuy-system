@@ -2,10 +2,8 @@
 import { Injectable } from '@nestjs/common';
 import { ok, fail } from '../../shared/kernel/service-result.kernel';
 import { ReportsRepository } from '../repositories/reports.repository';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { promedioPesos } = require('../../../shared/utils/helpers');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ExcelJS = require('exceljs');
+import { promedioPesos } from '../../shared/utils/helpers';
+import ExcelJS from 'exceljs';
 
 const MONTH_NAMES = [
   '',

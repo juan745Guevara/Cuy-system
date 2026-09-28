@@ -3,8 +3,7 @@ import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { AnimalsRepository } from '../repositories/animals.repository';
 import { CuyesDepsService } from '../cuyes-deps.service';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { normalizeCodigo, isValidDateStr, esFechaFutura } = require('../../../shared/utils/helpers');
+import { normalizeCodigo, isValidDateStr, esFechaFutura } from '../../shared/utils/helpers';
 
 @Injectable()
 export class AnimalsService {

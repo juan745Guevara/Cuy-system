@@ -2,8 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { BreedingsRepository } from '../repositories/breedings.repository';
 import { CuyesDepsService } from '../cuyes-deps.service';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { normalizeCodigo, isValidDateStr, todayISO, promedioPesos } = require('../../../shared/utils/helpers');
+import {
+  normalizeCodigo,
+  isValidDateStr,
+  todayISO,
+  promedioPesos,
+} from '../../shared/utils/helpers';
 
 @Injectable()
 export class BreedingsService {

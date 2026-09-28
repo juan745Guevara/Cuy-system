@@ -1,33 +1,40 @@
-/**
- * Bridges legacy pg-style `db.query` / `db.connect` to Prisma.
- * Complex SQL keeps working via $queryRawUnsafe; CRUD can use prisma.* directly.
- */
+import { PrismaClient } from '@prisma/client';
 
-function isControlStatement(sql) {
+type QueryClient = Pick<PrismaClient, '$queryRawUnsafe'>;
+
+function isControlStatement(sql: string): boolean {
   const cmd = sql.trim().toUpperCase();
   return cmd === 'BEGIN' || cmd === 'COMMIT' || cmd.startsWith('ROLLBACK');
 }
 
-function toRows(result) {
+/** Raw SQL row shape from $queryRawUnsafe (legacy repositories use dynamic columns). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SqlRow = any;
+
+function toRows(result: unknown): { rows: SqlRow[] } {
   return { rows: Array.isArray(result) ? result : [] };
 }
 
-function createQueryFn(client) {
-  return async (sql, params = []) => {
+function createQueryFn(client: QueryClient) {
+  return async (sql: string, params: unknown[] = []) => {
     if (isControlStatement(sql)) return { rows: [] };
     return toRows(await client.$queryRawUnsafe(sql, ...params));
   };
 }
 
+export type SqlBridge = {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: SqlRow[] }>;
+  connect: () => Promise<{
+    query: (sql: string, params?: unknown[]) => Promise<{ rows: SqlRow[] }>;
+    release: () => void;
+  }>;
+};
+
 /** pg-compatible adapter backed by Prisma. */
-function createSqlBridge(prisma) {
+export function createSqlBridge(prisma: PrismaClient): SqlBridge {
   return {
     query: createQueryFn(prisma),
 
-    /**
-     * Interactive transaction compatible with existing repository code
-     * (BEGIN / COMMIT / ROLLBACK / release).
-     */
     connect() {
       return new Promise((resolve, reject) => {
         prisma
@@ -36,7 +43,7 @@ function createSqlBridge(prisma) {
             let rollbackRequested = false;
 
             const client = {
-              query: async (sql, params = []) => {
+              query: async (sql: string, params: unknown[] = []) => {
                 const cmd = sql.trim().toUpperCase();
                 if (cmd === 'BEGIN') return { rows: [] };
                 if (cmd === 'COMMIT') {
@@ -65,7 +72,7 @@ function createSqlBridge(prisma) {
               throw new Error('ROLLBACK');
             }
           })
-          .catch((err) => {
+          .catch((err: Error & { pgRollback?: boolean }) => {
             if (err.message !== 'ROLLBACK' && !err.pgRollback) {
               reject(err);
             }
@@ -74,13 +81,3 @@ function createSqlBridge(prisma) {
     },
   };
 }
-
-/** Run callback inside a Prisma transaction with a pg-style client. */
-async function withPgTransaction(prisma, fn) {
-  return prisma.$transaction(async (tx) => {
-    const client = { query: createQueryFn(tx) };
-    return fn(client);
-  });
-}
-
-module.exports = { createSqlBridge, withPgTransaction };

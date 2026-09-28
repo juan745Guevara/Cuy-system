@@ -2,7 +2,7 @@
  * Category ↔ area purpose mapping (cuy module).
  * Canonical codes used in seed, areas and validation.
  */
-const PURPOSES = [
+export const PURPOSES = [
   'empadre',
   'gestacion_maternidad',
   'recria_hembras',
@@ -11,10 +11,10 @@ const PURPOSES = [
   'engorde_descarte',
   'cuarentena',
   'otro',
-];
+] as const;
 
 /** Legacy alias → canonical */
-const ALIAS = {
+const ALIAS: Record<string, string> = {
   maternidad: 'gestacion_maternidad',
   gestacion: 'gestacion_maternidad',
   gestacion_maternidad: 'gestacion_maternidad',
@@ -32,24 +32,25 @@ const ALIAS = {
   otro: 'otro',
 };
 
-function normalizePurpose(p) {
+export function normalizePurpose(p: unknown): string | null {
   if (!p) return null;
   const key = String(p).trim().toLowerCase().replace(/\s+/g, '_');
   return ALIAS[key] || key;
 }
 
-/**
- * Does the animal (sex + category area purpose) fit the destination area?
- * Breeding allows one male with females.
- */
-function animalMatchesArea({ sexo, propositoCategoria }, areaPurpose) {
+export function animalMatchesArea(
+  {
+    sexo,
+    propositoCategoria,
+  }: { sexo?: string; propositoCategoria?: unknown },
+  areaPurpose: unknown,
+): boolean {
   const area = normalizePurpose(areaPurpose);
   if (!area || area === 'otro' || area === 'cuarentena') return true;
 
   const cat = normalizePurpose(propositoCategoria);
 
   if (area === 'empadre') {
-    // breeding male allowed without warning
     if (sexo === 'M') return true;
     if (sexo === 'H') {
       if (!cat) return true;
@@ -73,7 +74,7 @@ function animalMatchesArea({ sexo, propositoCategoria }, areaPurpose) {
   if (area === 'recria_machos') {
     if (sexo !== 'M') return false;
     if (!cat) return true;
-    return cat === 'recria_machos' || cat === 'recria_hembras'; // legacy "recria"
+    return cat === 'recria_machos' || cat === 'recria_hembras';
   }
 
   if (area === 'reproductores_machos') {
@@ -88,21 +89,23 @@ function animalMatchesArea({ sexo, propositoCategoria }, areaPurpose) {
   }
 
   if (cat && cat === area) return true;
-  // no known category: do not force warning
   if (!cat) return true;
   return false;
 }
 
-function isAnimalOutOfArea(animal, areaPurpose) {
+export function isAnimalOutOfArea(
+  animal: {
+    sexo?: string;
+    proposito_area?: unknown;
+    propositoCategoria?: unknown;
+  },
+  areaPurpose: unknown,
+): boolean {
   return !animalMatchesArea(
-    { sexo: animal.sexo, propositoCategoria: animal.proposito_area || animal.propositoCategoria },
-    areaPurpose
+    {
+      sexo: animal.sexo,
+      propositoCategoria: animal.proposito_area || animal.propositoCategoria,
+    },
+    areaPurpose,
   );
 }
-
-module.exports = {
-  PURPOSES,
-  normalizePurpose,
-  animalMatchesArea,
-  isAnimalOutOfArea,
-};

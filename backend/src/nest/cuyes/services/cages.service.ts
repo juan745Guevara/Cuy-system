@@ -3,8 +3,7 @@ import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { CagesRepository } from '../repositories/cages.repository';
 import { CuyesDepsService } from '../cuyes-deps.service';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { normalizeCodigo } = require('../../../shared/utils/helpers');
+import { normalizeCodigo } from '../../shared/utils/helpers';
 
 @Injectable()
 export class CagesService {

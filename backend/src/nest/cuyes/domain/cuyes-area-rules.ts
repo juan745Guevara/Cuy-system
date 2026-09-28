@@ -1,9 +1,9 @@
 /** Cuyes adapter for areaRulesPort (OCP / LSP). */
-const areaPurpose = require('./areaPurpose');
+import * as areaPurpose from './area-purpose';
 
-module.exports = {
+export const cuyesAreaRules = {
   normalizePurpose: areaPurpose.normalizePurpose,
-  getPurposes: () => areaPurpose.PURPOSES,
+  getPurposes: () => [...areaPurpose.PURPOSES],
   animalMatchesArea: areaPurpose.animalMatchesArea,
   isAnimalOutOfArea: areaPurpose.isAnimalOutOfArea,
 };

@@ -42,7 +42,7 @@ export class AreasService {
     const rules = this.areaRules();
     const PURPOSES = rules.getPurposes();
     const prop = rules.normalizePurpose(proposito);
-    if (!PURPOSES.includes(prop)) {
+    if (!prop || !(PURPOSES as readonly string[]).includes(prop)) {
       return fail('Invalid purpose', 400, { propositos: PURPOSES });
     }
     const jaulaIds = (Array.isArray(jaula_ids) ? jaula_ids : [])
