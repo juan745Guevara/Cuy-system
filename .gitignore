@@ -1,5 +1,7 @@
 node_modules/
 build/
+backend/dist/
+*.tsbuildinfo
 .next/
 out/
 .env

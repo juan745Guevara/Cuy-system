@@ -1,0 +1,5 @@
+export const AUTH_SERVICE = 'AUTH_SERVICE';
+export const USERS_SERVICE = 'USERS_SERVICE';
+export const FARMS_SERVICE = 'FARMS_SERVICE';
+export const SPECIES_SERVICE = 'SPECIES_SERVICE';
+export const AUDIT_SERVICE = 'AUDIT_SERVICE';

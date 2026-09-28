@@ -19,10 +19,12 @@ Diseñado como plataforma **multigranja y modular por especie**: un núcleo comp
 ### Backend (`backend/src/`)
 
 ```
-shared/              Kernel técnico (Prisma, middleware, ServiceResult, contratos)
-platform/            Auth, usuarios, granjas, especies, auditoría  →  /api/v1/*
-modules/cuyes/       Operaciones del módulo cuyes                  →  /api/v1/cuyes/*
-server.js            Composition root
+main.ts, app.module.ts   Entrada NestJS (plataforma en TypeScript)
+nest/                    Guards, PrismaModule, controllers plataforma
+shared/                  Kernel técnico (Prisma JS, middleware, ServiceResult)
+platform/                Servicios JS de auth, usuarios, granjas, especies, audit
+modules/cuyes/           Router Express legacy                         →  /api/v1/cuyes/*
+server.js                Express legacy (`npm run dev:legacy`)
 ```
 
 Cada feature sigue capas **routes → service → repository**. Los repositorios usan **Prisma ORM**; consultas complejas (reportes, historial) usan SQL raw vía puente Prisma.
@@ -45,7 +47,7 @@ Headers requeridos en operaciones de granja: `Authorization`, `x-species-id`, `x
 | Capa | Tecnología |
 |------|------------|
 | Frontend | Next.js 15 (React 18), axios |
-| Backend | Node.js, Express |
+| Backend | NestJS 12 (TypeScript) + servicios Express legacy |
 | ORM | Prisma 6 + PostgreSQL |
 | Auth | JWT, bcrypt |
 | Despliegue | Docker (objetivo) |
@@ -82,7 +84,7 @@ cd frontend && npm install && npm run dev
 ### Producción
 
 ```bash
-cd backend && npm start
+cd backend && npm run build && npm start
 cd frontend && npm run build && npm start
 ```
 
@@ -101,8 +103,9 @@ Cuy-system/
 ├── backend/
 │   ├── prisma/schema.prisma      Esquema ORM
 │   └── src/
-│       ├── platform/             Núcleo compartido
-│       ├── modules/cuyes/        Módulo cuyes
+│       ├── nest/                 Controllers y guards Nest (plataforma)
+│       ├── platform/             Servicios plataforma (JS)
+│       ├── modules/cuyes/        Módulo cuyes (Express)
 │       └── shared/               DB, middleware, kernel
 ├── frontend/                     Next.js App Router (React)
 └── docs/                         Requisitos, backlog, guías
@@ -112,7 +115,9 @@ Cuy-system/
 
 | Comando | Descripción |
 |---------|-------------|
-| `npm run dev` | API con nodemon |
+| `npm run build` | Compilar Nest (`dist/`) |
+| `npm run dev` | API Nest en watch |
+| `npm run dev:legacy` | API Express legacy (nodemon) |
 | `npm run db:migrate` | Migración SQL inicial |
 | `npm run db:seed` | Seed de datos |
 | `npm run db:generate` | Generar cliente Prisma |
