@@ -6,15 +6,19 @@ import {
   FARMS_SERVICE,
   SPECIES_SERVICE,
   USERS_SERVICE,
+  RECINTOS_SERVICE,
 } from './platform.tokens';
-import { AreasService } from './application/services/areas.service';
+import { AreasService } from './application/areas.service';
 import { AreasRepositoryPort } from './domain/ports/areas.repository.port';
 import { AreasRepository } from './infrastructure/persistence/areas.repository';
-import { AuthService } from './application/services/auth.service';
-import { UsersService } from './application/services/users.service';
-import { FarmsService } from './application/services/farms.service';
-import { SpeciesService } from './application/services/species.service';
-import { AuditService } from './application/services/audit.service';
+import { RecintosService } from './application/recintos.service';
+import { RecintosRepositoryPort } from './domain/ports/recintos.repository.port';
+import { RecintosRepository } from './infrastructure/persistence/recintos.repository';
+import { AuthService } from './application/auth.service';
+import { UsersService } from './application/users.service';
+import { FarmsService } from './application/farms.service';
+import { SpeciesService } from './application/species.service';
+import { AuditService } from './application/audit.service';
 import { AuthRepositoryPort } from './domain/ports/auth.repository.port';
 import { AuthRepository } from './infrastructure/persistence/auth.repository';
 import { UsersRepositoryPort } from './domain/ports/users.repository.port';
@@ -38,6 +42,7 @@ const tokenAliases: Provider[] = [
   { provide: FARMS_SERVICE, useExisting: FarmsService },
   { provide: SPECIES_SERVICE, useExisting: SpeciesService },
   { provide: AUDIT_SERVICE, useExisting: AuditService },
+  { provide: RECINTOS_SERVICE, useExisting: RecintosService },
 ];
 
 export const platformProviders: Provider[] = [
@@ -48,10 +53,12 @@ export const platformProviders: Provider[] = [
   ...bindRepo(FarmsRepositoryPort, FarmsRepository),
   ...bindRepo(SpeciesRepositoryPort, SpeciesRepository),
   ...bindRepo(AuditRepositoryPort, AuditRepository),
+  ...bindRepo(RecintosRepositoryPort, RecintosRepository),
   AuthService,
   UsersService,
   FarmsService,
   SpeciesService,
   AuditService,
+  RecintosService,
   ...tokenAliases,
 ];

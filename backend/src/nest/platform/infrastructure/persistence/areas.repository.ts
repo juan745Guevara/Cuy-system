@@ -15,9 +15,9 @@ export class AreasRepository extends AreasRepositoryPort {
   async list(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT a.*,
-              (SELECT COUNT(*)::int FROM jaulas j WHERE j.id_area = a.id AND j.activa) AS jaulas,
+              (SELECT COUNT(*)::int FROM recintos j WHERE j.id_area = a.id AND j.activa) AS jaulas,
               (SELECT COUNT(*)::int FROM animales an
-                 JOIN jaulas j ON j.id = an.id_jaula
+                 JOIN recintos j ON j.id = an.id_jaula
                 WHERE j.id_area = a.id AND an.estado = 'activo') AS animales
        FROM areas a
        WHERE a.id_granja = $1
@@ -27,7 +27,7 @@ export class AreasRepository extends AreasRepositoryPort {
     return rows;
   }
 
-  async resumen(farmId: number) {
+  async summary(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT a.id, a.nombre, a.proposito,
               COALESCE(json_agg(
@@ -42,7 +42,7 @@ export class AreasRepository extends AreasRepositoryPort {
                 )
               ) FILTER (WHERE j.id IS NOT NULL), '[]') AS jaulas
        FROM areas a
-       LEFT JOIN jaulas j ON j.id_area = a.id AND j.activa = true
+       LEFT JOIN recintos j ON j.id_area = a.id AND j.activa = true
        WHERE a.id_granja = $1 AND a.activa = true
        GROUP BY a.id
        ORDER BY a.nombre`,
@@ -51,7 +51,7 @@ export class AreasRepository extends AreasRepositoryPort {
     return rows;
   }
 
-  async createWithJaulas(params: {
+  async createWithCages(params: {
     farmId: number;
     nombre: string;
     proposito: string;
@@ -69,7 +69,7 @@ export class AreasRepository extends AreasRepositoryPort {
       const area = rows[0];
       for (const jid of jaulaIds) {
         await client.query(
-          `UPDATE jaulas j SET id_area = $1
+          `UPDATE recintos j SET id_area = $1
            FROM areas a WHERE j.id_area = a.id AND a.id_granja = $2 AND j.id = $3`,
           [area.id, farmId, jid],
         );
@@ -92,9 +92,9 @@ export class AreasRepository extends AreasRepositoryPort {
     return rows[0] || null;
   }
 
-  async countActiveJaulas(areaId: number) {
+  async countActiveCages(areaId: number) {
     const { rows } = await this.db.query(
-      `SELECT id FROM jaulas WHERE id_area=$1 AND activa=true`,
+      `SELECT id FROM recintos WHERE id_area=$1 AND activa=true`,
       [areaId],
     );
     return rows;
@@ -118,7 +118,7 @@ export class AreasRepository extends AreasRepositoryPort {
           await client.query('ROLLBACK');
           return { error: 'Invalid destination area' };
         }
-        await client.query(`UPDATE jaulas SET id_area=$1 WHERE id_area=$2`, [
+        await client.query(`UPDATE recintos SET id_area=$1 WHERE id_area=$2`, [
           idAreaDestino,
           id,
         ]);

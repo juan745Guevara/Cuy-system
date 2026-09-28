@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { CagesRepositoryPort } from '../../domain/ports/cages.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { RecintosRepositoryPort } from '../domain/ports/recintos.repository.port';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
+import { normalizeCodigo } from '../../shared/utils/helpers';
 
-import { normalizeCodigo } from '../../../shared/utils/helpers';
-
+/** Núcleo: alta, edición y ocupación de recintos (jaula/corral/poza según la especie). */
 @Injectable()
-export class CagesService {
+export class RecintosService {
   constructor(
-    private readonly repository: CagesRepositoryPort,
-    private readonly cuyesDeps: CuyesDepsService,
+    private readonly repository: RecintosRepositoryPort,
+    private readonly sharedDeps: SharedDepsService,
   ) {}
 
   private get audit() {
-    return this.cuyesDeps.toDeps().audit;
+    return this.sharedDeps.audit;
   }
 
   async list({ farmId, query }: { farmId: number; query?: Record<string, unknown> }) {
@@ -22,7 +22,7 @@ export class CagesService {
   }
 
   async getOccupancy(farmId: number) {
-    const rows = await this.repository.ocupacionRows(farmId);
+    const rows = await this.repository.occupancyRows(farmId);
     const areasMap: Record<
       number,
       {
@@ -89,17 +89,17 @@ export class CagesService {
     if (!id_area || !codigo) {
       return fail('id_area and codigo are required');
     }
-    const area = await this.repository.findAreaInGranja(farmId, Number(id_area));
+    const area = await this.repository.findAreaInFarm(farmId, Number(id_area));
     if (!area) return fail('Area does not belong to the active farm');
 
     const codigoNorm = normalizeCodigo(codigo);
-    const dup = await this.repository.findDuplicateCodigo(farmId, codigoNorm);
+    const dup = await this.repository.findDuplicateCode(farmId, codigoNorm);
     if (dup) {
       return fail('A cage with that name already exists in the farm', 409);
     }
 
     try {
-      const jaula = await this.repository.insert({
+      const recinto = await this.repository.insert({
         idArea: Number(id_area),
         codigo: String(codigo).trim(),
         capacidadMaxima: capacidad_maxima,
@@ -108,12 +108,12 @@ export class CagesService {
         userId,
         farmId,
         accion: 'crear',
-        entidad: 'jaula',
-        idEntidad: jaula.id,
-        despues: jaula,
-        detalle: `Cage created: ${jaula.codigo}`,
+        entidad: 'recinto',
+        idEntidad: recinto.id,
+        despues: recinto,
+        detalle: `Cage created: ${recinto.codigo}`,
       });
-      return ok(jaula, 201);
+      return ok(recinto, 201);
     } catch (err: any) {
       if (err.code === '23505') {
         return fail('A cage with that code already exists in the area', 409);
@@ -134,16 +134,16 @@ export class CagesService {
     body: Record<string, unknown>;
   }) {
     const { codigo, capacidad_maxima, id_area } = body || {};
-    const cur = await this.repository.findInGranja(farmId, id);
+    const cur = await this.repository.findInFarm(farmId, id);
     if (!cur) return fail('Cage not found', 404);
 
     if (id_area) {
-      const area = await this.repository.findAreaInGranja(farmId, Number(id_area));
+      const area = await this.repository.findAreaInFarm(farmId, Number(id_area));
       if (!area) return fail('Invalid area');
     }
     if (codigo) {
       const codigoNorm = normalizeCodigo(codigo);
-      const dup = await this.repository.findDuplicateCodigo(farmId, codigoNorm, id);
+      const dup = await this.repository.findDuplicateCode(farmId, codigoNorm, id);
       if (dup) return fail('Duplicate cage name in the farm', 409);
     }
 
@@ -157,7 +157,7 @@ export class CagesService {
       userId,
       farmId,
       accion: 'editar',
-      entidad: 'jaula',
+      entidad: 'recinto',
       idEntidad: id,
       antes: cur,
       despues: updated,
@@ -167,21 +167,21 @@ export class CagesService {
   }
 
   async deactivate({ farmId, userId, id }: { farmId: number; userId: number; id: number }) {
-    const jaula = await this.repository.deactivate(farmId, id);
-    if (!jaula) return fail('Cage not found', 404);
+    const recinto = await this.repository.deactivate(farmId, id);
+    if (!recinto) return fail('Cage not found', 404);
     await this.audit.write({
       userId,
       farmId,
       accion: 'deactivate',
-      entidad: 'jaula',
-      idEntidad: jaula.id,
-      despues: jaula,
-      detalle: `Cage deactivated: ${jaula.codigo}`,
+      entidad: 'recinto',
+      idEntidad: recinto.id,
+      despues: recinto,
+      detalle: `Cage deactivated: ${recinto.codigo}`,
     });
-    return ok(jaula);
+    return ok(recinto);
   }
 
   async getAnimals({ farmId, jaulaId }: { farmId: number; jaulaId: number }) {
-    return ok(await this.repository.listAnimales(farmId, jaulaId));
+    return ok(await this.repository.listAnimals(farmId, jaulaId));
   }
 }

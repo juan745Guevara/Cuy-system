@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { WeighingsRepositoryPort } from '../../domain/ports/weighings.repository.port';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { WeighingsRepositoryPort } from '../domain/ports/weighings.repository.port';
 import {
   RANGOS_DEFAULT,
   CATEGORIAS_RANGO,
   ESPECIE_ABS,
-} from '../../domain/weighings.constants';
-import { CuyesDepsService } from '../cuyes-deps.service';
+} from '../domain/weighings.constants';
+import { CuyesDepsService } from './cuyes-deps.service';
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
@@ -40,9 +40,9 @@ export class WeighingsService {
   }
 
   private async loadRanges(farmId: number) {
-    let rows = await this.repository.getRangosRows(farmId);
+    let rows = await this.repository.getRangeRows(farmId);
     if (!rows.length) {
-      await this.repository.seedRangos(farmId);
+      await this.repository.seedRanges(farmId);
       return { ...RANGOS_DEFAULT };
     }
     const out: Record<string, { min: number; max: number }> = {};
@@ -56,7 +56,7 @@ export class WeighingsService {
     return out;
   }
 
-  private async insertPesaje(params: {
+  private async insertWeighing(params: {
     farmId: number;
     animalId: number;
     fecha: string;
@@ -87,7 +87,7 @@ export class WeighingsService {
       );
     }
 
-    const row = await this.repository.insertPesaje(null, {
+    const row = await this.repository.insertWeighing(null, {
       farmId,
       animalId,
       fecha,
@@ -110,7 +110,7 @@ export class WeighingsService {
     const { id_animal, fecha, peso_gramos, confirmar_fuera_rango } = body || {};
     try {
       const rangos = await this.loadRanges(farmId);
-      const result = await this.insertPesaje({
+      const result = await this.insertWeighing({
         farmId,
         animalId: Number(id_animal),
         fecha: String(fecha),
@@ -158,7 +158,7 @@ export class WeighingsService {
       const rangos = await this.loadRanges(farmId);
       const creados = [];
       for (const p of validos) {
-        const result = await this.insertPesaje({
+        const result = await this.insertWeighing({
           farmId,
           animalId: Number(p.id_animal),
           fecha: String(fecha),
@@ -197,7 +197,7 @@ export class WeighingsService {
   }
 
   async getAverage({ farmId, query }: { farmId: number; query?: Record<string, unknown> }) {
-    return ok(await this.repository.promedio(farmId, query || {}));
+    return ok(await this.repository.average(farmId, query || {}));
   }
 
   async getRanges(farmId: number) {
@@ -227,7 +227,7 @@ export class WeighingsService {
         next[key] = { min, max };
       }
     }
-    await this.repository.saveRangos(farmId, next, userId);
+    await this.repository.saveRanges(farmId, next, userId);
     const rangos = await this.loadRanges(farmId);
     await this.audit.write({
       userId,

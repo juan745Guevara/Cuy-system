@@ -10,32 +10,32 @@ export class MovementsRepository extends MovementsRepositoryPort {
     return this.cuyesDeps.toDeps().db;
   }
 
-  async getJaula(client, idJaula, farmId) {
+  async getCage(client, idJaula, farmId) {
       const q = client || this.db;
       const { rows } = await q.query(
         `SELECT j.id, j.codigo, j.capacidad_maxima, j.id_area, a.nombre AS area,
                 a.proposito, a.id_granja,
                 (SELECT COUNT(*)::int FROM animales an
                   WHERE an.id_jaula = j.id AND an.estado = 'activo') AS ocupacion
-         FROM jaulas j
+         FROM recintos j
          JOIN areas a ON a.id = j.id_area
          WHERE j.id = $1 AND a.id_granja = $2 AND j.activa = true`,
         [idJaula, farmId]
       );
       return rows[0] || null;
     }
-  async getAnimalesFromJaula(client, jaulaId, farmId) {
+  async getAnimalsFromCage(client, jaulaId, farmId) {
       const q = client || this.db;
       const { rows } = await q.query(
         `SELECT an.id FROM animales an
-         JOIN jaulas j ON j.id = an.id_jaula
+         JOIN recintos j ON j.id = an.id_jaula
          JOIN areas a ON a.id = j.id_area
          WHERE j.id = $1 AND a.id_granja = $2 AND an.estado = 'activo'`,
         [jaulaId, farmId]
       );
       return rows.map((r) => r.id);
     }
-  async getAnimalesActivos(client, animalIds, farmId) {
+  async getActiveAnimals(client, animalIds, farmId) {
       const q = client || this.db;
       const { rows } = await q.query(
         `SELECT an.*, c.nombre AS categoria, c.proposito_area
@@ -46,7 +46,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async ejecutarTraslado({ farmId, userId, fecha, idJaulaDestino, motivo, animales, excedio, avisosArea }) {
+  async executeRelocation({ farmId, userId, fecha, idJaulaDestino, motivo, animales, excedio, avisosArea }) {
       const client = await this.db.connect();
       try {
         await client.query('BEGIN');
@@ -85,23 +85,23 @@ export class MovementsRepository extends MovementsRepositoryPort {
         client.release();
       }
     }
-  async getGranjaEspecie(farmId) {
+  async getFarmSpecies(farmId) {
       const { rows } = await this.db.query(`SELECT id, id_especie FROM granjas WHERE id = $1`, [farmId]);
       return rows[0] || null;
     }
-  async getGranjaActiva(farmId) {
+  async getActiveFarm(farmId) {
       const { rows } = await this.db.query(
         `SELECT id, id_especie FROM granjas WHERE id = $1 AND activa = true`,
         [farmId]
       );
       return rows[0] || null;
     }
-  async listJaulasDestino(farmId) {
+  async listDestinationCages(farmId) {
       const { rows } = await this.db.query(
         `SELECT j.id, j.codigo, j.capacidad_maxima, a.nombre AS area, a.proposito,
                 (SELECT COUNT(*)::int FROM animales an
                   WHERE an.id_jaula = j.id AND an.estado = 'activo') AS ocupacion
-         FROM jaulas j
+         FROM recintos j
          JOIN areas a ON a.id = j.id_area
          WHERE a.id_granja = $1 AND j.activa = true
          ORDER BY a.nombre, j.codigo`,
@@ -109,7 +109,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async getAnimalesTransferencia(client, animalIds, farmId) {
+  async getTransferAnimals(client, animalIds, farmId) {
       const q = client || this.db;
       const { rows } = await q.query(
         `SELECT * FROM animales WHERE id = ANY($1::int[]) AND id_granja = $2 AND estado = 'activo'`,
@@ -117,7 +117,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async codigoExisteEnGranja(client, granjaDestino, codigoNorm, excludeId) {
+  async codeExistsInFarm(client, granjaDestino, codigoNorm, excludeId) {
       const q = client || this.db;
       const { rows } = await q.query(
         `SELECT id FROM animales WHERE id_granja = $1 AND codigo_norm = $2 AND id <> $3`,
@@ -125,7 +125,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows[0] || null;
     }
-  async ejecutarTransferencia({
+  async executeTransfer({
       granjaOrigen,
       granjaDestino,
       userId,
@@ -173,16 +173,16 @@ export class MovementsRepository extends MovementsRepositoryPort {
         client.release();
       }
     }
-  async historialAnimal(animalId, farmId) {
+  async animalHistory(animalId, farmId) {
       const { rows } = await this.db.query(
         `SELECT m.*,
                 jo.codigo AS jaula_origen, ao.nombre AS area_origen,
                 jd.codigo AS jaula_destino, ad.nombre AS area_destino,
                 go.nombre AS granja_origen, gd.nombre AS granja_destino
          FROM movimientos m
-         LEFT JOIN jaulas jo ON jo.id = m.id_jaula_origen
+         LEFT JOIN recintos jo ON jo.id = m.id_jaula_origen
          LEFT JOIN areas ao ON ao.id = jo.id_area
-         LEFT JOIN jaulas jd ON jd.id = m.id_jaula_destino
+         LEFT JOIN recintos jd ON jd.id = m.id_jaula_destino
          LEFT JOIN areas ad ON ad.id = jd.id_area
          LEFT JOIN granjas go ON go.id = m.id_granja_origen
          LEFT JOIN granjas gd ON gd.id = m.id_granja_destino
@@ -193,16 +193,16 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async findJaulaEnGranja(jaulaId, farmId) {
+  async findCageInFarm(jaulaId, farmId) {
       const { rows } = await this.db.query(
         `SELECT j.id, j.codigo, a.nombre AS area
-         FROM jaulas j JOIN areas a ON a.id = j.id_area
+         FROM recintos j JOIN areas a ON a.id = j.id_area
          WHERE j.id = $1 AND a.id_granja = $2`,
         [jaulaId, farmId]
       );
       return rows[0] || null;
     }
-  async animalesActualesJaula(jaulaId, farmId) {
+  async currentAnimalsInCage(jaulaId, farmId) {
       const { rows } = await this.db.query(
         `SELECT an.id, an.codigo, an.sexo, an.estado, c.nombre AS categoria
          FROM animales an
@@ -213,7 +213,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async animalesEnFecha(jaulaId, fecha, farmId) {
+  async animalsOnDate(jaulaId, fecha, farmId) {
       const { rows } = await this.db.query(
         `WITH ultimos AS (
            SELECT DISTINCT ON (m.id_animal)
@@ -242,16 +242,16 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async historialJaula(jaulaId, fecha, farmId) {
+  async cageHistory(jaulaId, fecha, farmId) {
       const { rows } = await this.db.query(
         `SELECT m.*, an.codigo,
                 jo.codigo AS jaula_origen, ao.nombre AS area_origen,
                 jd.codigo AS jaula_destino, ad.nombre AS area_destino
          FROM movimientos m
          JOIN animales an ON an.id = m.id_animal
-         LEFT JOIN jaulas jo ON jo.id = m.id_jaula_origen
+         LEFT JOIN recintos jo ON jo.id = m.id_jaula_origen
          LEFT JOIN areas ao ON ao.id = jo.id_area
-         LEFT JOIN jaulas jd ON jd.id = m.id_jaula_destino
+         LEFT JOIN recintos jd ON jd.id = m.id_jaula_destino
          LEFT JOIN areas ad ON ad.id = jd.id_area
          WHERE (m.id_jaula_origen = $1 OR m.id_jaula_destino = $1)
            AND m.fecha <= $2
@@ -262,14 +262,14 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async listRecientes(farmId) {
+  async listRecent(farmId) {
       const { rows } = await this.db.query(
         `SELECT m.*, an.codigo,
                 jo.codigo AS jaula_origen, jd.codigo AS jaula_destino
          FROM movimientos m
          JOIN animales an ON an.id = m.id_animal
-         LEFT JOIN jaulas jo ON jo.id = m.id_jaula_origen
-         LEFT JOIN jaulas jd ON jd.id = m.id_jaula_destino
+         LEFT JOIN recintos jo ON jo.id = m.id_jaula_origen
+         LEFT JOIN recintos jd ON jd.id = m.id_jaula_destino
          WHERE m.id_granja_origen = $1 OR m.id_granja_destino = $1
          ORDER BY m.fecha DESC, m.id DESC
          LIMIT 200`,
@@ -277,11 +277,11 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async listSobrecupo(farmId) {
+  async listOvercapacity(farmId) {
       const { rows } = await this.db.query(
         `SELECT j.id, j.codigo, j.capacidad_maxima, a.nombre AS area,
                 COUNT(an.id)::int AS ocupacion
-         FROM jaulas j
+         FROM recintos j
          JOIN areas a ON a.id = j.id_area
          LEFT JOIN animales an ON an.id_jaula = j.id AND an.estado = 'activo'
          WHERE a.id_granja = $1 AND j.activa = true AND j.capacidad_maxima IS NOT NULL
@@ -292,13 +292,13 @@ export class MovementsRepository extends MovementsRepositoryPort {
       );
       return rows;
     }
-  async listAnimalesConArea(farmId) {
+  async listAnimalsWithArea(farmId) {
       const { rows } = await this.db.query(
         `SELECT an.id, an.codigo, an.sexo, c.nombre AS categoria, c.proposito_area,
                 a.nombre AS area, a.proposito AS proposito_actual, j.codigo AS jaula
          FROM animales an
          LEFT JOIN categorias c ON c.id = an.id_categoria
-         JOIN jaulas j ON j.id = an.id_jaula
+         JOIN recintos j ON j.id = an.id_jaula
          JOIN areas a ON a.id = j.id_area
          WHERE an.id_granja = $1 AND an.estado = 'activo'
          ORDER BY a.nombre, an.codigo`,

@@ -33,7 +33,7 @@ const Pesajes = () => {
     try {
       const [a, j, r] = await Promise.all([
         api.get('/cuyes/animals', { params: { estado: 'activo' } }),
-        api.get('/cuyes/cages'),
+        api.get('/recintos'),
         api.get('/cuyes/weighings/ranges').catch(() => ({ data: null })),
       ]);
       setAnimales(a.data.data || a.data);
@@ -81,7 +81,7 @@ const Pesajes = () => {
   const cargarJaula = async () => {
     if (!form.id_jaula) return;
     try {
-      const { data } = await api.get(`/cuyes/cages/${form.id_jaula}/animals`);
+      const { data } = await api.get(`/recintos/${form.id_jaula}/animals`);
       setLoteAnimales(data);
       setPesosLote({});
     } catch (err) {

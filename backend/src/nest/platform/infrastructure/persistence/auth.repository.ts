@@ -22,7 +22,7 @@ export class AuthRepository extends AuthRepositoryPort {
     });
   }
 
-  async findGranjasForSuperadmin() {
+  async findFarmsForSuperadmin() {
     const rows = await this.prisma.granja.findMany({
       where: { activa: true },
       orderBy: { nombre: 'asc' },
@@ -41,7 +41,7 @@ export class AuthRepository extends AuthRepositoryPort {
     }));
   }
 
-  async findGranjasForUser(userId: number) {
+  async findFarmsForUser(userId: number) {
     const rows = await this.prisma.usuarioGranja.findMany({
       where: {
         id_usuario: userId,

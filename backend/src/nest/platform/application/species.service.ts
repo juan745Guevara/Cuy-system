@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ok } from '../../../shared/kernel/service-result.kernel';
-import { SpeciesRepositoryPort } from '../../domain/ports/species.repository.port';
-import { UserFarm } from '../../../shared/auth/auth-user.types';
+import { ok } from '../../shared/kernel/service-result.kernel';
+import { SpeciesRepositoryPort } from '../domain/ports/species.repository.port';
+import { UserFarm } from '../../shared/auth/auth-user.types';
 
 @Injectable()
 export class SpeciesService {

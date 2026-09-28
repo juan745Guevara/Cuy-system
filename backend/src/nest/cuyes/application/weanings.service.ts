@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { WeaningsRepositoryPort } from '../../domain/ports/weanings.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { WeaningsRepositoryPort } from '../domain/ports/weanings.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 
-import { isValidDateStr, promedioPesos, esFechaFutura } from '../../../shared/utils/helpers';
+import { isValidDateStr, promedioPesos, esFechaFutura } from '../../shared/utils/helpers';
 
 @Injectable()
 export class WeaningsService {
@@ -52,7 +52,7 @@ export class WeaningsService {
       });
     }
 
-    const parto = await this.repository.findParto(farmId, Number(id_parto));
+    const parto = await this.repository.findBirth(farmId, Number(id_parto));
     if (!parto) return fail('Birth record not found', 404);
     if (String(fecha_destete) <= String(parto.fecha_parto).slice(0, 10)) {
       return fail('fecha_destete must be after the birth date', 400, {
@@ -74,7 +74,7 @@ export class WeaningsService {
     }
 
     try {
-      const { destete, gazaposCount } = await this.repository.createDestete({
+      const { destete, gazaposCount } = await this.repository.createWeaning({
         farmId,
         userId,
         parto,
@@ -124,7 +124,7 @@ export class WeaningsService {
   }
 
   async list(farmId: number) {
-    const rows = await this.repository.listDestetes(farmId);
+    const rows = await this.repository.listWeanings(farmId);
     return ok(
       (rows as any[]).map((d) => ({
         ...d,

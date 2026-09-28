@@ -105,7 +105,7 @@ const Animales = () => {
       const [r, c, j, a] = await Promise.all([
         api.get('/cuyes/catalogs/breeds'),
         api.get('/cuyes/catalogs/categories'),
-        api.get('/cuyes/cages'),
+        api.get('/recintos'),
         api.get('/areas'),
       ]);
       setRazas(r.data);

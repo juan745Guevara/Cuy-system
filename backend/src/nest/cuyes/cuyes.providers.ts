@@ -6,7 +6,6 @@ import {
   CATALOGS_SERVICE,
   BIRTHS_SERVICE,
   INVENTORY_SERVICE,
-  CAGES_SERVICE,
   ANIMALS_SERVICE,
   MOVEMENTS_SERVICE,
   WEIGHINGS_SERVICE,
@@ -19,49 +18,46 @@ import {
 import { CuyesDepsService } from './application/cuyes-deps.service';
 import { MortalityRepositoryPort } from './domain/ports/mortality.repository.port';
 import { MortalityRepository } from './infrastructure/persistence/mortality.repository';
-import { MortalityService } from './application/services/mortality.service';
+import { MortalityService } from './application/mortality.service';
 import { SalesRepositoryPort } from './domain/ports/sales.repository.port';
 import { SalesRepository } from './infrastructure/persistence/sales.repository';
-import { SalesService } from './application/services/sales.service';
+import { SalesService } from './application/sales.service';
 import { WeaningsRepositoryPort } from './domain/ports/weanings.repository.port';
 import { WeaningsRepository } from './infrastructure/persistence/weanings.repository';
-import { WeaningsService } from './application/services/weanings.service';
+import { WeaningsService } from './application/weanings.service';
 import { CatalogsRepositoryPort } from './domain/ports/catalogs.repository.port';
 import { CatalogsRepository } from './infrastructure/persistence/catalogs.repository';
-import { CatalogsService } from './application/services/catalogs.service';
+import { CatalogsService } from './application/catalogs.service';
 import { BirthsRepositoryPort } from './domain/ports/births.repository.port';
 import { BirthsRepository } from './infrastructure/persistence/births.repository';
-import { BirthsService } from './application/services/births.service';
+import { BirthsService } from './application/births.service';
 import { InventoryRepositoryPort } from './domain/ports/inventory.repository.port';
 import { InventoryRepository } from './infrastructure/persistence/inventory.repository';
-import { InventoryService } from './application/services/inventory.service';
+import { InventoryService } from './application/inventory.service';
 import { AlertsRepositoryPort } from './domain/ports/alerts.repository.port';
 import { AlertsRepository } from './infrastructure/persistence/alerts.repository';
-import { AlertsService } from './application/services/alerts.service';
+import { AlertsService } from './application/alerts.service';
 import { RankingRepositoryPort } from './domain/ports/ranking.repository.port';
 import { RankingRepository } from './infrastructure/persistence/ranking.repository';
-import { RankingService } from './application/services/ranking.service';
+import { RankingService } from './application/ranking.service';
 import { TreatmentsRepositoryPort } from './domain/ports/treatments.repository.port';
 import { TreatmentsRepository } from './infrastructure/persistence/treatments.repository';
-import { TreatmentsService } from './application/services/treatments.service';
-import { CagesRepositoryPort } from './domain/ports/cages.repository.port';
-import { CagesRepository } from './infrastructure/persistence/cages.repository';
-import { CagesService } from './application/services/cages.service';
+import { TreatmentsService } from './application/treatments.service';
 import { WeighingsRepositoryPort } from './domain/ports/weighings.repository.port';
 import { WeighingsRepository } from './infrastructure/persistence/weighings.repository';
-import { WeighingsService } from './application/services/weighings.service';
+import { WeighingsService } from './application/weighings.service';
 import { AnimalsRepositoryPort } from './domain/ports/animals.repository.port';
 import { AnimalsRepository } from './infrastructure/persistence/animals.repository';
-import { AnimalsService } from './application/services/animals.service';
+import { AnimalsService } from './application/animals.service';
 import { MovementsRepositoryPort } from './domain/ports/movements.repository.port';
 import { MovementsRepository } from './infrastructure/persistence/movements.repository';
-import { MovementsService } from './application/services/movements.service';
+import { MovementsService } from './application/movements.service';
 import { BreedingsRepositoryPort } from './domain/ports/breedings.repository.port';
 import { BreedingsRepository } from './infrastructure/persistence/breedings.repository';
-import { BreedingsService } from './application/services/breedings.service';
+import { BreedingsService } from './application/breedings.service';
 import { ReportsRepositoryPort } from './domain/ports/reports.repository.port';
 import { ReportsRepository } from './infrastructure/persistence/reports.repository';
-import { ReportsService } from './application/services/reports.service';
+import { ReportsService } from './application/reports.service';
 
 function migrated(
   token: symbol,
@@ -86,7 +82,6 @@ export const cuyesProviders: Provider[] = [
   ...migrated(CATALOGS_SERVICE, CatalogsRepositoryPort, CatalogsRepository, CatalogsService),
   ...migrated(BIRTHS_SERVICE, BirthsRepositoryPort, BirthsRepository, BirthsService),
   ...migrated(INVENTORY_SERVICE, InventoryRepositoryPort, InventoryRepository, InventoryService),
-  ...migrated(CAGES_SERVICE, CagesRepositoryPort, CagesRepository, CagesService),
   ...migrated(ANIMALS_SERVICE, AnimalsRepositoryPort, AnimalsRepository, AnimalsService),
   ...migrated(MOVEMENTS_SERVICE, MovementsRepositoryPort, MovementsRepository, MovementsService),
   ...migrated(WEIGHINGS_SERVICE, WeighingsRepositoryPort, WeighingsRepository, WeighingsService),

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { ok, fail } from '../../../shared/kernel/service-result.kernel';
-import { AuthRepositoryPort } from '../../domain/ports/auth.repository.port';
-import { UserFarm } from '../../../shared/auth/auth-user.types';
+import { ok, fail } from '../../shared/kernel/service-result.kernel';
+import { AuthRepositoryPort } from '../domain/ports/auth.repository.port';
+import { UserFarm } from '../../shared/auth/auth-user.types';
 
 @Injectable()
 export class AuthService {
@@ -31,8 +31,8 @@ export class AuthService {
 
     const granjas =
       user.rol === 'superadmin'
-        ? await this.repository.findGranjasForSuperadmin()
-        : await this.repository.findGranjasForUser(user.id);
+        ? await this.repository.findFarmsForSuperadmin()
+        : await this.repository.findFarmsForUser(user.id);
 
     await this.repository.logLogin(user.id, user.email);
 

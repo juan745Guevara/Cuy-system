@@ -10,7 +10,7 @@ export class SalesRepository extends SalesRepositoryPort {
     return this.cuyesDeps.toDeps().db;
   }
 
-  async countPoblacion(farmId: number, categoria?: string) {
+  async countPopulation(farmId: number, categoria?: string) {
     if (!categoria) {
       const { rows } = await this.db.query(
         `SELECT COUNT(*)::int AS n FROM animales WHERE id_granja=$1 AND estado='activo'`,

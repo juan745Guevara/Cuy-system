@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { TreatmentsRepositoryPort } from '../../domain/ports/treatments.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { TreatmentsRepositoryPort } from '../domain/ports/treatments.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 
-import { isValidDateStr, esFechaFutura } from '../../../shared/utils/helpers';
+import { isValidDateStr, esFechaFutura } from '../../shared/utils/helpers';
 
 function addDays(fechaISO: string, dias: number) {
   const d = new Date(`${fechaISO}T00:00:00`);
@@ -69,10 +69,10 @@ export class TreatmentsService {
     if (id_animal) animalIds = [Number(id_animal)];
 
     if (id_jaula && !animalIds.length) {
-      animalIds = await this.repository.getAnimalesByJaula(Number(id_jaula), farmId);
+      animalIds = await this.repository.getAnimalsByCage(Number(id_jaula), farmId);
     }
     if (id_area && !animalIds.length) {
-      animalIds = await this.repository.getAnimalesByArea(Number(id_area), farmId);
+      animalIds = await this.repository.getAnimalsByArea(Number(id_area), farmId);
     }
 
     const targets = animalIds.length ? animalIds : [null];
@@ -119,7 +119,7 @@ export class TreatmentsService {
 
   async listActive({ farmId, query }: { farmId: number; query?: Record<string, unknown> }) {
     const idArea = query?.id_area ? Number(query.id_area) : null;
-    return ok(await this.repository.listEnCurso(farmId, idArea));
+    return ok(await this.repository.listOngoing(farmId, idArea));
   }
 
   async complete({

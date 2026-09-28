@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { CatalogsRepositoryPort } from '../../domain/ports/catalogs.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { CatalogsRepositoryPort } from '../domain/ports/catalogs.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 
 @Injectable()
 export class CatalogsService {
@@ -15,12 +15,12 @@ export class CatalogsService {
   }
 
   private async especieDeGranja(farmId: number) {
-    return this.repository.getEspecieGranja(farmId);
+    return this.repository.getFarmSpecies(farmId);
   }
 
   async listBreeds(farmId: number) {
     const idEspecie = await this.especieDeGranja(farmId);
-    return ok(await this.repository.listRazas(idEspecie!));
+    return ok(await this.repository.listBreeds(idEspecie!));
   }
 
   async createBreed({
@@ -36,7 +36,7 @@ export class CatalogsService {
     if (!nombre) return fail('name is required');
     const idEspecie = await this.especieDeGranja(farmId);
     try {
-      const raza = await this.repository.insertRaza(idEspecie!, String(nombre));
+      const raza = await this.repository.insertBreed(idEspecie!, String(nombre));
       await this.audit.write({
         userId,
         farmId,
@@ -55,7 +55,7 @@ export class CatalogsService {
 
   async listCategories(farmId: number) {
     const idEspecie = await this.especieDeGranja(farmId);
-    return ok(await this.repository.listCategorias(idEspecie!));
+    return ok(await this.repository.listCategories(idEspecie!));
   }
 
   async createCategory({
@@ -71,7 +71,7 @@ export class CatalogsService {
     if (!nombre) return fail('name is required');
     const idEspecie = await this.especieDeGranja(farmId);
     try {
-      const categoria = await this.repository.insertCategoria(
+      const categoria = await this.repository.insertCategory(
         idEspecie!,
         String(nombre),
         proposito_area ? String(proposito_area) : undefined,
@@ -92,7 +92,7 @@ export class CatalogsService {
     }
   }
 
-  async deactivateRaza({
+  async deactivateBreed({
     farmId,
     userId,
     id,
@@ -102,7 +102,7 @@ export class CatalogsService {
     id: string;
   }) {
     const idEspecie = await this.especieDeGranja(farmId);
-    const raza = await this.repository.deactivateRaza(Number(id), idEspecie!);
+    const raza = await this.repository.deactivateBreed(Number(id), idEspecie!);
     if (!raza) return fail('Breed not found', 404);
     await this.audit.write({
       userId,
@@ -116,7 +116,7 @@ export class CatalogsService {
     return ok(raza);
   }
 
-  async deactivateCategoria({
+  async deactivateCategory({
     farmId,
     userId,
     id,
@@ -126,7 +126,7 @@ export class CatalogsService {
     id: string;
   }) {
     const idEspecie = await this.especieDeGranja(farmId);
-    const categoria = await this.repository.deactivateCategoria(
+    const categoria = await this.repository.deactivateCategory(
       Number(id),
       idEspecie!,
     );
@@ -144,20 +144,20 @@ export class CatalogsService {
   }
 
   async getTransitions(farmId: number) {
-    const conf = await this.repository.getAlertaConfig(farmId);
+    const conf = await this.repository.getAlertConfig(farmId);
     const byTipo = Object.fromEntries(conf.map((c) => [c.tipo, c.dias]));
     const edadRecria = Number(byTipo.edad_recria) || 21;
     const edadEmpadre = Number(byTipo.edad_empadre) || 90;
 
     const idEspecie = await this.especieDeGranja(farmId);
-    const cats = await this.repository.listCategorias(idEspecie!);
+    const cats = await this.repository.listCategories(idEspecie!);
     const findCat = (fn: (n: string) => boolean) =>
       cats.find((c) => fn(c.nombre.toLowerCase()))?.id || null;
     const idRecria = findCat((n) => n.includes('recr') || n.includes('reemplazo'));
     const idReproductora = findCat((n) => n.includes('reproductora'));
     const idReproductor = findCat((n) => n.includes('reproductor'));
 
-    const rows = (await this.repository.getAnimalesConCategoria(farmId)) as any[];
+    const rows = (await this.repository.getAnimalsWithCategory(farmId)) as any[];
     const hoy = new Date();
     const propuestas: unknown[] = [];
 

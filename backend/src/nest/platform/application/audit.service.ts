@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail } from '../../../shared/kernel/service-result.kernel';
-import { AuditRepositoryPort } from '../../domain/ports/audit.repository.port';
-import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
+import { ok, fail } from '../../shared/kernel/service-result.kernel';
+import { AuditRepositoryPort } from '../domain/ports/audit.repository.port';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
 
 @Injectable()
 export class AuditService {
@@ -39,11 +39,11 @@ export class AuditService {
     if (!(String(motivo || '')).trim()) {
       return fail('void reason is required');
     }
-    const before = await this.repository.findMortalidad(id, farmId);
+    const before = await this.repository.findMortality(id, farmId);
     if (!before) return fail('Record not found', 404);
     if ((before as any).anulado) return fail('Already voided', 409);
 
-    await this.repository.ensureMortalidadAnulacionColumns();
+    await this.repository.ensureMortalityVoidColumns();
     const row = await this.repository.voidMortality(
       id,
       farmId,
@@ -78,10 +78,10 @@ export class AuditService {
     if (!(String(motivo || '')).trim()) {
       return fail('void reason is required');
     }
-    const before = await this.repository.findVenta(id, farmId);
+    const before = await this.repository.findSale(id, farmId);
     if (!before) return fail('Record not found', 404);
 
-    await this.repository.ensureVentasAnulacionColumns();
+    await this.repository.ensureSalesVoidColumns();
     if ((before as any).anulado) return fail('Already voided', 409);
 
     const row = await this.repository.voidSale(id, farmId, String(motivo).trim());

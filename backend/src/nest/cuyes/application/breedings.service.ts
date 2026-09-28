@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { BreedingsRepositoryPort } from '../../domain/ports/breedings.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { BreedingsRepositoryPort } from '../domain/ports/breedings.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 import {
   normalizeCodigo,
   isValidDateStr,
   todayISO,
   promedioPesos,
-} from '../../../shared/utils/helpers';
+} from '../../shared/utils/helpers';
 
 @Injectable()
 export class BreedingsService {
@@ -33,7 +33,7 @@ export class BreedingsService {
       if (!id_jaula) return fail('cage is required', 400, { campo: 'id_jaula' });
       const codigoNorm = normalizeCodigo(codigo);
       try {
-        const animal = await this.repository.insertReproductor({
+        const animal = await this.repository.insertBreedingMale({
           farmId,
           codigo: String(codigo).trim(),
           codigoNorm,
@@ -45,7 +45,7 @@ export class BreedingsService {
           userId,
         });
         if (particularidad) {
-          await this.repository.insertParticularidad(animal.id, particularidad, userId);
+          await this.repository.insertNote(animal.id, particularidad, userId);
         }
         return ok(animal, 201);
       } catch (err: any) {
@@ -58,7 +58,7 @@ export class BreedingsService {
       if (!codigo) return fail('code is required');
       const codigoNorm = normalizeCodigo(codigo);
       try {
-        const animal = await this.repository.insertReproductor({
+        const animal = await this.repository.insertBreedingMale({
           farmId,
           codigo: String(codigo).trim(),
           codigoNorm,
@@ -70,7 +70,7 @@ export class BreedingsService {
           userId,
         });
         if (particularidad) {
-          await this.repository.insertParticularidad(animal.id, particularidad, userId);
+          await this.repository.insertNote(animal.id, particularidad, userId);
         }
         return ok(animal, 201);
       } catch (err: any) {
@@ -112,7 +112,7 @@ export class BreedingsService {
       for (const hid of hembras) {
         const h = await this.assertAnimal(farmId, hid, 'H');
         if (h.error) return fail(h.error);
-        const lastParto = await this.repository.getLastPartoDate(hid);
+        const lastParto = await this.repository.getLastBirthDate(hid);
         if (lastParto && fecha_empadre < String(lastParto).slice(0, 10)) {
           return fail('breeding date cannot be before the female last birth', 400, {
             campo: 'fecha_empadre',
@@ -122,7 +122,7 @@ export class BreedingsService {
       }
 
       try {
-        const emp = await this.repository.createEmpadre({
+        const emp = await this.repository.createBreeding({
           farmId,
           userId,
           id_macho,
@@ -149,7 +149,7 @@ export class BreedingsService {
       }
     }
     async list(farmId) {
-      return ok(await this.repository.listEmpadres(farmId));
+      return ok(await this.repository.listBreedings(farmId));
     }
     async updateFemaleBreedingResult({ farmId, userId, empadreId, hembraId, body }) {
       const { resultado, fecha } = body || {};
@@ -157,8 +157,8 @@ export class BreedingsService {
         return fail('Invalid result');
       }
       const fechaRes = fecha && isValidDateStr(fecha) ? fecha : todayISO();
-      const antes = await this.repository.findEmpadreHembra(farmId, empadreId, hembraId);
-      const row = await this.repository.updateEmpadreHembraResultado(
+      const antes = await this.repository.findBreedingFemale(farmId, empadreId, hembraId);
+      const row = await this.repository.updateBreedingFemaleResult(
         farmId,
         empadreId,
         hembraId,
@@ -167,7 +167,7 @@ export class BreedingsService {
       if (!row) return fail('Record not found', 404);
 
       if (resultado === 'murio') {
-        await this.repository.markHembraMuerta({ farmId, hembraId, fechaRes, userId });
+        await this.repository.markFemaleDeceased({ farmId, hembraId, fechaRes, userId });
       }
       await this.audit.write({
         userId,
@@ -185,12 +185,12 @@ export class BreedingsService {
       let h = await this.assertAnimal(farmId, hembraId, 'H');
       let animal = h.animal;
       if (h.error) {
-        animal = await this.repository.findHembraAnyState(farmId, hembraId);
+        animal = await this.repository.findFemaleAnyState(farmId, hembraId);
         if (!animal) return fail('Female not found', 404);
       }
 
-      const ciclos = await this.repository.getReproductoraCiclos(hembraId, farmId);
-      const partosAll = await this.repository.getPartosByHembra(hembraId);
+      const ciclos = await this.repository.getFemaleBreedingCycles(hembraId, farmId);
+      const partosAll = await this.repository.getBirthsByFemale(hembraId);
       const numPartos = partosAll.length;
       const avgCamada =
         numPartos > 0
@@ -227,13 +227,13 @@ export class BreedingsService {
       });
     }
     async getFemalesInCage({ farmId, jaulaId }) {
-      return ok(await this.repository.getHembrasByJaula(jaulaId, farmId));
+      return ok(await this.repository.getFemalesByCage(jaulaId, farmId));
     }
     async getMaleBreedingProfile({ farmId, machoId }) {
-      const macho = await this.repository.findMacho(farmId, machoId);
+      const macho = await this.repository.findMale(farmId, machoId);
       if (!macho) return fail('Male not found', 404);
 
-      const ciclos = await this.repository.getReproductorCiclos(machoId, farmId);
+      const ciclos = await this.repository.getMaleBreedingCycles(machoId, farmId);
       let totalEmpadres = ciclos.length;
       let totalPrenadas = 0;
       let totalHembras = 0;
@@ -263,7 +263,7 @@ export class BreedingsService {
     }
     async closeBreeding({ farmId, userId, empadreId, body }) {
       const { id_jaula_retorno } = body || {};
-      const emp = await this.repository.findEmpadre(farmId, empadreId);
+      const emp = await this.repository.findBreeding(farmId, empadreId);
       if (!emp) return fail('Breeding record not found', 404);
       if (!emp.id_macho) return fail('Breeding record has no assigned male');
       if (!id_jaula_retorno) return fail('id_jaula_retorno is required');

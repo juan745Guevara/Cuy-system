@@ -20,7 +20,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
     return rows[0]?.id || null;
   }
 
-  async findHembraActiva(farmId: number, hembraId: number) {
+  async findActiveFemale(farmId: number, hembraId: number) {
     const { rows } = await this.db.query(
       `SELECT * FROM animales WHERE id=$1 AND id_granja=$2 AND sexo='H' AND estado='activo'`,
       [hembraId, farmId],
@@ -28,7 +28,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
     return rows[0] || null;
   }
 
-  async createParto(params: {
+  async createBirth(params: {
     farmId: number;
     userId: number;
     data: Record<string, unknown>;
@@ -154,7 +154,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
     }
   }
 
-  async listPartos(farmId: number) {
+  async listBirths(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT p.*, a.codigo AS hembra_codigo
        FROM partos p JOIN animales a ON a.id = p.id_hembra

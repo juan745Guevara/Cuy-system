@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { FarmsRepositoryPort } from '../../domain/ports/farms.repository.port';
-import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
-import { UserFarm } from '../../../shared/auth/auth-user.types';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { FarmsRepositoryPort } from '../domain/ports/farms.repository.port';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
+import { UserFarm } from '../../shared/auth/auth-user.types';
 
 @Injectable()
 export class FarmsService {

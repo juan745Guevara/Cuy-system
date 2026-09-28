@@ -22,7 +22,7 @@ export class UsersRepository extends UsersRepositoryPort {
     return rows.map((r) => r.id_granja);
   }
 
-  logEscaladaBloqueada(userId: number, detalle: Record<string, unknown>) {
+  logBlockedEscalation(userId: number, detalle: Record<string, unknown>) {
     return this.prisma.auditLog.create({
       data: {
         id_usuario: userId,
@@ -32,7 +32,7 @@ export class UsersRepository extends UsersRepositoryPort {
     });
   }
 
-  createWithGranjas(params: {
+  createWithFarms(params: {
     nombre: string;
     email: string;
     passwordHash: string;
@@ -98,7 +98,7 @@ export class UsersRepository extends UsersRepositoryPort {
     return this.prisma.usuario.findUnique({ where: { id } });
   }
 
-  updateWithGranjas(params: {
+  updateWithFarms(params: {
     id: number;
     nombre?: string;
     activo?: boolean;
@@ -140,7 +140,7 @@ export class UsersRepository extends UsersRepositoryPort {
     });
   }
 
-  async findWithGranjas(id: number) {
+  async findWithFarms(id: number) {
     const rows = await this.prisma.$queryRawUnsafe(
       `SELECT u.id, u.nombre, u.email, u.rol, u.activo,
               COALESCE(json_agg(json_build_object('id', g.id, 'nombre', g.nombre))

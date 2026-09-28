@@ -14,18 +14,18 @@ import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
-import { CuyesFarmScope } from '../cuyes-scope.decorator';
+import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
 import { BREEDINGS_SERVICE } from '../../cuyes.tokens';
 
 @Controller('cuyes/breedings')
-@CuyesFarmScope()
+@FarmScope()
 export class BreedingsController {
   constructor(@Inject(BREEDINGS_SERVICE) private readonly service: any) {}
 
   @Get('breeding-females/:id')
-  femaleProfile(@FarmId() farmId: number, @Param('id') id: string) {
+  async femaleProfile(@FarmId() farmId: number, @Param('id') id: string) {
     return unwrapServiceResult(
-      this.service.getFemaleBreedingProfile({
+      await this.service.getFemaleBreedingProfile({
         farmId,
         hembraId: Number(id),
       }),
@@ -33,22 +33,22 @@ export class BreedingsController {
   }
 
   @Get('breeding-males/:id')
-  maleProfile(@FarmId() farmId: number, @Param('id') id: string) {
+  async maleProfile(@FarmId() farmId: number, @Param('id') id: string) {
     return unwrapServiceResult(
-      this.service.getMaleBreedingProfile({ farmId, machoId: id }),
+      await this.service.getMaleBreedingProfile({ farmId, machoId: id }),
     );
   }
 
   @Get('cage/:id/females')
-  femalesInCage(@FarmId() farmId: number, @Param('id') id: string) {
+  async femalesInCage(@FarmId() farmId: number, @Param('id') id: string) {
     return unwrapServiceResult(
-      this.service.getFemalesInCage({ farmId, jaulaId: id }),
+      await this.service.getFemalesInCage({ farmId, jaulaId: id }),
     );
   }
 
   @Get()
-  list(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.list(farmId));
+  async list(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.list(farmId));
   }
 
   @Post('breeding-females')

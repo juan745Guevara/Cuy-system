@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { MortalityRepositoryPort } from '../../domain/ports/mortality.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { MortalityRepositoryPort } from '../domain/ports/mortality.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 
-import { isValidDateStr, esFechaFutura } from '../../../shared/utils/helpers';
+import { isValidDateStr, esFechaFutura } from '../../shared/utils/helpers';
 
 @Injectable()
 export class MortalityService {
@@ -38,7 +38,7 @@ export class MortalityService {
     }
 
     if (!id_animal) {
-      const disponible = await this.repository.countPoblacion(
+      const disponible = await this.repository.countPopulation(
         farmId,
         categoria ? String(categoria) : undefined,
       );

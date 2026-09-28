@@ -15,36 +15,36 @@ import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
-import { CuyesFarmScope } from '../cuyes-scope.decorator';
+import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
 import { WEIGHINGS_SERVICE } from '../../cuyes.tokens';
 
 @Controller('cuyes/weighings')
-@CuyesFarmScope()
+@FarmScope()
 export class WeighingsController {
   constructor(@Inject(WEIGHINGS_SERVICE) private readonly service: any) {}
 
   @Get('ranges')
-  getRanges(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.getRanges(farmId));
+  async getRanges(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.getRanges(farmId));
   }
 
   @Get('average')
-  getAverage(
+  async getAverage(
     @FarmId() farmId: number,
     @Query() query: Record<string, string>,
   ) {
     return unwrapServiceResult(
-      this.service.getAverage({ farmId, query }),
+      await this.service.getAverage({ farmId, query }),
     );
   }
 
   @Get('animal/:id_animal')
-  animalTrend(
+  async animalTrend(
     @FarmId() farmId: number,
     @Param('id_animal') animalId: string,
   ) {
     return unwrapServiceResult(
-      this.service.animalTrend({ farmId, animalId }),
+      await this.service.animalTrend({ farmId, animalId }),
     );
   }
 

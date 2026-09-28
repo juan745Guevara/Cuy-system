@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { MovementsRepositoryPort } from '../../domain/ports/movements.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { MovementsRepositoryPort } from '../domain/ports/movements.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -41,12 +41,12 @@ export class MovementsService {
       }
 
       try {
-        const destino = await this.repository.getJaula(null, id_jaula_destino, farmId);
+        const destino = await this.repository.getCage(null, id_jaula_destino, farmId);
         if (!destino) return fail('Invalid destination cage in this farm');
 
         let animalIds = Array.isArray(ids_animales) ? ids_animales.map(Number) : [];
         if (id_jaula_origen_completa) {
-          animalIds = await this.repository.getAnimalesFromJaula(
+          animalIds = await this.repository.getAnimalsFromCage(
             null,
             id_jaula_origen_completa,
             farmId
@@ -54,7 +54,7 @@ export class MovementsService {
         }
         if (!animalIds.length) return fail('Select at least one animal');
 
-        const animales = await this.repository.getAnimalesActivos(null, animalIds, farmId);
+        const animales = await this.repository.getActiveAnimals(null, animalIds, farmId);
         if (animales.length !== animalIds.length) {
           return fail('Some animals are not active in this farm');
         }
@@ -97,7 +97,7 @@ export class MovementsService {
           });
         }
 
-        const creados = await this.repository.ejecutarTraslado({
+        const creados = await this.repository.executeRelocation({
           farmId,
           userId,
           fecha,
@@ -137,14 +137,14 @@ export class MovementsService {
         (userFarms || []).some((g) => Number(g.id) === idDest);
       if (!enAlcance) return fail('No access to destination farm', 403);
 
-      const origen = await this.repository.getGranjaEspecie(farmId);
-      const dest = await this.repository.getGranjaActiva(idDest);
+      const origen = await this.repository.getFarmSpecies(farmId);
+      const dest = await this.repository.getActiveFarm(idDest);
       if (!origen || !dest) return fail('Invalid farm');
       if (origen.id_especie !== dest.id_especie) {
         return fail('Destination farm belongs to another species');
       }
 
-      return ok(await this.repository.listJaulasDestino(idDest));
+      return ok(await this.repository.listDestinationCages(idDest));
     }
     async transfer({ farmId, userId, user, userFarms, body }) {
       const {
@@ -171,8 +171,8 @@ export class MovementsService {
         (userFarms || []).some((g) => Number(g.id) === Number(id_granja_destino));
       if (!enAlcance) return fail('No access to destination farm', 403);
 
-      const origen = await this.repository.getGranjaEspecie(farmId);
-      const dest = await this.repository.getGranjaActiva(id_granja_destino);
+      const origen = await this.repository.getFarmSpecies(farmId);
+      const dest = await this.repository.getActiveFarm(id_granja_destino);
       if (!origen || !dest) return fail('Invalid origin or destination farm');
       if (origen.id_especie !== dest.id_especie) {
         return fail('Transfers only allowed between farms of the same species');
@@ -182,11 +182,11 @@ export class MovementsService {
       }
 
       try {
-        const jaulaDest = await this.repository.getJaula(null, id_jaula_destino, id_granja_destino);
+        const jaulaDest = await this.repository.getCage(null, id_jaula_destino, id_granja_destino);
         if (!jaulaDest) return fail('Invalid destination cage');
 
         const animalIds = ids_animales.map(Number);
-        const animales = await this.repository.getAnimalesTransferencia(null, animalIds, farmId);
+        const animales = await this.repository.getTransferAnimals(null, animalIds, farmId);
         if (animales.length !== animalIds.length) {
           return fail('Some animals are not active at origin');
         }
@@ -195,7 +195,7 @@ export class MovementsService {
           if (a.fecha_nacimiento && fecha < String(a.fecha_nacimiento).slice(0, 10)) {
             return fail(`Date before birth of ${a.codigo}`);
           }
-          const clash = await this.repository.codigoExisteEnGranja(
+          const clash = await this.repository.codeExistsInFarm(
             null,
             id_granja_destino,
             a.codigo_norm,
@@ -220,7 +220,7 @@ export class MovementsService {
           });
         }
 
-        const creados = await this.repository.ejecutarTransferencia({
+        const creados = await this.repository.executeTransfer({
           granjaOrigen: farmId,
           granjaDestino: id_granja_destino,
           userId,
@@ -254,17 +254,17 @@ export class MovementsService {
       }
     }
     async animalHistory({ farmId, animalId }) {
-      return ok(await this.repository.historialAnimal(animalId, farmId));
+      return ok(await this.repository.animalHistory(animalId, farmId));
     }
     async cageHistory({ farmId, jaulaId, query }) {
       const fecha = query?.fecha || hoyISO();
-      const jaula = await this.repository.findJaulaEnGranja(jaulaId, farmId);
+      const jaula = await this.repository.findCageInFarm(jaulaId, farmId);
       if (!jaula) return fail('Cage not found', 404);
 
       const [actuales, enFecha, historial] = await Promise.all([
-        this.repository.animalesActualesJaula(jaulaId, farmId),
-        this.repository.animalesEnFecha(jaulaId, fecha, farmId),
-        this.repository.historialJaula(jaulaId, fecha, farmId),
+        this.repository.currentAnimalsInCage(jaulaId, farmId),
+        this.repository.animalsOnDate(jaulaId, fecha, farmId),
+        this.repository.cageHistory(jaulaId, fecha, farmId),
       ]);
 
       return ok({
@@ -276,13 +276,13 @@ export class MovementsService {
       });
     }
     async list(farmId) {
-      return ok(await this.repository.listRecientes(farmId));
+      return ok(await this.repository.listRecent(farmId));
     }
     async listOvercapacity(farmId) {
-      return ok(await this.repository.listSobrecupo(farmId));
+      return ok(await this.repository.listOvercapacity(farmId));
     }
     async listOutOfArea(farmId) {
-      const rows = await this.repository.listAnimalesConArea(farmId);
+      const rows = await this.repository.listAnimalsWithArea(farmId);
       return ok(
         rows.filter((r) =>
           this.areaRules().isAnimalOutOfArea(

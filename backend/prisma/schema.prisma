@@ -104,14 +104,16 @@ model Area {
   updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
   granja       Granja        @relation(fields: [id_granja], references: [id], onDelete: Cascade)
-  jaulas       Jaula[]
+  recintos     Recinto[]
   tratamientos Tratamiento[]
 
   @@unique([id_granja, nombre])
   @@map("areas")
 }
 
-model Jaula {
+/// Contenedor genérico dentro de un área (jaula, corral, poza, etc. según la especie).
+/// Concepto de núcleo — vive en platform; cada módulo de especie solo le pone nombre visible.
+model Recinto {
   id               Int       @id @default(autoincrement())
   id_area          Int
   codigo           String    @db.VarChar(50)
@@ -124,12 +126,12 @@ model Jaula {
   animales            Animal[]
   empadres            Empadre[]
   mortalidad          Mortalidad[]
-  movimientos_origen  Movimiento[] @relation("MovOrigenJaula")
-  movimientos_destino Movimiento[] @relation("MovDestinoJaula")
+  movimientos_origen  Movimiento[] @relation("MovOrigenRecinto")
+  movimientos_destino Movimiento[] @relation("MovDestinoRecinto")
   tratamientos        Tratamiento[]
 
   @@unique([id_area, codigo])
-  @@map("jaulas")
+  @@map("recintos")
 }
 
 model Raza {
@@ -180,7 +182,7 @@ model Animal {
   granja              Granja                 @relation(fields: [id_granja], references: [id])
   raza                Raza?                  @relation(fields: [id_raza], references: [id])
   categoria           Categoria?             @relation(fields: [id_categoria], references: [id])
-  jaula               Jaula?                 @relation(fields: [id_jaula], references: [id])
+  recinto             Recinto?               @relation(fields: [id_jaula], references: [id])
   parto_origen        Parto?                 @relation("AnimalPartoOrigen", fields: [id_parto_origen], references: [id])
   creador             Usuario?               @relation("AnimalCreatedBy", fields: [created_by], references: [id])
   particularidades    AnimalParticularidad[]
@@ -229,7 +231,7 @@ model Empadre {
 
   granja   Granja          @relation(fields: [id_granja], references: [id])
   macho    Animal?         @relation("EmpadreMacho", fields: [id_macho], references: [id])
-  jaula    Jaula?          @relation(fields: [id_jaula], references: [id])
+  recinto  Recinto?        @relation(fields: [id_jaula], references: [id])
   creador  Usuario?        @relation("EmpadreCreatedBy", fields: [created_by], references: [id])
   hembras  EmpadreHembra[]
   partos   Parto[]
@@ -318,7 +320,7 @@ model Mortalidad {
 
   granja  Granja  @relation(fields: [id_granja], references: [id])
   animal  Animal? @relation(fields: [id_animal], references: [id])
-  jaula   Jaula?  @relation(fields: [id_jaula], references: [id])
+  recinto Recinto? @relation(fields: [id_jaula], references: [id])
   creador Usuario? @relation("MortalidadCreatedBy", fields: [created_by], references: [id])
 
   @@map("mortalidad")
@@ -382,8 +384,8 @@ model Movimiento {
   animal          Animal  @relation(fields: [id_animal], references: [id])
   granja_origen   Granja? @relation("MovimientoOrigen", fields: [id_granja_origen], references: [id])
   granja_destino  Granja? @relation("MovimientoDestino", fields: [id_granja_destino], references: [id])
-  jaula_origen    Jaula?  @relation("MovOrigenJaula", fields: [id_jaula_origen], references: [id])
-  jaula_destino   Jaula?  @relation("MovDestinoJaula", fields: [id_jaula_destino], references: [id])
+  recinto_origen  Recinto? @relation("MovOrigenRecinto", fields: [id_jaula_origen], references: [id])
+  recinto_destino Recinto? @relation("MovDestinoRecinto", fields: [id_jaula_destino], references: [id])
   creador         Usuario? @relation("MovimientoCreatedBy", fields: [created_by], references: [id])
 
   @@index([id_animal], map: "idx_movimientos_animal")
@@ -430,7 +432,7 @@ model Tratamiento {
 
   granja  Granja  @relation(fields: [id_granja], references: [id])
   animal  Animal? @relation(fields: [id_animal], references: [id])
-  jaula   Jaula?  @relation(fields: [id_jaula], references: [id])
+  recinto Recinto? @relation(fields: [id_jaula], references: [id])
   area    Area?   @relation(fields: [id_area], references: [id])
   creador Usuario? @relation("TratamientoCreatedBy", fields: [created_by], references: [id])
 

@@ -3,11 +3,11 @@ import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { exportToStreamableFile } from '../../../shared/http/service-result';
-import { CuyesFarmScope } from '../cuyes-scope.decorator';
+import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
 import { REPORTS_SERVICE } from '../../cuyes.tokens';
 
 @Controller('cuyes/reports')
-@CuyesFarmScope()
+@FarmScope()
 export class ReportsController {
   constructor(@Inject(REPORTS_SERVICE) private readonly service: any) {}
 

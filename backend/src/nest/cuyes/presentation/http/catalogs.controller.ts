@@ -14,17 +14,17 @@ import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
-import { CuyesFarmScope } from '../cuyes-scope.decorator';
+import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
 import { CATALOGS_SERVICE } from '../../cuyes.tokens';
 
 @Controller('cuyes/catalogs')
-@CuyesFarmScope()
+@FarmScope()
 export class CatalogsController {
   constructor(@Inject(CATALOGS_SERVICE) private readonly service: any) {}
 
   @Get('breeds')
-  listBreeds(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.listBreeds(farmId));
+  async listBreeds(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.listBreeds(farmId));
   }
 
   @Post('breeds')
@@ -41,8 +41,8 @@ export class CatalogsController {
   }
 
   @Get('categories')
-  listCategories(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.listCategories(farmId));
+  async listCategories(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.listCategories(farmId));
   }
 
   @Post('categories')
@@ -85,7 +85,7 @@ export class CatalogsController {
   }
 
   @Get('transitions')
-  transitions(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.getTransitions(farmId));
+  async transitions(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.getTransitions(farmId));
   }
 }

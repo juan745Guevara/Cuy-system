@@ -53,7 +53,11 @@ export function createSqlBridge(prisma: PrismaClient): SqlBridge {
                 if (cmd.startsWith('ROLLBACK')) {
                   rollbackRequested = true;
                   finished = true;
-                  throw Object.assign(new Error('ROLLBACK'), { pgRollback: true });
+                  // Return normally so the caller's own catch block (which issued the
+                  // ROLLBACK while handling its real error) can re-throw that original
+                  // error instead of having it replaced by this one. The busy-wait loop
+                  // below still aborts the underlying Prisma transaction via `rollbackRequested`.
+                  return { rows: [] };
                 }
                 return toRows(await tx.$queryRawUnsafe(sql, ...params));
               },

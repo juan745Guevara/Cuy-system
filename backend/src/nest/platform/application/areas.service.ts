@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { AreasRepositoryPort } from '../../domain/ports/areas.repository.port';
-import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
-import { AreaRulesRegistry } from '../../../shared/species/area-rules-registry.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { AreasRepositoryPort } from '../domain/ports/areas.repository.port';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
+import { AreaRulesRegistry } from '../../shared/species/area-rules-registry.service';
 
 @Injectable()
 export class AreasService {
@@ -21,7 +21,7 @@ export class AreasService {
   }
 
   async getSummary(farmId: number) {
-    return ok(await this.repository.resumen(farmId));
+    return ok(await this.repository.summary(farmId));
   }
 
   async create({
@@ -49,7 +49,7 @@ export class AreasService {
       .map(Number)
       .filter(Boolean);
     try {
-      const area = await this.repository.createWithJaulas({
+      const area = await this.repository.createWithCages({
         farmId,
         nombre: String(nombre),
         proposito: String(prop),
@@ -88,7 +88,7 @@ export class AreasService {
     const antes = await this.repository.findById(farmId, id);
     if (!antes) return fail('Area not found', 404);
 
-    const jaulas = await this.repository.countActiveJaulas(id);
+    const jaulas = await this.repository.countActiveCages(id);
     if (jaulas.length && !id_area_destino) {
       return fail('Move cages to another area before deactivating', 400, {
         jaulas: jaulas.length,

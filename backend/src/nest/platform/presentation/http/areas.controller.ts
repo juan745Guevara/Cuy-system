@@ -24,13 +24,13 @@ export class AreasController {
   constructor(@Inject(AREAS_SERVICE) private readonly service: any) {}
 
   @Get()
-  list(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.list(farmId));
+  async list(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.list(farmId));
   }
 
   @Get('summary')
-  summary(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.getSummary(farmId));
+  async summary(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.getSummary(farmId));
   }
 
   @Post()

@@ -1,13 +1,16 @@
-import { CagesRepositoryPort } from '../../domain/ports/cages.repository.port';
+import { RecintosRepositoryPort } from '../../domain/ports/recintos.repository.port';
 import { Injectable } from '@nestjs/common';
-import { CuyesDepsService } from '../../application/cuyes-deps.service';
+import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
 
+/** Núcleo: contenedor genérico dentro de un área (jaula, corral, poza, etc. según la especie). */
 @Injectable()
-export class CagesRepository extends CagesRepositoryPort {
-  constructor(private readonly cuyesDeps: CuyesDepsService) { super(); }
+export class RecintosRepository extends RecintosRepositoryPort {
+  constructor(private readonly sharedDeps: SharedDepsService) {
+    super();
+  }
 
   private get db() {
-    return this.cuyesDeps.toDeps().db;
+    return this.sharedDeps.db;
   }
 
   async list(farmId: number, idArea: number | null) {
@@ -16,7 +19,7 @@ export class CagesRepository extends CagesRepositoryPort {
         SELECT j.*, a.nombre AS area, a.proposito,
                (SELECT COUNT(*)::int FROM animales an
                  WHERE an.id_jaula = j.id AND an.estado = 'activo') AS ocupacion
-        FROM jaulas j
+        FROM recintos j
         JOIN areas a ON a.id = j.id_area
         WHERE a.id_granja = $1 AND j.activa = true`;
     if (idArea) {
@@ -28,13 +31,13 @@ export class CagesRepository extends CagesRepositoryPort {
     return rows;
   }
 
-  async ocupacionRows(farmId: number) {
+  async occupancyRows(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT a.id AS id_area, a.nombre AS area, a.proposito,
                 j.id AS id_jaula, j.codigo AS jaula, j.capacidad_maxima,
                 COUNT(an.id)::int AS ocupacion
          FROM areas a
-         LEFT JOIN jaulas j ON j.id_area = a.id AND j.activa = true
+         LEFT JOIN recintos j ON j.id_area = a.id AND j.activa = true
          LEFT JOIN animales an ON an.id_jaula = j.id AND an.estado = 'activo'
          WHERE a.id_granja = $1 AND a.activa = true
          GROUP BY a.id, a.nombre, a.proposito, j.id, j.codigo, j.capacidad_maxima
@@ -44,7 +47,7 @@ export class CagesRepository extends CagesRepositoryPort {
     return rows;
   }
 
-  async findAreaInGranja(farmId: number, idArea: number) {
+  async findAreaInFarm(farmId: number, idArea: number) {
     const { rows } = await this.db.query(
       `SELECT id FROM areas WHERE id = $1 AND id_granja = $2`,
       [idArea, farmId],
@@ -52,10 +55,10 @@ export class CagesRepository extends CagesRepositoryPort {
     return rows[0] || null;
   }
 
-  async findDuplicateCodigo(farmId: number, codigoNorm: string, excludeId?: number) {
+  async findDuplicateCode(farmId: number, codigoNorm: string, excludeId?: number) {
     const params: unknown[] = [farmId, codigoNorm];
     let sql = `
-        SELECT j.id FROM jaulas j
+        SELECT j.id FROM recintos j
         JOIN areas a ON a.id = j.id_area
         WHERE a.id_granja = $1 AND UPPER(REPLACE(j.codigo,' ','')) = $2 AND j.activa = true`;
     if (excludeId) {
@@ -69,16 +72,16 @@ export class CagesRepository extends CagesRepositoryPort {
   async insert(params: { idArea: number; codigo: string; capacidadMaxima?: unknown }) {
     const { idArea, codigo, capacidadMaxima } = params;
     const { rows } = await this.db.query(
-      `INSERT INTO jaulas (id_area, codigo, capacidad_maxima)
+      `INSERT INTO recintos (id_area, codigo, capacidad_maxima)
          VALUES ($1, $2, $3) RETURNING *`,
       [idArea, codigo, capacidadMaxima || null],
     );
     return rows[0];
   }
 
-  async findInGranja(farmId: number, id: number) {
+  async findInFarm(farmId: number, id: number) {
     const { rows } = await this.db.query(
-      `SELECT j.* FROM jaulas j JOIN areas a ON a.id = j.id_area
+      `SELECT j.* FROM recintos j JOIN areas a ON a.id = j.id_area
          WHERE j.id=$1 AND a.id_granja=$2`,
       [id, farmId],
     );
@@ -93,7 +96,7 @@ export class CagesRepository extends CagesRepositoryPort {
   }) {
     const { id, codigo, capacidadMaxima, idArea } = params;
     const { rows } = await this.db.query(
-      `UPDATE jaulas SET
+      `UPDATE recintos SET
            codigo = COALESCE($1, codigo),
            capacidad_maxima = COALESCE($2, capacidad_maxima),
            id_area = COALESCE($3, id_area),
@@ -106,7 +109,7 @@ export class CagesRepository extends CagesRepositoryPort {
 
   async deactivate(farmId: number, id: number) {
     const { rows } = await this.db.query(
-      `UPDATE jaulas j SET activa=false, updated_at=NOW()
+      `UPDATE recintos j SET activa=false, updated_at=NOW()
          FROM areas a WHERE j.id_area=a.id AND j.id=$1 AND a.id_granja=$2
          RETURNING j.*`,
       [id, farmId],
@@ -114,11 +117,11 @@ export class CagesRepository extends CagesRepositoryPort {
     return rows[0] || null;
   }
 
-  async listAnimales(farmId: number, jaulaId: number) {
+  async listAnimals(farmId: number, jaulaId: number) {
     const { rows } = await this.db.query(
       `SELECT an.*
          FROM animales an
-         JOIN jaulas j ON j.id = an.id_jaula
+         JOIN recintos j ON j.id = an.id_jaula
          JOIN areas a ON a.id = j.id_area
          WHERE j.id = $1 AND a.id_granja = $2 AND an.estado = 'activo'
          ORDER BY an.codigo`,

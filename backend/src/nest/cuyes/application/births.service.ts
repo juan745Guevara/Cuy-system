@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { BirthsRepositoryPort } from '../../domain/ports/births.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { BirthsRepositoryPort } from '../domain/ports/births.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 
 import {
   normalizeCodigo,
   isValidDateStr,
   promedioPesos,
   esFechaFutura,
-} from '../../../shared/utils/helpers';
+} from '../../shared/utils/helpers';
 
 @Injectable()
 export class BirthsService {
@@ -71,14 +71,14 @@ export class BirthsService {
       return fail('deaths cannot exceed litter size', 400, { campo: 'muertos' });
     }
 
-    const madre = await this.repository.findHembraActiva(
+    const madre = await this.repository.findActiveFemale(
       farmId,
       Number(id_hembra),
     );
     if (!madre) return fail('Invalid female');
 
     try {
-      const { parto, crias } = await this.repository.createParto({
+      const { parto, crias } = await this.repository.createBirth({
         farmId,
         userId,
         data: {
@@ -128,7 +128,7 @@ export class BirthsService {
   }
 
   async list(farmId: number) {
-    const rows = await this.repository.listPartos(farmId);
+    const rows = await this.repository.listBirths(farmId);
     return ok(
       (rows as any[]).map((p) => ({
         ...p,

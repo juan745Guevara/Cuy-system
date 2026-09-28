@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ok } from '../../../shared/kernel/service-result.kernel';
-import { InventoryRepositoryPort } from '../../domain/ports/inventory.repository.port';
-import { UserFarm } from '../../../shared/auth/auth-user.types';
+import { ok } from '../../shared/kernel/service-result.kernel';
+import { InventoryRepositoryPort } from '../domain/ports/inventory.repository.port';
+import { UserFarm } from '../../shared/auth/auth-user.types';
 
 function endOfMonth(year: number, month: number) {
   return new Date(year, month, 0).toISOString().slice(0, 10);
@@ -23,7 +23,7 @@ export class InventoryService {
     query: Record<string, string>;
   }) {
     const fecha = query?.fecha || new Date().toISOString().slice(0, 10);
-    const rows = (await this.repository.poblacionAt(farmId, fecha)) as any[];
+    const rows = (await this.repository.populationAt(farmId, fecha)) as any[];
 
     const matriz: Record<string, Record<string, { H: number; M: number; total: number }>> = {};
     for (const r of rows) {
@@ -34,7 +34,7 @@ export class InventoryService {
       matriz[r.raza][key].total += r.cantidad;
     }
 
-    const detalle = await this.repository.detalleActivos(farmId);
+    const detalle = await this.repository.activeDetail(farmId);
     const total = rows.reduce((s, r) => s + r.cantidad, 0);
 
     return ok({
@@ -65,20 +65,20 @@ export class InventoryService {
     const prevFin =
       month === 1 ? endOfMonth(year - 1, 12) : endOfMonth(year, month - 1);
 
-    const pobIniRows = (await this.repository.poblacionAt(farmId, prevFin)) as any[];
-    const pobFinRows = (await this.repository.poblacionAt(farmId, fin)) as any[];
+    const pobIniRows = (await this.repository.populationAt(farmId, prevFin)) as any[];
+    const pobFinRows = (await this.repository.populationAt(farmId, fin)) as any[];
     const sum = (rws: any[]) => rws.reduce((s, r) => s + r.cantidad, 0);
 
-    const nac = await this.repository.nacimientosPeriodo(farmId, ini, fin);
-    const mort = (await this.repository.mortalidadPeriodo(farmId, ini, fin)) as any[];
-    const vent = (await this.repository.ventasPeriodo(farmId, ini, fin)) as any[];
+    const nac = await this.repository.birthsInPeriod(farmId, ini, fin);
+    const mort = (await this.repository.mortalityInPeriod(farmId, ini, fin)) as any[];
+    const vent = (await this.repository.salesInPeriod(farmId, ini, fin)) as any[];
     const mortTotal = mort.reduce((s, r) => s + Number(r.mortalidad), 0);
     const ventTotal = vent.reduce((s, r) => s + Number(r.ventas), 0);
 
     let transfers_in = 0;
     let transfers_out = 0;
     try {
-      const tr = await this.repository.transfersPeriodo(farmId, ini, fin);
+      const tr = await this.repository.transfersInPeriod(farmId, ini, fin);
       transfers_in = tr?.tin || 0;
       transfers_out = tr?.tout || 0;
     } catch {
@@ -134,7 +134,7 @@ export class InventoryService {
   }
 
   async getByArea(farmId: number) {
-    const rows = (await this.repository.porArea(farmId)) as any[];
+    const rows = (await this.repository.byArea(farmId)) as any[];
     const byArea: Record<number, any> = {};
     for (const r of rows) {
       if (!byArea[r.id_area]) {
@@ -163,7 +163,7 @@ export class InventoryService {
   }
 
   async getByCategoryArea(farmId: number) {
-    return ok(await this.repository.porCategoriaArea(farmId));
+    return ok(await this.repository.byCategoryArea(farmId));
   }
 
   async getConsolidated({
@@ -180,7 +180,7 @@ export class InventoryService {
       return ok({ granjas: [], por_especie: [], total: null });
     }
 
-    const rows = (await this.repository.consolidadoGranjas(
+    const rows = (await this.repository.consolidatedFarms(
       farmIds,
       year,
       month,

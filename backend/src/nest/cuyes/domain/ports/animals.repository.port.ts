@@ -1,15 +1,29 @@
+import { NewAnimal } from '../entities/animal.entity';
+
+export interface InsertNewAnimalParams {
+  farmId: number;
+  userId: number;
+  animal: NewAnimal;
+}
+
+export interface ReuseDischargedCodeParams {
+  userId: number;
+  existente: { id: number; codigo: string; estado: string };
+  animal: NewAnimal;
+}
+
 /** Domain port (repository abstraction). */
 export abstract class AnimalsRepositoryPort {
   protected constructor() {}
-  abstract findByCodigoNorm(...args: any[]): Promise<any> | any;
-  abstract findByCodigoNormRaw(...args: any[]): Promise<any> | any;
+  abstract findByNormalizedCode(...args: any[]): Promise<any> | any;
+  abstract findByNormalizedCodeRaw(...args: any[]): Promise<any> | any;
   abstract findById(...args: any[]): Promise<any> | any;
-  abstract findJaulaActiva(...args: any[]): Promise<any> | any;
-  abstract getHistorial(...args: any[]): Promise<any> | any;
-  abstract getTratamientos(...args: any[]): Promise<any> | any;
-  abstract insertNuevo(...args: any[]): Promise<any> | any;
-  abstract insertParticularidad(...args: any[]): Promise<any> | any;
+  abstract findActiveCage(...args: any[]): Promise<any> | any;
+  abstract getHistory(...args: any[]): Promise<any> | any;
+  abstract getTreatments(...args: any[]): Promise<any> | any;
+  abstract insertNew(params: InsertNewAnimalParams): Promise<any> | any;
+  abstract insertNote(...args: any[]): Promise<any> | any;
   abstract list(...args: any[]): Promise<any> | any;
-  abstract reusarBaja(...args: any[]): Promise<any> | any;
+  abstract reuseDischargedCode(params: ReuseDischargedCodeParams): Promise<any> | any;
   abstract update(...args: any[]): Promise<any> | any;
 }

@@ -1,5 +1,4 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { CagesController } from './presentation/http/cages.controller';
 import { AnimalsController } from './presentation/http/animals.controller';
 import { CatalogsController } from './presentation/http/catalogs.controller';
 import { MovementsController } from './presentation/http/movements.controller';
@@ -18,10 +17,11 @@ import { cuyesProviders } from './cuyes.providers';
 import { CuyesDepsService } from './application/cuyes-deps.service';
 import { AreaRulesRegistry } from '../shared/species/area-rules-registry.service';
 import { cuyesAreaRules } from '../shared/species/cuyes/cuyes-area-rules';
+import { PlatformModule } from '../platform/platform.module';
 
 @Module({
+  imports: [PlatformModule],
   controllers: [
-    CagesController,
     AnimalsController,
     CatalogsController,
     MovementsController,

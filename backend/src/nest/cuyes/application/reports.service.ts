@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { Injectable } from '@nestjs/common';
-import { ok, fail } from '../../../shared/kernel/service-result.kernel';
-import { ReportsRepositoryPort } from '../../domain/ports/reports.repository.port';
-import { promedioPesos } from '../../../shared/utils/helpers';
+import { ok, fail } from '../../shared/kernel/service-result.kernel';
+import { ReportsRepositoryPort } from '../domain/ports/reports.repository.port';
+import { promedioPesos } from '../../shared/utils/helpers';
 import ExcelJS from 'exceljs';
 
 const MONTH_NAMES = [
@@ -44,12 +44,12 @@ export class ReportsService {
 
 private async hojaMensual(wb, farmId, year, month) {
     const mesNombre = MONTH_NAMES[month] || String(month);
-    const pob = await this.repository.getPopulationActiva(farmId);
+    const pob = await this.repository.getActivePopulation(farmId);
     if (!pob.length) return false;
 
-    const nac = await this.repository.getNacimientosMes(farmId, year, month);
-    const mort = await this.repository.getMortalidadMes(farmId, year, month);
-    const vent = await this.repository.getVentasMes(farmId, year, month);
+    const nac = await this.repository.getMonthlyBirths(farmId, year, month);
+    const mort = await this.repository.getMonthlyMortality(farmId, year, month);
+    const vent = await this.repository.getMonthlySales(farmId, year, month);
     const mortMap = Object.fromEntries(mort.map((r) => [r.categoria, r.n]));
     const ventMap = Object.fromEntries(vent.map((r) => [r.categoria, r.n]));
 
@@ -133,13 +133,13 @@ private async hojaMensual(wb, farmId, year, month) {
 
     async exportFemales({ farmId, query }) {
       const idAnimal = query?.id_animal ? Number(query.id_animal) : null;
-      const hembras = await this.repository.getHembras(farmId, idAnimal);
+      const hembras = await this.repository.getFemales(farmId, idAnimal);
       if (!hembras.length) {
         return fail('No female data to export for the period/scope');
       }
 
       const ids = hembras.map((h) => h.id);
-      const ciclos = await this.repository.getCiclosHembras(ids);
+      const ciclos = await this.repository.getFemaleCycles(ids);
       const byHembra = {};
       for (const c of ciclos) {
         if (!byHembra[c.id_hembra]) byHembra[c.id_hembra] = [];
@@ -261,11 +261,11 @@ private async hojaMensual(wb, farmId, year, month) {
       });
     }
     async exportMales(farmId) {
-      const machos = await this.repository.getMachos(farmId);
+      const machos = await this.repository.getMales(farmId);
       if (!machos.length) return fail('No male data to export');
 
       const ids = machos.map((m) => m.id);
-      const ev = await this.repository.getEmpadresMachos(ids);
+      const ev = await this.repository.getMaleBreedings(ids);
       const byMacho = {};
       for (const e of ev) {
         if (!byMacho[e.id_macho]) byMacho[e.id_macho] = [];
@@ -365,7 +365,7 @@ private async hojaMensual(wb, farmId, year, month) {
       const year = Number(query?.anio) || new Date().getFullYear();
       const month = Number(query?.mes) || new Date().getMonth() + 1;
       const estado = query?.estado && query.estado !== 'todos' ? query.estado : null;
-      const rows = await this.repository.listAnimalesExport(farmId, {
+      const rows = await this.repository.listAnimalsForExport(farmId, {
         estado,
         idArea: query?.id_area ? Number(query.id_area) : null,
         idRaza: query?.id_raza ? Number(query.id_raza) : null,
@@ -405,7 +405,7 @@ private async hojaMensual(wb, farmId, year, month) {
       const mes =
         query?.mes != null && query?.mes !== '' ? Number(query.mes) : null;
       const isSuper = user?.rol === 'superadmin';
-      const granjas = await this.repository.getGranjasUsuario(isSuper, user.id);
+      const granjas = await this.repository.getUserFarms(isSuper, user.id);
       if (!granjas.length) return fail('No farms to consolidate');
 
       const filas = [];
@@ -418,7 +418,7 @@ private async hojaMensual(wb, farmId, year, month) {
       const mesFilter = mes && !Number.isNaN(mes) ? ` AND EXTRACT(MONTH FROM {{col}})=$3` : '';
 
       for (const g of granjas) {
-        const pob = await this.repository.getPopulationGranja(g.id);
+        const pob = await this.repository.getFarmPopulation(g.id);
         let H = 0,
           M = 0,
           G = 0;
@@ -428,7 +428,7 @@ private async hojaMensual(wb, farmId, year, month) {
           else if (r.sexo === 'H') H += r.n;
           else M += r.n;
         }
-        const metricas = await this.repository.getMetricasGranja(
+        const metricas = await this.repository.getFarmMetrics(
           g.id,
           year,
           mes,

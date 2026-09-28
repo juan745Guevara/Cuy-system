@@ -34,7 +34,7 @@ const Empadres = () => {
       const [h, m, j] = await Promise.all([
         api.get('/cuyes/animals', { params: { sexo: 'H', estado: 'activo' } }),
         api.get('/cuyes/animals', { params: { sexo: 'M', estado: 'activo' } }),
-        api.get('/cuyes/cages'),
+        api.get('/recintos'),
       ]);
       setHembras(h.data.data || h.data);
       setMachos(m.data.data || m.data);

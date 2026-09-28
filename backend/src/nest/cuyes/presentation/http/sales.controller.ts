@@ -12,22 +12,22 @@ import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
-import { CuyesFarmScope } from '../cuyes-scope.decorator';
+import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
 import { SALES_SERVICE } from '../../cuyes.tokens';
 
 @Controller('cuyes/sales')
-@CuyesFarmScope()
+@FarmScope()
 export class SalesController {
   constructor(@Inject(SALES_SERVICE) private readonly service: any) {}
 
   @Get('discards')
-  listDiscards(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.listDiscards(farmId));
+  async listDiscards(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.listDiscards(farmId));
   }
 
   @Get()
-  list(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.list(farmId));
+  async list(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.list(farmId));
   }
 
   @Post('discards')

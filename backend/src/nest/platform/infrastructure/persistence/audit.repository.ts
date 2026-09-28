@@ -28,13 +28,13 @@ export class AuditRepository extends AuditRepositoryPort {
     return this.prisma.$queryRawUnsafe(sql, ...params);
   }
 
-  findMortalidad(id: number, farmId: number) {
+  findMortality(id: number, farmId: number) {
     return this.prisma.mortalidad.findFirst({
       where: { id, id_granja: farmId },
     });
   }
 
-  ensureMortalidadAnulacionColumns() {
+  ensureMortalityVoidColumns() {
     return Promise.all([
       this.prisma.$executeRawUnsafe(
         `ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false`,
@@ -56,13 +56,13 @@ export class AuditRepository extends AuditRepositoryPort {
     });
   }
 
-  findVenta(id: number, farmId: number) {
+  findSale(id: number, farmId: number) {
     return this.prisma.venta.findFirst({
       where: { id, id_granja: farmId },
     });
   }
 
-  ensureVentasAnulacionColumns() {
+  ensureSalesVoidColumns() {
     return Promise.all([
       this.prisma.$executeRawUnsafe(
         `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false`,

@@ -10,7 +10,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return this.cuyesDeps.toDeps().db;
   }
 
-  async poblacionAt(farmId: number, fechaHasta: string) {
+  async populationAt(farmId: number, fechaHasta: string) {
     const { rows } = await this.db.query(
       `SELECT COALESCE(r.nombre, 'sin_raza') AS raza,
               COALESCE(c.nombre, 'sin_categoria') AS categoria,
@@ -32,14 +32,14 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows;
   }
 
-  async detalleActivos(farmId: number) {
+  async activeDetail(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT a.id, a.codigo, a.sexo, a.estado,
               r.nombre AS raza, c.nombre AS categoria, j.codigo AS jaula
        FROM animales a
        LEFT JOIN razas r ON r.id = a.id_raza
        LEFT JOIN categorias c ON c.id = a.id_categoria
-       LEFT JOIN jaulas j ON j.id = a.id_jaula
+       LEFT JOIN recintos j ON j.id = a.id_jaula
        WHERE a.id_granja = $1 AND a.estado = 'activo'
        ORDER BY r.nombre, c.nombre, a.codigo
        LIMIT 500`,
@@ -48,7 +48,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows;
   }
 
-  async nacimientosPeriodo(farmId: number, ini: string, fin: string) {
+  async birthsInPeriod(farmId: number, ini: string, fin: string) {
     const { rows } = await this.db.query(
       `SELECT COALESCE(SUM(vivos_m + vivos_h),0)::int AS nacimientos,
               COALESCE(SUM(vivos_m),0)::int AS nac_m,
@@ -60,7 +60,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows[0];
   }
 
-  async mortalidadPeriodo(farmId: number, ini: string, fin: string) {
+  async mortalityInPeriod(farmId: number, ini: string, fin: string) {
     const { rows } = await this.db.query(
       `SELECT COALESCE(SUM(cantidad),0)::int AS mortalidad,
               COALESCE(categoria,'sin_categoria') AS categoria
@@ -72,7 +72,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows;
   }
 
-  async ventasPeriodo(farmId: number, ini: string, fin: string) {
+  async salesInPeriod(farmId: number, ini: string, fin: string) {
     const { rows } = await this.db.query(
       `SELECT COALESCE(SUM(cantidad),0)::int AS ventas,
               COALESCE(categoria,'sin_categoria') AS categoria
@@ -84,7 +84,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows;
   }
 
-  async transfersPeriodo(farmId: number, ini: string, fin: string) {
+  async transfersInPeriod(farmId: number, ini: string, fin: string) {
     const { rows } = await this.db.query(
       `SELECT
          COALESCE(SUM(CASE WHEN tipo = 'transfer' AND id_granja_destino = $1 THEN 1 ELSE 0 END),0)::int AS tin,
@@ -98,7 +98,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows[0];
   }
 
-  async porArea(farmId: number) {
+  async byArea(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT a.id AS id_area, a.nombre AS area, a.proposito,
               j.id AS id_jaula, j.codigo AS jaula, j.capacidad_maxima,
@@ -106,7 +106,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
               COUNT(an.id) FILTER (WHERE an.estado = 'activo' AND an.sexo = 'H')::int AS hembras,
               COUNT(an.id) FILTER (WHERE an.estado = 'activo' AND an.sexo = 'M')::int AS machos
        FROM areas a
-       LEFT JOIN jaulas j ON j.id_area = a.id AND j.activa = true
+       LEFT JOIN recintos j ON j.id_area = a.id AND j.activa = true
        LEFT JOIN animales an ON an.id_jaula = j.id
        WHERE a.id_granja = $1 AND a.activa = true
        GROUP BY a.id, a.nombre, a.proposito, j.id, j.codigo, j.capacidad_maxima
@@ -116,13 +116,13 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows;
   }
 
-  async porCategoriaArea(farmId: number) {
+  async byCategoryArea(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT COALESCE(c.nombre, 'sin_categoria') AS categoria,
               ar.nombre AS area, a.sexo, COUNT(*)::int AS cantidad
        FROM animales a
        LEFT JOIN categorias c ON c.id = a.id_categoria
-       LEFT JOIN jaulas j ON j.id = a.id_jaula
+       LEFT JOIN recintos j ON j.id = a.id_jaula
        LEFT JOIN areas ar ON ar.id = j.id_area
        WHERE a.id_granja = $1 AND a.estado = 'activo'
        GROUP BY c.nombre, ar.nombre, a.sexo
@@ -132,7 +132,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
     return rows;
   }
 
-  async consolidadoGranjas(farmIds: number[], year: number, month: number) {
+  async consolidatedFarms(farmIds: number[], year: number, month: number) {
     const { rows } = await this.db.query(
       `SELECT g.id, g.nombre, e.nombre AS especie,
               (SELECT COUNT(*)::int FROM animales a WHERE a.id_granja = g.id AND a.estado = 'activo') AS poblacion,

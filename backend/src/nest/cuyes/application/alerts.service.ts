@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail } from '../../../shared/kernel/service-result.kernel';
-import { AlertsRepositoryPort } from '../../domain/ports/alerts.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail } from '../../shared/kernel/service-result.kernel';
+import { AlertsRepositoryPort } from '../domain/ports/alerts.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 
 function addDays(fecha: unknown, dias: number) {
   const d = new Date(`${String(fecha).slice(0, 10)}T00:00:00`);
@@ -72,7 +72,7 @@ export class AlertsService {
     const hoy = hoyISO();
     const alertas: Array<Record<string, unknown>> = [];
 
-    const descartes = await this.repository.findDescartes(farmId);
+    const descartes = await this.repository.findDiscards(farmId);
     const descartado = (tipo: string, idAnimal: unknown, idRef: unknown) =>
       descartes.some(
         (d: { tipo: string; id_animal: unknown; id_referencia: unknown }) =>
@@ -83,7 +83,7 @@ export class AlertsService {
 
     const gest = byTipo.parto_proximo;
     if (gest?.activo) {
-      const rows = await this.repository.findPartoProximo(farmId);
+      const rows = await this.repository.findUpcomingBirths(farmId);
       for (const r of rows) {
         if (descartado('parto_proximo', r.id_hembra, r.id_empadre)) continue;
         const prevista = addDays(r.fecha_empadre, gest.dias);
@@ -104,7 +104,7 @@ export class AlertsService {
 
     const dest = byTipo.destete_pendiente;
     if (dest?.activo) {
-      const rows = await this.repository.findDestetePendiente(farmId);
+      const rows = await this.repository.findPendingWeanings(farmId);
       for (const r of rows) {
         if (descartado('destete_pendiente', r.id_hembra, r.id)) continue;
         const prevista = addDays(r.fecha_parto, dest.dias);
@@ -125,7 +125,7 @@ export class AlertsService {
 
     const sinP = byTipo.sin_prenez;
     if (sinP?.activo) {
-      const rows = await this.repository.findSinPrenez(farmId);
+      const rows = await this.repository.findWithoutPregnancy(farmId);
       for (const r of rows) {
         if (descartado('sin_prenez', r.id_hembra, r.id_empadre)) continue;
         const prevista = addDays(r.fecha_empadre, sinP.dias);
@@ -146,7 +146,7 @@ export class AlertsService {
 
     const empDisp = byTipo.empadre_disponible;
     if (empDisp?.activo) {
-      const rows = await this.repository.findEmpadreDisponible(farmId);
+      const rows = await this.repository.findAvailableBreeding(farmId);
       for (const r of rows) {
         if (descartado('empadre_disponible', r.id_hembra, null)) continue;
         const prevista = addDays(r.ultimo_evento, empDisp.dias);
@@ -186,7 +186,7 @@ export class AlertsService {
   }) {
     const { tipo, id_animal, id_referencia, motivo } = body || {};
     if (!tipo) return fail('tipo is required');
-    const row = await this.repository.insertDescarte({
+    const row = await this.repository.insertDiscard({
       farmId,
       userId,
       tipo: String(tipo),

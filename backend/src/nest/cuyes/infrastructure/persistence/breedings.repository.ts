@@ -17,28 +17,28 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows[0] || null;
     }
-  async findHembraAnyState(farmId, id) {
+  async findFemaleAnyState(farmId, id) {
       const { rows } = await this.db.query(
         `SELECT * FROM animales WHERE id=$1 AND id_granja=$2 AND sexo='H'`,
         [id, farmId]
       );
       return rows[0] || null;
     }
-  async findMacho(farmId, id) {
+  async findMale(farmId, id) {
       const { rows } = await this.db.query(
         `SELECT * FROM animales WHERE id = $1 AND id_granja = $2 AND sexo = 'M'`,
         [id, farmId]
       );
       return rows[0] || null;
     }
-  async getLastPartoDate(hembraId) {
+  async getLastBirthDate(hembraId) {
       const { rows } = await this.db.query(
         `SELECT fecha_parto FROM partos WHERE id_hembra=$1 ORDER BY fecha_parto DESC LIMIT 1`,
         [hembraId]
       );
       return rows[0]?.fecha_parto || null;
     }
-  async insertReproductor(data) {
+  async insertBreedingMale(data) {
       const { rows } = await this.db.query(
         `INSERT INTO animales
           (id_granja, codigo, codigo_norm, sexo, id_raza, id_categoria, id_jaula, fecha_nacimiento, created_by)
@@ -57,13 +57,13 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows[0];
     }
-  async insertParticularidad(idAnimal, texto, userId) {
+  async insertNote(idAnimal, texto, userId) {
       await this.db.query(
         `INSERT INTO animal_particularidades (id_animal, texto, created_by) VALUES ($1,$2,$3)`,
         [idAnimal, texto, userId]
       );
     }
-  async createEmpadre({ farmId, userId, id_macho, id_jaula, fecha_empadre, peso_antes, peso_despues, hembras, cantPren, notas }) {
+  async createBreeding({ farmId, userId, id_macho, id_jaula, fecha_empadre, peso_antes, peso_despues, hembras, cantPren, notas }) {
       const client = await this.db.connect();
       try {
         await client.query('BEGIN');
@@ -116,7 +116,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
         client.release();
       }
     }
-  async listEmpadres(farmId) {
+  async listBreedings(farmId) {
       const { rows } = await this.db.query(
         `SELECT e.*, m.codigo AS macho_codigo,
                 (SELECT COUNT(*)::int FROM empadre_hembras eh WHERE eh.id_empadre = e.id) AS cant_hembras
@@ -128,7 +128,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows;
     }
-  async findEmpadreHembra(farmId, empadreId, hembraId) {
+  async findBreedingFemale(farmId, empadreId, hembraId) {
       const { rows } = await this.db.query(
         `SELECT eh.* FROM empadre_hembras eh
          JOIN empadres e ON e.id = eh.id_empadre
@@ -137,7 +137,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows[0] || null;
     }
-  async updateEmpadreHembraResultado(farmId, empadreId, hembraId, resultado) {
+  async updateBreedingFemaleResult(farmId, empadreId, hembraId, resultado) {
       const { rows } = await this.db.query(
         `UPDATE empadre_hembras eh SET resultado = $1
          FROM empadres e
@@ -147,7 +147,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows[0] || null;
     }
-  async markHembraMuerta({ farmId, hembraId, fechaRes, userId }) {
+  async markFemaleDeceased({ farmId, hembraId, fechaRes, userId }) {
       const client = await this.db.connect();
       try {
         await client.query('BEGIN');
@@ -171,7 +171,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
         client.release();
       }
     }
-  async getReproductoraCiclos(hembraId, farmId) {
+  async getFemaleBreedingCycles(hembraId, farmId) {
       const { rows } = await this.db.query(
         `SELECT e.*, eh.resultado, m.codigo AS macho_codigo,
                 (SELECT json_agg(json_build_object(
@@ -198,7 +198,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows;
     }
-  async getPartosByHembra(hembraId) {
+  async getBirthsByFemale(hembraId) {
       const { rows } = await this.db.query(
         `SELECT p.*, d.destetados_m, d.destetados_h
          FROM partos p
@@ -208,11 +208,11 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows;
     }
-  async getHembrasByJaula(jaulaId, farmId) {
+  async getFemalesByCage(jaulaId, farmId) {
       const { rows } = await this.db.query(
         `SELECT an.id, an.codigo, an.sexo, j.codigo AS jaula, ar.nombre AS area, ar.proposito
          FROM animales an
-         JOIN jaulas j ON j.id = an.id_jaula
+         JOIN recintos j ON j.id = an.id_jaula
          JOIN areas ar ON ar.id = j.id_area
          WHERE j.id = $1 AND an.id_granja = $2 AND an.estado = 'activo' AND an.sexo = 'H'
          ORDER BY an.codigo`,
@@ -220,7 +220,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       );
       return rows;
     }
-  async getReproductorCiclos(machoId, farmId) {
+  async getMaleBreedingCycles(machoId, farmId) {
       const { rows } = await this.db.query(
         `SELECT e.id, e.fecha_empadre, e.cantidad_hembras, e.cantidad_prenadas, e.id_jaula,
                 j.codigo AS jaula,
@@ -242,14 +242,14 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
                   WHERE p.id_empadre = e.id
                 ), '[]'::json) AS partos
          FROM empadres e
-         LEFT JOIN jaulas j ON j.id = e.id_jaula
+         LEFT JOIN recintos j ON j.id = e.id_jaula
          WHERE e.id_macho = $1 AND e.id_granja = $2
          ORDER BY e.fecha_empadre DESC`,
         [machoId, farmId]
       );
       return rows;
     }
-  async findEmpadre(farmId, id) {
+  async findBreeding(farmId, id) {
       const { rows } = await this.db.query(
         `SELECT * FROM empadres WHERE id = $1 AND id_granja = $2`,
         [id, farmId]
@@ -261,7 +261,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       try {
         await client.query('BEGIN');
         const jaula = await client.query(
-          `SELECT j.id FROM jaulas j
+          `SELECT j.id FROM recintos j
            JOIN areas a ON a.id = j.id_area
            WHERE j.id = $1 AND a.id_granja = $2 AND j.activa = true`,
           [id_jaula_retorno, farmId]

@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { AnimalsRepositoryPort } from '../../domain/ports/animals.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
-
-import { normalizeCodigo, isValidDateStr, esFechaFutura } from '../../../shared/utils/helpers';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { AnimalsRepositoryPort } from '../domain/ports/animals.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
+import { NewAnimal } from '../domain/entities/animal.entity';
+import { PastDate } from '../domain/value-objects/past-date.vo';
+import { NormalizedCode } from '../domain/value-objects/normalized-code.vo';
+import { DomainValidationError } from '../domain/errors/domain-validation.error';
 
 @Injectable()
 export class AnimalsService {
@@ -18,14 +20,14 @@ export class AnimalsService {
 
   async list({ farmId, query }: { farmId: number; query?: Record<string, unknown> }) {
     const filters = { ...(query || {}) } as Record<string, unknown>;
-    if (filters.q) filters.q = normalizeCodigo(filters.q);
+    if (filters.q) filters.q = NormalizedCode.normalize(filters.q);
     const rows = await this.repository.list(farmId, filters);
     return ok({ total: rows.length, data: rows });
   }
 
   async findByCode({ farmId, codigoRaw }: { farmId: number; codigoRaw: string }) {
-    const codigoNorm = normalizeCodigo(codigoRaw);
-    const animal = await this.repository.findByCodigoNorm(farmId, codigoNorm);
+    const codigoNorm = NormalizedCode.normalize(codigoRaw);
+    const animal = await this.repository.findByNormalizedCode(farmId, codigoNorm);
     if (!animal) {
       return fail('Animal not found', 404, {
         sugerencia: 'register',
@@ -33,8 +35,8 @@ export class AnimalsService {
       });
     }
     const [historial, tratamientos] = await Promise.all([
-      this.repository.getHistorial(animal.id),
-      this.repository.getTratamientos(animal.id),
+      this.repository.getHistory(animal.id),
+      this.repository.getTreatments(animal.id),
     ]);
     return ok({ ...animal, historial, tratamientos });
   }
@@ -48,28 +50,23 @@ export class AnimalsService {
     userId: number;
     body: Record<string, unknown>;
   }) {
-    const data = body || {};
-    if (!data.codigo || !data.sexo) return fail('code and sex are required');
-    if (!['M', 'H'].includes(String(data.sexo))) return fail('sex must be M or H');
-    if (!data.id_jaula) return fail('cage is required', 400, { campo: 'id_jaula' });
-    if (!normalizeCodigo(data.codigo)) return fail('Invalid code');
-    if (data.fecha_nacimiento && !isValidDateStr(data.fecha_nacimiento)) {
-      return fail('Invalid birth_date', 400, { campo: 'fecha_nacimiento' });
-    }
-    if (esFechaFutura(data.fecha_nacimiento)) {
-      return fail('birth_date cannot be in the future', 400, { campo: 'fecha_nacimiento' });
+    let newAnimal: NewAnimal;
+    try {
+      newAnimal = NewAnimal.register(body || {});
+    } catch (err) {
+      if (err instanceof DomainValidationError) {
+        return fail(err.message, 400, err.field ? { campo: err.field } : {});
+      }
+      throw err;
     }
 
-    const codigo = String(data.codigo).trim();
-    const codigoNorm = normalizeCodigo(codigo);
-
-    const jaula = await this.repository.findJaulaActiva(farmId, Number(data.id_jaula));
+    const jaula = await this.repository.findActiveCage(farmId, newAnimal.cageId);
     if (!jaula) return fail('Cage is outside the active farm');
 
     if (
       jaula.capacidad_maxima != null &&
       jaula.ocupacion + 1 > jaula.capacidad_maxima &&
-      !data.confirmar_capacidad
+      !newAnimal.confirmCapacity
     ) {
       return fail('Cage exceeds max capacity', 409, {
         requiere_confirmacion: 'capacidad',
@@ -78,22 +75,21 @@ export class AnimalsService {
       });
     }
 
-    const ex = await this.repository.findByCodigoNormRaw(farmId, codigoNorm);
+    const ex = await this.repository.findByNormalizedCodeRaw(farmId, newAnimal.code.normalized);
     if (ex) {
       if (ex.estado === 'activo') {
         return fail('Duplicate code in farm', 409, { animal: ex });
       }
-      if (!data.confirmar_reuso) {
+      if (!newAnimal.confirmReuse) {
         return fail('Code belongs to a removed animal. Confirm reuse.', 409, {
           requiere_confirmacion: true,
           animal: ex,
         });
       }
-      const animal = await this.repository.reusarBaja({
+      const animal = await this.repository.reuseDischargedCode({
         userId,
         existente: ex,
-        codigo,
-        data,
+        animal: newAnimal,
       });
       await this.audit.write({
         userId,
@@ -108,12 +104,10 @@ export class AnimalsService {
     }
 
     try {
-      const animal = await this.repository.insertNuevo({
+      const animal = await this.repository.insertNew({
         farmId,
         userId,
-        codigo,
-        codigoNorm,
-        data,
+        animal: newAnimal,
       });
       await this.audit.write({
         userId,
@@ -145,11 +139,13 @@ export class AnimalsService {
     body: Record<string, unknown>;
   }) {
     const data = body || {};
-    if (data.fecha_baja && !isValidDateStr(data.fecha_baja)) {
-      return fail('Invalid removal date', 400, { campo: 'fecha_baja' });
-    }
-    if (esFechaFutura(data.fecha_baja)) {
-      return fail('removal date cannot be in the future', 400, { campo: 'fecha_baja' });
+    try {
+      PastDate.createOptional(data.fecha_baja, 'fecha_baja', 'removal date');
+    } catch (err) {
+      if (err instanceof DomainValidationError) {
+        return fail(err.message, 400, { campo: err.field });
+      }
+      throw err;
     }
 
     const antes = await this.repository.findById(farmId, id);
@@ -157,7 +153,7 @@ export class AnimalsService {
 
     const animal = await this.repository.update({ id, data });
     if (data.particularidad) {
-      await this.repository.insertParticularidad({
+      await this.repository.insertNote({
         id,
         texto: String(data.particularidad),
         fecha: data.fecha_baja as string | undefined,

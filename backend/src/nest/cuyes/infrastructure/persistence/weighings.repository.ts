@@ -14,7 +14,7 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     return this.cuyesDeps.toDeps().db;
   }
 
-  async getRangosRows(farmId: number) {
+  async getRangeRows(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT categoria, min, max FROM peso_rangos WHERE id_granja = $1`,
       [farmId],
@@ -22,7 +22,7 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     return rows;
   }
 
-  async seedRangos(farmId: number) {
+  async seedRanges(farmId: number) {
     for (const cat of CATEGORIAS_RANGO) {
       const r = RANGOS_DEFAULT[cat];
       await this.db.query(
@@ -33,7 +33,7 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     }
   }
 
-  async saveRangos(
+  async saveRanges(
     farmId: number,
     next: Record<string, { min: number; max: number }>,
     userId: number,
@@ -71,7 +71,7 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     return rows[0] || null;
   }
 
-  async insertPesaje(
+  async insertWeighing(
     client: { query: (...args: unknown[]) => Promise<{ rows: unknown[] }> } | null,
     data: {
       farmId: number;
@@ -100,10 +100,10 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     return rows;
   }
 
-  async promedio(farmId: number, filters: Record<string, unknown>) {
+  async average(farmId: number, filters: Record<string, unknown>) {
     const params: unknown[] = [farmId];
     let sql = `
-        SELECT p.fecha, AVG(p.peso_gramos)::numeric(10,2) AS promedio, COUNT(*)::int AS n
+        SELECT p.fecha, AVG(p.peso_gramos)::numeric(10,2) AS average, COUNT(*)::int AS n
         FROM pesajes p JOIN animales a ON a.id = p.id_animal
         WHERE p.id_granja = $1`;
     if (filters.id_jaula) {
@@ -113,7 +113,7 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     if (filters.id_area) {
       params.push(Number(filters.id_area));
       sql += ` AND EXISTS (
-          SELECT 1 FROM jaulas j WHERE j.id = a.id_jaula AND j.id_area = $${params.length}
+          SELECT 1 FROM recintos j WHERE j.id = a.id_jaula AND j.id_area = $${params.length}
         )`;
     }
     sql += ' GROUP BY p.fecha ORDER BY p.fecha';

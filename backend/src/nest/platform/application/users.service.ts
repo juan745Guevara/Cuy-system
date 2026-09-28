@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { ok, fail, fromError } from '../../../shared/kernel/service-result.kernel';
-import { UsersRepositoryPort } from '../../domain/ports/users.repository.port';
-import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
-import { AuthUser } from '../../../shared/auth/auth-user.types';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
+import { UsersRepositoryPort } from '../domain/ports/users.repository.port';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
+import { AuthUser } from '../../shared/auth/auth-user.types';
 
 const ROLE_RANK: Record<string, number> = {
   superadmin: 5,
@@ -39,7 +39,7 @@ export class UsersService {
     const requested = params.farmIds.map(Number);
     const invalid = requested.filter((id) => !allowed.includes(id));
     if (invalid.length) {
-      await this.repository.logEscaladaBloqueada(params.userId, {
+      await this.repository.logBlockedEscalation(params.userId, {
         invalid,
         requested,
         ...(params.targetId != null ? { target: params.targetId } : {}),
@@ -96,7 +96,7 @@ export class UsersService {
 
     const hash = await bcrypt.hash(String(password), 10);
     try {
-      const created = await this.repository.createWithGranjas({
+      const created = await this.repository.createWithFarms({
         nombre: String(nombre),
         email: String(email).trim().toLowerCase(),
         passwordHash: hash,
@@ -173,14 +173,14 @@ export class UsersService {
     let hash: string | null = null;
     if (password) hash = await bcrypt.hash(String(password), 10);
 
-    const updated = await this.repository.updateWithGranjas({
+    const updated = await this.repository.updateWithFarms({
       id,
       nombre: nombre != null ? String(nombre) : undefined,
       activo: typeof activo === 'boolean' ? activo : undefined,
       passwordHash: hash,
       farmIds: Array.isArray(granja_ids) ? (granja_ids as number[]) : undefined,
     });
-    const full = await this.repository.findWithGranjas(id);
+    const full = await this.repository.findWithFarms(id);
     await this.audit.write({
       userId: user.id,
       farmId,

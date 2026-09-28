@@ -35,7 +35,7 @@ const Mortalidad = () => {
         api.get('/cuyes/animals', { params: { estado: 'activo' } }),
         api.get('/cuyes/catalogs/categories'),
         api.get('/cuyes/catalogs/breeds'),
-        api.get('/cuyes/cages'),
+        api.get('/recintos'),
       ]);
       setLista(m.data);
       setAnimales(a.data.data || a.data);

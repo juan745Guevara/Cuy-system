@@ -39,7 +39,7 @@ const Destetes = () => {
       const [d, p, j] = await Promise.all([
         api.get('/cuyes/weanings'),
         api.get('/cuyes/births'),
-        api.get('/cuyes/cages'),
+        api.get('/recintos'),
       ]);
       setLista(d.data);
       setPartos(p.data);

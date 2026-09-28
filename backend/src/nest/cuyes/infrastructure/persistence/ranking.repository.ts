@@ -56,7 +56,7 @@ export class RankingRepository extends RankingRepositoryPort {
     return rows[0];
   }
 
-  async findRankingHembras(farmId: number, idRaza: number | null, idCategoria: number | null) {
+  async findFemaleRanking(farmId: number, idRaza: number | null, idCategoria: number | null) {
     const { rows } = await this.db.query(
       `SELECT an.id, an.codigo, r.nombre AS raza, c.nombre AS categoria,
                 COUNT(p.id)::int AS partos,
@@ -93,7 +93,7 @@ export class RankingRepository extends RankingRepositoryPort {
     return rows;
   }
 
-  async findRankingMachos(farmId: number, idRaza: number | null, idCategoria: number | null) {
+  async findMaleRanking(farmId: number, idRaza: number | null, idCategoria: number | null) {
     const { rows } = await this.db.query(
       `SELECT an.id, an.codigo, r.nombre AS raza, c.nombre AS categoria,
                 COUNT(DISTINCT e.id)::int AS empadres,
@@ -124,7 +124,7 @@ export class RankingRepository extends RankingRepositoryPort {
     return rows[0] || null;
   }
 
-  async markDescarte(animalId: number) {
+  async markDiscard(animalId: number) {
     const { rows } = await this.db.query(
       `UPDATE animales
          SET estado = 'descarte', fecha_baja = CURRENT_DATE,
@@ -135,7 +135,7 @@ export class RankingRepository extends RankingRepositoryPort {
     return rows[0];
   }
 
-  async findCategoriaReemplazo(farmId: number) {
+  async findReplacementCategory(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT c.id FROM categorias c
          JOIN granjas g ON g.id_especie = c.id_especie
@@ -146,7 +146,7 @@ export class RankingRepository extends RankingRepositoryPort {
     return rows[0]?.id || null;
   }
 
-  async markReemplazo(animalId: number, categoriaId: number | null) {
+  async markReplacement(animalId: number, categoriaId: number | null) {
     const { rows } = await this.db.query(
       `UPDATE animales
          SET id_categoria = COALESCE($1, id_categoria), updated_at = NOW()
@@ -156,7 +156,7 @@ export class RankingRepository extends RankingRepositoryPort {
     return rows[0];
   }
 
-  async insertParticularidad(animalId: number, texto: string, userId: number) {
+  async insertNote(animalId: number, texto: string, userId: number) {
     await this.db.query(
       `INSERT INTO animal_particularidades (id_animal, texto, created_by)
          VALUES ($1, $2, $3)`,

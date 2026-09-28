@@ -223,7 +223,7 @@ const Dashboard = () => {
         params: { anio: now.getFullYear(), mes: now.getMonth() + 1 },
       }).catch(() => ({ data: null })),
       api.get('/cuyes/alerts').catch(() => ({ data: null })),
-      api.get('/cuyes/cages/occupancy').catch(() => ({ data: null })),
+      api.get('/recintos/occupancy').catch(() => ({ data: null })),
     ])
       .then(([p, r, a, o]) => {
         setPob(p.data);

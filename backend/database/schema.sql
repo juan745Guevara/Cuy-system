@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS areas (
   UNIQUE(id_granja, nombre)
 );
 
-CREATE TABLE IF NOT EXISTS jaulas (
+CREATE TABLE IF NOT EXISTS recintos (
   id SERIAL PRIMARY KEY,
   id_area INTEGER NOT NULL REFERENCES areas(id) ON DELETE CASCADE,
   codigo VARCHAR(50) NOT NULL,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS animales (
   sexo CHAR(1) NOT NULL CHECK (sexo IN ('M','H')),
   id_raza INTEGER REFERENCES razas(id),
   id_categoria INTEGER REFERENCES categorias(id),
-  id_jaula INTEGER REFERENCES jaulas(id),
+  id_jaula INTEGER REFERENCES recintos(id),
   fecha_nacimiento DATE,
   estado VARCHAR(20) DEFAULT 'activo'
     CHECK (estado IN ('activo','baja_muerte','baja_venta','descarte')),
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS empadres (
   id SERIAL PRIMARY KEY,
   id_granja INTEGER NOT NULL REFERENCES granjas(id),
   id_macho INTEGER REFERENCES animales(id),
-  id_jaula INTEGER REFERENCES jaulas(id),
+  id_jaula INTEGER REFERENCES recintos(id),
   fecha_empadre DATE NOT NULL,
   peso_antes NUMERIC(10,2),
   peso_despues NUMERIC(10,2),
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS mortalidad (
   categoria VARCHAR(50),
   cantidad INTEGER NOT NULL CHECK (cantidad > 0),
   causa TEXT,
-  id_jaula INTEGER REFERENCES jaulas(id),
+  id_jaula INTEGER REFERENCES recintos(id),
   created_by INTEGER REFERENCES usuarios(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -202,8 +202,8 @@ CREATE TABLE IF NOT EXISTS movimientos (
   id_animal INTEGER NOT NULL REFERENCES animales(id),
   id_granja_origen INTEGER REFERENCES granjas(id),
   id_granja_destino INTEGER REFERENCES granjas(id),
-  id_jaula_origen INTEGER REFERENCES jaulas(id),
-  id_jaula_destino INTEGER REFERENCES jaulas(id),
+  id_jaula_origen INTEGER REFERENCES recintos(id),
+  id_jaula_destino INTEGER REFERENCES recintos(id),
   fecha DATE NOT NULL,
   motivo TEXT,
   excedio_capacidad BOOLEAN DEFAULT false,
@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS tratamientos (
   id SERIAL PRIMARY KEY,
   id_granja INTEGER NOT NULL REFERENCES granjas(id),
   id_animal INTEGER REFERENCES animales(id),
-  id_jaula INTEGER REFERENCES jaulas(id),
+  id_jaula INTEGER REFERENCES recintos(id),
   id_area INTEGER REFERENCES areas(id),
   tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('preventivo','curativo')),
   producto VARCHAR(150) NOT NULL,

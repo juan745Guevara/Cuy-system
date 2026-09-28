@@ -21,9 +21,9 @@ const Jaulas = () => {
     setError('');
     try {
       const [j, a, o] = await Promise.all([
-        api.get('/cuyes/cages'),
+        api.get('/recintos'),
         api.get('/areas'),
-        api.get('/cuyes/cages/occupancy'),
+        api.get('/recintos/occupancy'),
       ]);
       setJaulas(j.data);
       setAreas(a.data);
@@ -43,7 +43,7 @@ const Jaulas = () => {
     setError('');
     setOk('');
     try {
-      await api.post('/cuyes/cages', {
+      await api.post('/recintos', {
         id_area: Number(idArea),
         codigo,
         capacidad_maxima: capacidad ? Number(capacidad) : null,
@@ -63,7 +63,7 @@ const Jaulas = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/cuyes/cages/${edit.id}`, {
+      await api.patch(`/recintos/${edit.id}`, {
         codigo: edit.codigo,
         capacidad_maxima: edit.capacidad ? Number(edit.capacidad) : null,
         id_area: Number(edit.id_area),
@@ -80,7 +80,7 @@ const Jaulas = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/cuyes/cages/${j.id}/deactivate`);
+      await api.patch(`/recintos/${j.id}/deactivate`);
       setOk(`Jaula ${j.codigo} desactivada`);
       if (ocupantes?.id === j.id) setOcupantes(null);
       if (edit?.id === j.id) setEdit(null);
@@ -92,7 +92,7 @@ const Jaulas = () => {
 
   const verAnimales = async (id) => {
     try {
-      const { data } = await api.get(`/cuyes/cages/${id}/animals`);
+      const { data } = await api.get(`/recintos/${id}/animals`);
       setOcupantes({ id, data });
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron list animales');

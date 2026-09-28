@@ -49,7 +49,7 @@ export class AlertsRepository extends AlertsRepositoryPort {
     }
   }
 
-  async findDescartes(farmId: number) {
+  async findDiscards(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT tipo, id_animal, id_referencia FROM alertas_descarte WHERE id_granja = $1`,
       [farmId],
@@ -57,25 +57,25 @@ export class AlertsRepository extends AlertsRepositoryPort {
     return rows;
   }
 
-  async findPartoProximo(farmId: number) {
+  async findUpcomingBirths(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT eh.id_hembra, eh.id_empadre, e.fecha_empadre, an.codigo, j.codigo AS jaula
          FROM empadre_hembras eh
          JOIN empadres e ON e.id = eh.id_empadre
          JOIN animales an ON an.id = eh.id_hembra
-         LEFT JOIN jaulas j ON j.id = an.id_jaula
+         LEFT JOIN recintos j ON j.id = an.id_jaula
          WHERE e.id_granja = $1 AND eh.resultado = 'abierto' AND an.estado = 'activo'`,
       [farmId],
     );
     return rows;
   }
 
-  async findDestetePendiente(farmId: number) {
+  async findPendingWeanings(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT p.id, p.id_hembra, p.fecha_parto, an.codigo, j.codigo AS jaula
          FROM partos p
          JOIN animales an ON an.id = p.id_hembra
-         LEFT JOIN jaulas j ON j.id = an.id_jaula
+         LEFT JOIN recintos j ON j.id = an.id_jaula
          WHERE p.id_granja = $1
            AND NOT EXISTS (SELECT 1 FROM destetes d WHERE d.id_parto = p.id)`,
       [farmId],
@@ -83,13 +83,13 @@ export class AlertsRepository extends AlertsRepositoryPort {
     return rows;
   }
 
-  async findSinPrenez(farmId: number) {
+  async findWithoutPregnancy(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT eh.id_hembra, eh.id_empadre, e.fecha_empadre, an.codigo, j.codigo AS jaula
          FROM empadre_hembras eh
          JOIN empadres e ON e.id = eh.id_empadre
          JOIN animales an ON an.id = eh.id_hembra
-         LEFT JOIN jaulas j ON j.id = an.id_jaula
+         LEFT JOIN recintos j ON j.id = an.id_jaula
          LEFT JOIN partos p ON p.id_empadre = e.id AND p.id_hembra = eh.id_hembra
          WHERE e.id_granja = $1 AND eh.resultado = 'abierto' AND an.estado = 'activo'
            AND p.id IS NULL`,
@@ -98,12 +98,12 @@ export class AlertsRepository extends AlertsRepositoryPort {
     return rows;
   }
 
-  async findEmpadreDisponible(farmId: number) {
+  async findAvailableBreeding(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT an.id AS id_hembra, an.codigo, j.codigo AS jaula,
                 MAX(COALESCE(p.fecha_parto, e.fecha_empadre)) AS ultimo_evento
          FROM animales an
-         LEFT JOIN jaulas j ON j.id = an.id_jaula
+         LEFT JOIN recintos j ON j.id = an.id_jaula
          LEFT JOIN categorias c ON c.id = an.id_categoria
          LEFT JOIN empadre_hembras eh ON eh.id_hembra = an.id
          LEFT JOIN empadres e ON e.id = eh.id_empadre
@@ -122,7 +122,7 @@ export class AlertsRepository extends AlertsRepositoryPort {
     return rows;
   }
 
-  async insertDescarte(params: {
+  async insertDiscard(params: {
     farmId: number;
     userId: number;
     tipo: string;

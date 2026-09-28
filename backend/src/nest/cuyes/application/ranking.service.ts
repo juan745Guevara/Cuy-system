@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ok, fail } from '../../../shared/kernel/service-result.kernel';
-import { RankingRepositoryPort } from '../../domain/ports/ranking.repository.port';
-import { CuyesDepsService } from '../cuyes-deps.service';
+import { ok, fail } from '../../shared/kernel/service-result.kernel';
+import { RankingRepositoryPort } from '../domain/ports/ranking.repository.port';
+import { CuyesDepsService } from './cuyes-deps.service';
 
 const DEFAULT_CFG = {
   peso_partos: 20,
@@ -66,7 +66,7 @@ export class RankingService {
     const cfg = await this.getCfg(farmId);
 
     if (sexo === 'H') {
-      const rows = await this.repository.findRankingHembras(farmId, idRaza, idCategoria);
+      const rows = await this.repository.findFemaleRanking(farmId, idRaza, idCategoria);
       const ranked = rows.map((row: Record<string, unknown>) => {
         const insuficientes = (row.partos as number) < 2;
         const score = insuficientes
@@ -92,7 +92,7 @@ export class RankingService {
       return ok({ sexo: 'H', config: cfg, ranking: ranked });
     }
 
-    const rows = await this.repository.findRankingMachos(farmId, idRaza, idCategoria);
+    const rows = await this.repository.findMaleRanking(farmId, idRaza, idCategoria);
     const ranked = rows.map((row: Record<string, unknown>) => {
       const insuficientes = (row.empadres as number) < 2;
       const pctPrenez =
@@ -140,8 +140,8 @@ export class RankingService {
     if (!animal) return fail('Animal not found', 404);
 
     if (accion === 'descarte') {
-      const row = await this.repository.markDescarte(animalId);
-      await this.repository.insertParticularidad(
+      const row = await this.repository.markDiscard(animalId);
+      await this.repository.insertNote(
         animalId,
         'Marked for discard from ranking',
         userId,
@@ -159,9 +159,9 @@ export class RankingService {
       return ok(row);
     }
 
-    const catId = await this.repository.findCategoriaReemplazo(farmId);
-    const row = await this.repository.markReemplazo(animalId, catId);
-    await this.repository.insertParticularidad(
+    const catId = await this.repository.findReplacementCategory(farmId);
+    const row = await this.repository.markReplacement(animalId, catId);
+    await this.repository.insertNote(
       animalId,
       'Marked as replacement from ranking',
       userId,

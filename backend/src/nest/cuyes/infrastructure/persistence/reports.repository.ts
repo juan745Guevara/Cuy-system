@@ -10,7 +10,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
     return this.cuyesDeps.toDeps().db;
   }
 
-  async getHembras(farmId, idAnimal) {
+  async getFemales(farmId, idAnimal) {
       const params = [farmId];
       let filter = `a.id_granja = $1 AND a.sexo = 'H'`;
       if (idAnimal) {
@@ -25,14 +25,14 @@ export class ReportsRepository extends ReportsRepositoryPort {
                    FROM animal_particularidades ap WHERE ap.id_animal = a.id) AS particularidades
          FROM animales a
          LEFT JOIN razas r ON r.id = a.id_raza
-         LEFT JOIN jaulas j ON j.id = a.id_jaula
+         LEFT JOIN recintos j ON j.id = a.id_jaula
          WHERE ${filter}
          ORDER BY a.codigo`,
         params
       );
       return rows;
     }
-  async getCiclosHembras(ids) {
+  async getFemaleCycles(ids) {
       const { rows } = await this.db.query(
         `SELECT eh.id_hembra, e.id AS id_empadre, e.fecha_empadre, eh.resultado,
                 m.codigo AS macho_codigo,
@@ -52,7 +52,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async getMachos(farmId) {
+  async getMales(farmId) {
       const { rows } = await this.db.query(
         `SELECT a.*, r.nombre AS raza,
                 (SELECT string_agg(ap.texto, '; ') FROM animal_particularidades ap WHERE ap.id_animal = a.id) AS particularidades
@@ -64,7 +64,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async getEmpadresMachos(ids) {
+  async getMaleBreedings(ids) {
       const { rows } = await this.db.query(
         `SELECT e.*,
                 (SELECT string_agg(a.codigo, ', ') FROM empadre_hembras eh
@@ -83,7 +83,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async getPopulationActiva(farmId) {
+  async getActivePopulation(farmId) {
       const { rows } = await this.db.query(
         `SELECT COALESCE(r.nombre,'sin_raza') AS raza,
                 COALESCE(c.nombre,'sin_categoria') AS categoria,
@@ -97,7 +97,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async getNacimientosMes(farmId, year, month) {
+  async getMonthlyBirths(farmId, year, month) {
       const { rows } = await this.db.query(
         `SELECT COALESCE(SUM(vivos_m+vivos_h),0)::int AS n FROM partos
          WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha_parto)=$2 AND EXTRACT(MONTH FROM fecha_parto)=$3`,
@@ -105,7 +105,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows[0].n;
     }
-  async getMortalidadMes(farmId, year, month) {
+  async getMonthlyMortality(farmId, year, month) {
       const { rows } = await this.db.query(
         `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
          FROM mortalidad WHERE id_granja=$1
@@ -115,7 +115,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async getVentasMes(farmId, year, month) {
+  async getMonthlySales(farmId, year, month) {
       const { rows } = await this.db.query(
         `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
          FROM ventas WHERE id_granja=$1
@@ -125,7 +125,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async listAnimalesExport(farmId, filters) {
+  async listAnimalsForExport(farmId, filters) {
       const params = [farmId];
       let sql = `
         SELECT a.codigo, a.sexo, a.estado, a.fecha_nacimiento,
@@ -134,7 +134,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
         FROM animales a
         LEFT JOIN razas r ON r.id = a.id_raza
         LEFT JOIN categorias c ON c.id = a.id_categoria
-        LEFT JOIN jaulas j ON j.id = a.id_jaula
+        LEFT JOIN recintos j ON j.id = a.id_jaula
         LEFT JOIN areas ar ON ar.id = j.id_area
         WHERE a.id_granja = $1`;
       if (filters.estado) {
@@ -157,7 +157,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       const { rows } = await this.db.query(sql, params);
       return rows;
     }
-  async getGranjasUsuario(isSuper, userId) {
+  async getUserFarms(isSuper, userId) {
       const { rows } = await this.db.query(
         `SELECT g.id, g.nombre FROM granjas g
          WHERE $1::boolean
@@ -167,7 +167,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async getPopulationGranja(farmId) {
+  async getFarmPopulation(farmId) {
       const { rows } = await this.db.query(
         `SELECT COALESCE(c.nombre,'sin_categoria') AS categoria, a.sexo, COUNT(*)::int AS n
          FROM animales a LEFT JOIN categorias c ON c.id = a.id_categoria
@@ -177,7 +177,7 @@ export class ReportsRepository extends ReportsRepositoryPort {
       );
       return rows;
     }
-  async getMetricasGranja(farmId, year, month, mesFilter) {
+  async getFarmMetrics(farmId, year, month, mesFilter) {
       const nacParams = mesFilter ? [farmId, year, month] : [farmId, year];
       const nac = await this.db.query(
         `SELECT COALESCE(SUM(vivos_m+vivos_h),0)::int AS n FROM partos

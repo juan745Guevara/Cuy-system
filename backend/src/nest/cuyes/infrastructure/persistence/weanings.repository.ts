@@ -20,7 +20,7 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
     return rows as { id: number; nombre: string }[];
   }
 
-  async findParto(farmId: number, partoId: number) {
+  async findBirth(farmId: number, partoId: number) {
     const { rows } = await this.db.query(
       `SELECT * FROM partos WHERE id = $1 AND id_granja = $2`,
       [partoId, farmId],
@@ -28,7 +28,7 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
     return rows[0] || null;
   }
 
-  async createDestete(params: {
+  async createWeaning(params: {
     farmId: number;
     userId: number;
     parto: any;
@@ -149,7 +149,7 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
     }
   }
 
-  async listDestetes(farmId: number) {
+  async listWeanings(farmId: number) {
     const { rows } = await this.db.query(
       `SELECT d.*, p.fecha_parto, a.codigo AS hembra_codigo
        FROM destetes d

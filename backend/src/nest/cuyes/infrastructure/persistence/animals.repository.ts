@@ -1,4 +1,8 @@
-import { AnimalsRepositoryPort } from '../../domain/ports/animals.repository.port';
+import {
+  AnimalsRepositoryPort,
+  InsertNewAnimalParams,
+  ReuseDischargedCodeParams,
+} from '../../domain/ports/animals.repository.port';
 import { Injectable } from '@nestjs/common';
 import { CuyesDepsService } from '../../application/cuyes-deps.service';
 
@@ -7,7 +11,7 @@ const ANIMAL_SELECT = `
   FROM animales a
   LEFT JOIN razas r ON r.id = a.id_raza
   LEFT JOIN categorias c ON c.id = a.id_categoria
-  LEFT JOIN jaulas j ON j.id = a.id_jaula
+  LEFT JOIN recintos j ON j.id = a.id_jaula
   LEFT JOIN areas ar ON ar.id = j.id_area
 `;
 
@@ -46,9 +50,9 @@ const HISTORIAL_SQL = `
               ELSE '' END,
          m.created_at
   FROM movimientos m
-  LEFT JOIN jaulas jo ON jo.id = m.id_jaula_origen
+  LEFT JOIN recintos jo ON jo.id = m.id_jaula_origen
   LEFT JOIN areas ao ON ao.id = jo.id_area
-  LEFT JOIN jaulas jd ON jd.id = m.id_jaula_destino
+  LEFT JOIN recintos jd ON jd.id = m.id_jaula_destino
   LEFT JOIN areas ad ON ad.id = jd.id_area
   LEFT JOIN granjas go ON go.id = m.id_granja_origen
   LEFT JOIN granjas gd ON gd.id = m.id_granja_destino
@@ -102,66 +106,66 @@ export class AnimalsRepository extends AnimalsRepositoryPort {
       const { rows } = await this.db.query(`${ANIMAL_SELECT} ${where} ORDER BY ${orderBy}`, params);
       return rows;
     }
-  async findByCodigoNorm(farmId, codigoNorm) {
+  async findByNormalizedCode(farmId, codigoNorm) {
       const { rows } = await this.db.query(
         `${ANIMAL_SELECT} WHERE a.id_granja = $1 AND a.codigo_norm = $2`,
         [farmId, codigoNorm]
       );
       return rows[0] || null;
     }
-  async getHistorial(animalId) {
+  async getHistory(animalId) {
       const { rows } = await this.db.query(HISTORIAL_SQL, [animalId]);
       return rows;
     }
-  async getTratamientos(animalId) {
+  async getTreatments(animalId) {
       const { rows } = await this.db.query(
         `SELECT * FROM tratamientos WHERE id_animal = $1 ORDER BY fecha_inicio DESC`,
         [animalId]
       );
       return rows;
     }
-  async findJaulaActiva(farmId, idJaula) {
+  async findActiveCage(farmId, idJaula) {
       const { rows } = await this.db.query(
         `SELECT j.id, j.capacidad_maxima,
                 (SELECT COUNT(*)::int FROM animales an
                   WHERE an.id_jaula = j.id AND an.estado = 'activo') AS ocupacion
-         FROM jaulas j JOIN areas a ON a.id = j.id_area
+         FROM recintos j JOIN areas a ON a.id = j.id_area
          WHERE j.id = $1 AND a.id_granja = $2 AND j.activa = true`,
         [idJaula, farmId]
       );
       return rows[0] || null;
     }
-  async findByCodigoNormRaw(farmId, codigoNorm) {
+  async findByNormalizedCodeRaw(farmId, codigoNorm) {
       const { rows } = await this.db.query(
         `SELECT id, codigo, estado FROM animales WHERE id_granja=$1 AND codigo_norm=$2`,
         [farmId, codigoNorm]
       );
       return rows[0] || null;
     }
-  async insertNuevo({ farmId, userId, codigo, codigoNorm, data }) {
+  async insertNew({ farmId, userId, animal }: InsertNewAnimalParams) {
       const client = await this.db.connect();
       try {
         await client.query('BEGIN');
         const { rows } = await client.query(
           `INSERT INTO animales
             (id_granja, codigo, codigo_norm, sexo, id_raza, id_categoria, id_jaula, fecha_nacimiento, created_by)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8::date,$9) RETURNING *`,
           [
             farmId,
-            codigo,
-            codigoNorm,
-            data.sexo,
-            data.id_raza || null,
-            data.id_categoria || null,
-            data.id_jaula,
-            data.fecha_nacimiento || null,
+            animal.code.original,
+            animal.code.normalized,
+            animal.sex,
+            animal.breedId,
+            animal.categoryId,
+            animal.cageId,
+            animal.birthDate?.isoDate ?? null,
             userId,
           ]
         );
-        if (data.particularidad) {
+        if (animal.note) {
           await client.query(
             `INSERT INTO animal_particularidades (id_animal, texto, created_by) VALUES ($1,$2,$3)`,
-            [rows[0].id, data.particularidad, userId]
+            [rows[0].id, animal.note, userId]
           );
         }
         await client.query('COMMIT');
@@ -173,26 +177,26 @@ export class AnimalsRepository extends AnimalsRepositoryPort {
         client.release();
       }
     }
-  async reusarBaja({ userId, existente, codigo, data }) {
+  async reuseDischargedCode({ userId, existente, animal }: ReuseDischargedCodeParams) {
       const { rows } = await this.db.query(
         `UPDATE animales SET
-           sexo=$1, id_raza=$2, id_categoria=$3, id_jaula=$4, fecha_nacimiento=$5,
+           sexo=$1, id_raza=$2, id_categoria=$3, id_jaula=$4, fecha_nacimiento=$5::date,
            estado='activo', fecha_baja=NULL, motivo_baja=NULL, codigo=$6, updated_at=NOW()
          WHERE id=$7 RETURNING *`,
         [
-          data.sexo,
-          data.id_raza || null,
-          data.id_categoria || null,
-          data.id_jaula,
-          data.fecha_nacimiento || null,
-          codigo,
+          animal.sex,
+          animal.breedId,
+          animal.categoryId,
+          animal.cageId,
+          animal.birthDate?.isoDate ?? null,
+          animal.code.original,
           existente.id,
         ]
       );
-      if (data.particularidad) {
+      if (animal.note) {
         await this.db.query(
           `INSERT INTO animal_particularidades (id_animal, texto, created_by) VALUES ($1,$2,$3)`,
-          [rows[0].id, data.particularidad, userId]
+          [rows[0].id, animal.note, userId]
         );
       }
       return rows[0];
@@ -209,7 +213,7 @@ export class AnimalsRepository extends AnimalsRepositoryPort {
         `UPDATE animales SET
            estado = COALESCE($1, estado),
            motivo_baja = COALESCE($2, motivo_baja),
-           fecha_baja = COALESCE($3, fecha_baja),
+           fecha_baja = COALESCE($3::date, fecha_baja),
            id_categoria = COALESCE($4, id_categoria),
            id_jaula = COALESCE($5, id_jaula),
            updated_at = NOW()
@@ -225,7 +229,7 @@ export class AnimalsRepository extends AnimalsRepositoryPort {
       );
       return rows[0] || null;
     }
-  async insertParticularidad({ id, texto, fecha, userId }) {
+  async insertNote({ id, texto, fecha, userId }) {
       await this.db.query(
         `INSERT INTO animal_particularidades (id_animal, texto, fecha, created_by) VALUES ($1,$2,COALESCE($3,CURRENT_DATE),$4)`,
         [id, texto, fecha || null, userId]

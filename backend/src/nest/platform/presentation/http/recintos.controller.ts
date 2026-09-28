@@ -13,30 +13,30 @@ import { RolesGuard } from '../../../shared/guards/roles.guard';
 import { Roles } from '../../../shared/decorators/roles.decorator';
 import { CurrentUser } from '../../../shared/decorators/current-user.decorator';
 import { FarmId } from '../../../shared/decorators/farm-id.decorator';
+import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
-import { CuyesFarmScope } from '../cuyes-scope.decorator';
-import { CAGES_SERVICE } from '../../cuyes.tokens';
+import { RECINTOS_SERVICE } from '../../platform.tokens';
 
-@Controller('cuyes/cages')
-@CuyesFarmScope()
-export class CagesController {
-  constructor(@Inject(CAGES_SERVICE) private readonly service: any) {}
+@Controller('recintos')
+@FarmScope()
+export class RecintosController {
+  constructor(@Inject(RECINTOS_SERVICE) private readonly service: any) {}
 
   @Get()
-  list(@FarmId() farmId: number, @Query() query: Record<string, string>) {
-    return unwrapServiceResult(this.service.list({ farmId, query }));
+  async list(@FarmId() farmId: number, @Query() query: Record<string, string>) {
+    return unwrapServiceResult(await this.service.list({ farmId, query }));
   }
 
   @Get('occupancy')
-  occupancy(@FarmId() farmId: number) {
-    return unwrapServiceResult(this.service.getOccupancy(farmId));
+  async occupancy(@FarmId() farmId: number) {
+    return unwrapServiceResult(await this.service.getOccupancy(farmId));
   }
 
-  @Get(':id/animales')
-  animals(@FarmId() farmId: number, @Param('id') id: string) {
+  @Get(':id/animals')
+  async animals(@FarmId() farmId: number, @Param('id') id: string) {
     return unwrapServiceResult(
-      this.service.getAnimals({ farmId, jaulaId: id }),
+      await this.service.getAnimals({ farmId, jaulaId: id }),
     );
   }
 

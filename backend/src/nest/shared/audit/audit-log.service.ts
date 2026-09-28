@@ -20,13 +20,18 @@ export class AuditLogService {
 
   async ensureSchema() {
     if (this.ready) return;
-    await this.prisma.$executeRawUnsafe(`
-    ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS entidad VARCHAR(80);
-    ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_entidad INTEGER;
-    ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_granja INTEGER;
-    ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS antes JSONB;
-    ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS despues JSONB;
-  `);
+    // Prisma's raw executor (unlike node-pg) rejects multiple ;-separated
+    // statements in a single prepared call, so each ALTER runs on its own.
+    const statements = [
+      `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS entidad VARCHAR(80)`,
+      `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_entidad INTEGER`,
+      `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_granja INTEGER`,
+      `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS antes JSONB`,
+      `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS despues JSONB`,
+    ];
+    for (const statement of statements) {
+      await this.prisma.$executeRawUnsafe(statement);
+    }
     this.ready = true;
   }
 
