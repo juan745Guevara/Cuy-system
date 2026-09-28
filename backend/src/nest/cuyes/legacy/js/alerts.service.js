@@ -1,4 +1,4 @@
-const { ok, fail } = require('../../../shared/kernel/ServiceResult');
+const { ok, fail } = require('../../../../shared/kernel/ServiceResult');
 
 function addDays(fecha, dias) {
   const d = new Date(`${String(fecha).slice(0, 10)}T00:00:00`);

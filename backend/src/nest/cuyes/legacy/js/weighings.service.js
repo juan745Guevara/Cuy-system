@@ -1,4 +1,4 @@
-const { ok, fail, fromError } = require('../../../shared/kernel/ServiceResult');
+const { ok, fail, fromError } = require('../../../../shared/kernel/ServiceResult');
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);

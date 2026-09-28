@@ -1,4 +1,4 @@
-const { ok, fail } = require('../../../shared/kernel/ServiceResult');
+const { ok, fail } = require('../../../../shared/kernel/ServiceResult');
 
 const DEFAULT_CFG = {
   peso_partos: 20,

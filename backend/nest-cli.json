@@ -5,7 +5,8 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "assets": [
-      { "include": "modules/**/*.js", "watchAssets": true },
+      { "include": "nest/cuyes/legacy/js/**/*.js", "watchAssets": true },
+      { "include": "modules/cuyes/domain/**/*.js", "watchAssets": true },
       { "include": "shared/**/*.js", "watchAssets": true }
     ],
     "watchAssets": true

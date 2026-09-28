@@ -1,5 +1,5 @@
-const { normalizeCodigo, isValidDateStr, todayISO, promedioPesos } = require('../../../shared/utils/helpers');
-const { ok, fail, fromError } = require('../../../shared/kernel/ServiceResult');
+const { normalizeCodigo, isValidDateStr, todayISO, promedioPesos } = require('../../../../shared/utils/helpers');
+const { ok, fail, fromError } = require('../../../../shared/kernel/ServiceResult');
 
 function createBreedingsService({ repository, audit }) {
   async function assertAnimal(farmId, id, sexo) {

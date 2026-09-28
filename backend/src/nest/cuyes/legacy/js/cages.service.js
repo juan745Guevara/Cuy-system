@@ -1,5 +1,5 @@
-const { normalizeCodigo } = require('../../../shared/utils/helpers');
-const { ok, fail, fromError } = require('../../../shared/kernel/ServiceResult');
+const { normalizeCodigo } = require('../../../../shared/utils/helpers');
+const { ok, fail, fromError } = require('../../../../shared/kernel/ServiceResult');
 
 function createCagesService({ repository, audit }) {
   return {

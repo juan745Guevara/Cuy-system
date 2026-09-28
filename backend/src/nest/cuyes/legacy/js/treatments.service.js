@@ -1,5 +1,5 @@
-const { isValidDateStr, esFechaFutura } = require('../../../shared/utils/helpers');
-const { ok, fail, fromError } = require('../../../shared/kernel/ServiceResult');
+const { isValidDateStr, esFechaFutura } = require('../../../../shared/utils/helpers');
+const { ok, fail, fromError } = require('../../../../shared/kernel/ServiceResult');
 
 function addDays(fechaISO, dias) {
   const d = new Date(`${fechaISO}T00:00:00`);

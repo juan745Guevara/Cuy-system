@@ -2,8 +2,8 @@ const {
   normalizeCodigo,
   isValidDateStr,
   esFechaFutura,
-} = require('../../../shared/utils/helpers');
-const { ok, fail, fromError } = require('../../../shared/kernel/ServiceResult');
+} = require('../../../../shared/utils/helpers');
+const { ok, fail, fromError } = require('../../../../shared/kernel/ServiceResult');
 
 function createAnimalsService({ repository, audit }) {
   return {

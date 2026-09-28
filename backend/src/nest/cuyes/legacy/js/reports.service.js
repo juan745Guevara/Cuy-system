@@ -1,6 +1,6 @@
 const ExcelJS = require('exceljs');
-const { promedioPesos } = require('../../../shared/utils/helpers');
-const { ok, fail } = require('../../../shared/kernel/ServiceResult');
+const { promedioPesos } = require('../../../../shared/utils/helpers');
+const { ok, fail } = require('../../../../shared/kernel/ServiceResult');
 
 const MONTH_NAMES = [
   '',
