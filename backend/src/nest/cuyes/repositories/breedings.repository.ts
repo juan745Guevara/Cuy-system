@@ -1,39 +1,44 @@
-function createBreedingsRepository({ db }) {
-  return {
-    async findAnimal(farmId, id, sexo) {
-      const { rows } = await db.query(
+import { Injectable } from '@nestjs/common';
+import { CuyesDepsService } from '../cuyes-deps.service';
+
+@Injectable()
+export class BreedingsRepository {
+  constructor(private readonly cuyesDeps: CuyesDepsService) {}
+
+  private get db() {
+    return this.cuyesDeps.toDeps().db;
+  }
+
+async findAnimal(farmId, id, sexo) {
+      const { rows } = await this.db.query(
         `SELECT * FROM animales WHERE id = $1 AND id_granja = $2 AND estado = 'activo'`,
         [id, farmId]
       );
       return rows[0] || null;
-    },
-
-    async findHembraAnyState(farmId, id) {
-      const { rows } = await db.query(
+    }
+  async findHembraAnyState(farmId, id) {
+      const { rows } = await this.db.query(
         `SELECT * FROM animales WHERE id=$1 AND id_granja=$2 AND sexo='H'`,
         [id, farmId]
       );
       return rows[0] || null;
-    },
-
-    async findMacho(farmId, id) {
-      const { rows } = await db.query(
+    }
+  async findMacho(farmId, id) {
+      const { rows } = await this.db.query(
         `SELECT * FROM animales WHERE id = $1 AND id_granja = $2 AND sexo = 'M'`,
         [id, farmId]
       );
       return rows[0] || null;
-    },
-
-    async getLastPartoDate(hembraId) {
-      const { rows } = await db.query(
+    }
+  async getLastPartoDate(hembraId) {
+      const { rows } = await this.db.query(
         `SELECT fecha_parto FROM partos WHERE id_hembra=$1 ORDER BY fecha_parto DESC LIMIT 1`,
         [hembraId]
       );
       return rows[0]?.fecha_parto || null;
-    },
-
-    async insertReproductor(data) {
-      const { rows } = await db.query(
+    }
+  async insertReproductor(data) {
+      const { rows } = await this.db.query(
         `INSERT INTO animales
           (id_granja, codigo, codigo_norm, sexo, id_raza, id_categoria, id_jaula, fecha_nacimiento, created_by)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
@@ -50,17 +55,15 @@ function createBreedingsRepository({ db }) {
         ]
       );
       return rows[0];
-    },
-
-    async insertParticularidad(idAnimal, texto, userId) {
-      await db.query(
+    }
+  async insertParticularidad(idAnimal, texto, userId) {
+      await this.db.query(
         `INSERT INTO animal_particularidades (id_animal, texto, created_by) VALUES ($1,$2,$3)`,
         [idAnimal, texto, userId]
       );
-    },
-
-    async createEmpadre({ farmId, userId, id_macho, id_jaula, fecha_empadre, peso_antes, peso_despues, hembras, cantPren, notas }) {
-      const client = await db.connect();
+    }
+  async createEmpadre({ farmId, userId, id_macho, id_jaula, fecha_empadre, peso_antes, peso_despues, hembras, cantPren, notas }) {
+      const client = await this.db.connect();
       try {
         await client.query('BEGIN');
         const { rows } = await client.query(
@@ -111,10 +114,9 @@ function createBreedingsRepository({ db }) {
       } finally {
         client.release();
       }
-    },
-
-    async listEmpadres(farmId) {
-      const { rows } = await db.query(
+    }
+  async listEmpadres(farmId) {
+      const { rows } = await this.db.query(
         `SELECT e.*, m.codigo AS macho_codigo,
                 (SELECT COUNT(*)::int FROM empadre_hembras eh WHERE eh.id_empadre = e.id) AS cant_hembras
          FROM empadres e
@@ -124,20 +126,18 @@ function createBreedingsRepository({ db }) {
         [farmId]
       );
       return rows;
-    },
-
-    async findEmpadreHembra(farmId, empadreId, hembraId) {
-      const { rows } = await db.query(
+    }
+  async findEmpadreHembra(farmId, empadreId, hembraId) {
+      const { rows } = await this.db.query(
         `SELECT eh.* FROM empadre_hembras eh
          JOIN empadres e ON e.id = eh.id_empadre
          WHERE e.id = $1 AND eh.id_hembra = $2 AND e.id_granja = $3`,
         [empadreId, hembraId, farmId]
       );
       return rows[0] || null;
-    },
-
-    async updateEmpadreHembraResultado(farmId, empadreId, hembraId, resultado) {
-      const { rows } = await db.query(
+    }
+  async updateEmpadreHembraResultado(farmId, empadreId, hembraId, resultado) {
+      const { rows } = await this.db.query(
         `UPDATE empadre_hembras eh SET resultado = $1
          FROM empadres e
          WHERE eh.id_empadre = e.id AND e.id = $2 AND eh.id_hembra = $3 AND e.id_granja = $4
@@ -145,10 +145,9 @@ function createBreedingsRepository({ db }) {
         [resultado, empadreId, hembraId, farmId]
       );
       return rows[0] || null;
-    },
-
-    async markHembraMuerta({ farmId, hembraId, fechaRes, userId }) {
-      const client = await db.connect();
+    }
+  async markHembraMuerta({ farmId, hembraId, fechaRes, userId }) {
+      const client = await this.db.connect();
       try {
         await client.query('BEGIN');
         await client.query(
@@ -170,10 +169,9 @@ function createBreedingsRepository({ db }) {
       } finally {
         client.release();
       }
-    },
-
-    async getReproductoraCiclos(hembraId, farmId) {
-      const { rows } = await db.query(
+    }
+  async getReproductoraCiclos(hembraId, farmId) {
+      const { rows } = await this.db.query(
         `SELECT e.*, eh.resultado, m.codigo AS macho_codigo,
                 (SELECT json_agg(json_build_object(
                    'id', p.id, 'fecha_parto', p.fecha_parto,
@@ -198,10 +196,9 @@ function createBreedingsRepository({ db }) {
         [hembraId, farmId]
       );
       return rows;
-    },
-
-    async getPartosByHembra(hembraId) {
-      const { rows } = await db.query(
+    }
+  async getPartosByHembra(hembraId) {
+      const { rows } = await this.db.query(
         `SELECT p.*, d.destetados_m, d.destetados_h
          FROM partos p
          LEFT JOIN destetes d ON d.id_parto = p.id
@@ -209,10 +206,9 @@ function createBreedingsRepository({ db }) {
         [hembraId]
       );
       return rows;
-    },
-
-    async getHembrasByJaula(jaulaId, farmId) {
-      const { rows } = await db.query(
+    }
+  async getHembrasByJaula(jaulaId, farmId) {
+      const { rows } = await this.db.query(
         `SELECT an.id, an.codigo, an.sexo, j.codigo AS jaula, ar.nombre AS area, ar.proposito
          FROM animales an
          JOIN jaulas j ON j.id = an.id_jaula
@@ -222,10 +218,9 @@ function createBreedingsRepository({ db }) {
         [jaulaId, farmId]
       );
       return rows;
-    },
-
-    async getReproductorCiclos(machoId, farmId) {
-      const { rows } = await db.query(
+    }
+  async getReproductorCiclos(machoId, farmId) {
+      const { rows } = await this.db.query(
         `SELECT e.id, e.fecha_empadre, e.cantidad_hembras, e.cantidad_prenadas, e.id_jaula,
                 j.codigo AS jaula,
                 (SELECT COUNT(*)::int FROM empadre_hembras eh
@@ -252,18 +247,16 @@ function createBreedingsRepository({ db }) {
         [machoId, farmId]
       );
       return rows;
-    },
-
-    async findEmpadre(farmId, id) {
-      const { rows } = await db.query(
+    }
+  async findEmpadre(farmId, id) {
+      const { rows } = await this.db.query(
         `SELECT * FROM empadres WHERE id = $1 AND id_granja = $2`,
         [id, farmId]
       );
       return rows[0] || null;
-    },
-
-    async closeBreeding({ farmId, userId, emp, id_jaula_retorno, fecha }) {
-      const client = await db.connect();
+    }
+  async closeBreeding({ farmId, userId, emp, id_jaula_retorno, fecha }) {
+      const client = await this.db.connect();
       try {
         await client.query('BEGIN');
         const jaula = await client.query(
@@ -312,8 +305,5 @@ function createBreedingsRepository({ db }) {
       } finally {
         client.release();
       }
-    },
-  };
+  }
 }
-
-module.exports = { createBreedingsRepository };

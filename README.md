@@ -21,7 +21,7 @@ Diseñado como plataforma **multigranja y modular por especie**: un núcleo comp
 ```
 main.ts, app.module.ts   Entrada NestJS
 nest/platform/           Controllers + servicios/repos TypeScript (auth, users, farms…)
-nest/cuyes/              Controllers + servicios Nest (TS nativo + legacy/js bajo nest)
+nest/cuyes/              Controllers, servicios y repositorios cuyes (TypeScript)
 modules/cuyes/domain/    Reglas de dominio cuyes (areaRules, areaPurpose)
 shared/                  Prisma, SQL bridge, helpers, audit
 ```

@@ -1,3 +1,6 @@
+import { Injectable } from '@nestjs/common';
+import { CuyesDepsService } from '../cuyes-deps.service';
+
 const ANIMAL_SELECT = `
   SELECT a.*, r.nombre AS raza, c.nombre AS categoria, j.codigo AS jaula, ar.nombre AS area
   FROM animales a
@@ -60,9 +63,15 @@ const HISTORIAL_SQL = `
   ORDER BY created_at DESC
 `;
 
-function createAnimalsRepository({ db }) {
-  return {
-    async list(farmId, filters) {
+@Injectable()
+export class AnimalsRepository {
+  constructor(private readonly cuyesDeps: CuyesDepsService) {}
+
+  private get db() {
+    return this.cuyesDeps.toDeps().db;
+  }
+
+async list(farmId, filters) {
       const {
         sexo,
         id_categoria,
@@ -71,7 +80,7 @@ function createAnimalsRepository({ db }) {
         id_jaula,
         estado = 'activo',
         q,
-        sort = 'codigo',
+        sort = 'codigo'
       } = filters;
 
       const params = [farmId];
@@ -89,33 +98,29 @@ function createAnimalsRepository({ db }) {
       if (q) add(`%${q}%`, 'a.codigo_norm LIKE ?');
 
       const orderBy = ORDER_MAP[sort] || ORDER_MAP.codigo;
-      const { rows } = await db.query(`${ANIMAL_SELECT} ${where} ORDER BY ${orderBy}`, params);
+      const { rows } = await this.db.query(`${ANIMAL_SELECT} ${where} ORDER BY ${orderBy}`, params);
       return rows;
-    },
-
-    async findByCodigoNorm(farmId, codigoNorm) {
-      const { rows } = await db.query(
+    }
+  async findByCodigoNorm(farmId, codigoNorm) {
+      const { rows } = await this.db.query(
         `${ANIMAL_SELECT} WHERE a.id_granja = $1 AND a.codigo_norm = $2`,
         [farmId, codigoNorm]
       );
       return rows[0] || null;
-    },
-
-    async getHistorial(animalId) {
-      const { rows } = await db.query(HISTORIAL_SQL, [animalId]);
+    }
+  async getHistorial(animalId) {
+      const { rows } = await this.db.query(HISTORIAL_SQL, [animalId]);
       return rows;
-    },
-
-    async getTratamientos(animalId) {
-      const { rows } = await db.query(
+    }
+  async getTratamientos(animalId) {
+      const { rows } = await this.db.query(
         `SELECT * FROM tratamientos WHERE id_animal = $1 ORDER BY fecha_inicio DESC`,
         [animalId]
       );
       return rows;
-    },
-
-    async findJaulaActiva(farmId, idJaula) {
-      const { rows } = await db.query(
+    }
+  async findJaulaActiva(farmId, idJaula) {
+      const { rows } = await this.db.query(
         `SELECT j.id, j.capacidad_maxima,
                 (SELECT COUNT(*)::int FROM animales an
                   WHERE an.id_jaula = j.id AND an.estado = 'activo') AS ocupacion
@@ -124,18 +129,16 @@ function createAnimalsRepository({ db }) {
         [idJaula, farmId]
       );
       return rows[0] || null;
-    },
-
-    async findByCodigoNormRaw(farmId, codigoNorm) {
-      const { rows } = await db.query(
+    }
+  async findByCodigoNormRaw(farmId, codigoNorm) {
+      const { rows } = await this.db.query(
         `SELECT id, codigo, estado FROM animales WHERE id_granja=$1 AND codigo_norm=$2`,
         [farmId, codigoNorm]
       );
       return rows[0] || null;
-    },
-
-    async insertNuevo({ farmId, userId, codigo, codigoNorm, data }) {
-      const client = await db.connect();
+    }
+  async insertNuevo({ farmId, userId, codigo, codigoNorm, data }) {
+      const client = await this.db.connect();
       try {
         await client.query('BEGIN');
         const { rows } = await client.query(
@@ -168,10 +171,9 @@ function createAnimalsRepository({ db }) {
       } finally {
         client.release();
       }
-    },
-
-    async reusarBaja({ userId, existente, codigo, data }) {
-      const { rows } = await db.query(
+    }
+  async reusarBaja({ userId, existente, codigo, data }) {
+      const { rows } = await this.db.query(
         `UPDATE animales SET
            sexo=$1, id_raza=$2, id_categoria=$3, id_jaula=$4, fecha_nacimiento=$5,
            estado='activo', fecha_baja=NULL, motivo_baja=NULL, codigo=$6, updated_at=NOW()
@@ -187,24 +189,22 @@ function createAnimalsRepository({ db }) {
         ]
       );
       if (data.particularidad) {
-        await db.query(
+        await this.db.query(
           `INSERT INTO animal_particularidades (id_animal, texto, created_by) VALUES ($1,$2,$3)`,
           [rows[0].id, data.particularidad, userId]
         );
       }
       return rows[0];
-    },
-
-    async findById(farmId, id) {
-      const { rows } = await db.query(`SELECT * FROM animales WHERE id=$1 AND id_granja=$2`, [
+    }
+  async findById(farmId, id) {
+      const { rows } = await this.db.query(`SELECT * FROM animales WHERE id=$1 AND id_granja=$2`, [
         id,
         farmId,
       ]);
       return rows[0] || null;
-    },
-
-    async update({ id, data }) {
-      const { rows } = await db.query(
+    }
+  async update({ id, data }) {
+      const { rows } = await this.db.query(
         `UPDATE animales SET
            estado = COALESCE($1, estado),
            motivo_baja = COALESCE($2, motivo_baja),
@@ -223,15 +223,11 @@ function createAnimalsRepository({ db }) {
         ]
       );
       return rows[0] || null;
-    },
-
-    async insertParticularidad({ id, texto, fecha, userId }) {
-      await db.query(
+    }
+  async insertParticularidad({ id, texto, fecha, userId }) {
+      await this.db.query(
         `INSERT INTO animal_particularidades (id_animal, texto, fecha, created_by) VALUES ($1,$2,COALESCE($3,CURRENT_DATE),$4)`,
         [id, texto, fecha || null, userId]
       );
-    },
-  };
+  }
 }
-
-module.exports = { createAnimalsRepository };

@@ -1,6 +1,15 @@
-function createReportsRepository({ db }) {
-  return {
-    async getHembras(farmId, idAnimal) {
+import { Injectable } from '@nestjs/common';
+import { CuyesDepsService } from '../cuyes-deps.service';
+
+@Injectable()
+export class ReportsRepository {
+  constructor(private readonly cuyesDeps: CuyesDepsService) {}
+
+  private get db() {
+    return this.cuyesDeps.toDeps().db;
+  }
+
+async getHembras(farmId, idAnimal) {
       const params = [farmId];
       let filter = `a.id_granja = $1 AND a.sexo = 'H'`;
       if (idAnimal) {
@@ -9,7 +18,7 @@ function createReportsRepository({ db }) {
       } else {
         filter += ` AND a.estado = 'activo'`;
       }
-      const { rows } = await db.query(
+      const { rows } = await this.db.query(
         `SELECT a.*, r.nombre AS raza, j.codigo AS jaula,
                 (SELECT string_agg(ap.texto, '; ' ORDER BY ap.fecha)
                    FROM animal_particularidades ap WHERE ap.id_animal = a.id) AS particularidades
@@ -21,10 +30,9 @@ function createReportsRepository({ db }) {
         params
       );
       return rows;
-    },
-
-    async getCiclosHembras(ids) {
-      const { rows } = await db.query(
+    }
+  async getCiclosHembras(ids) {
+      const { rows } = await this.db.query(
         `SELECT eh.id_hembra, e.id AS id_empadre, e.fecha_empadre, eh.resultado,
                 m.codigo AS macho_codigo,
                 p.id AS id_parto, p.fecha_parto, p.vivos_m, p.vivos_h, p.muertos,
@@ -42,10 +50,9 @@ function createReportsRepository({ db }) {
         [ids]
       );
       return rows;
-    },
-
-    async getMachos(farmId) {
-      const { rows } = await db.query(
+    }
+  async getMachos(farmId) {
+      const { rows } = await this.db.query(
         `SELECT a.*, r.nombre AS raza,
                 (SELECT string_agg(ap.texto, '; ') FROM animal_particularidades ap WHERE ap.id_animal = a.id) AS particularidades
          FROM animales a
@@ -55,10 +62,9 @@ function createReportsRepository({ db }) {
         [farmId]
       );
       return rows;
-    },
-
-    async getEmpadresMachos(ids) {
-      const { rows } = await db.query(
+    }
+  async getEmpadresMachos(ids) {
+      const { rows } = await this.db.query(
         `SELECT e.*,
                 (SELECT string_agg(a.codigo, ', ') FROM empadre_hembras eh
                   JOIN animales a ON a.id = eh.id_hembra WHERE eh.id_empadre = e.id) AS hembras_codigos,
@@ -75,10 +81,9 @@ function createReportsRepository({ db }) {
         [ids]
       );
       return rows;
-    },
-
-    async getPopulationActiva(farmId) {
-      const { rows } = await db.query(
+    }
+  async getPopulationActiva(farmId) {
+      const { rows } = await this.db.query(
         `SELECT COALESCE(r.nombre,'sin_raza') AS raza,
                 COALESCE(c.nombre,'sin_categoria') AS categoria,
                 a.sexo, COUNT(*)::int AS n
@@ -90,19 +95,17 @@ function createReportsRepository({ db }) {
         [farmId]
       );
       return rows;
-    },
-
-    async getNacimientosMes(farmId, year, month) {
-      const { rows } = await db.query(
+    }
+  async getNacimientosMes(farmId, year, month) {
+      const { rows } = await this.db.query(
         `SELECT COALESCE(SUM(vivos_m+vivos_h),0)::int AS n FROM partos
          WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha_parto)=$2 AND EXTRACT(MONTH FROM fecha_parto)=$3`,
         [farmId, year, month]
       );
       return rows[0].n;
-    },
-
-    async getMortalidadMes(farmId, year, month) {
-      const { rows } = await db.query(
+    }
+  async getMortalidadMes(farmId, year, month) {
+      const { rows } = await this.db.query(
         `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
          FROM mortalidad WHERE id_granja=$1
            AND EXTRACT(YEAR FROM fecha)=$2 AND EXTRACT(MONTH FROM fecha)=$3
@@ -110,10 +113,9 @@ function createReportsRepository({ db }) {
         [farmId, year, month]
       );
       return rows;
-    },
-
-    async getVentasMes(farmId, year, month) {
-      const { rows } = await db.query(
+    }
+  async getVentasMes(farmId, year, month) {
+      const { rows } = await this.db.query(
         `SELECT LOWER(COALESCE(categoria,'')) AS categoria, COALESCE(SUM(cantidad),0)::int AS n
          FROM ventas WHERE id_granja=$1
            AND EXTRACT(YEAR FROM fecha)=$2 AND EXTRACT(MONTH FROM fecha)=$3
@@ -121,9 +123,8 @@ function createReportsRepository({ db }) {
         [farmId, year, month]
       );
       return rows;
-    },
-
-    async listAnimalesExport(farmId, filters) {
+    }
+  async listAnimalesExport(farmId, filters) {
       const params = [farmId];
       let sql = `
         SELECT a.codigo, a.sexo, a.estado, a.fecha_nacimiento,
@@ -152,12 +153,11 @@ function createReportsRepository({ db }) {
         sql += ` AND c.id = $${params.length}`;
       }
       sql += ' ORDER BY ar.nombre, j.codigo, a.codigo';
-      const { rows } = await db.query(sql, params);
+      const { rows } = await this.db.query(sql, params);
       return rows;
-    },
-
-    async getGranjasUsuario(isSuper, userId) {
-      const { rows } = await db.query(
+    }
+  async getGranjasUsuario(isSuper, userId) {
+      const { rows } = await this.db.query(
         `SELECT g.id, g.nombre FROM granjas g
          WHERE $1::boolean
             OR EXISTS (SELECT 1 FROM granja_usuarios gu WHERE gu.id_granja = g.id AND gu.id_usuario = $2)
@@ -165,10 +165,9 @@ function createReportsRepository({ db }) {
         [isSuper, userId]
       );
       return rows;
-    },
-
-    async getPopulationGranja(farmId) {
-      const { rows } = await db.query(
+    }
+  async getPopulationGranja(farmId) {
+      const { rows } = await this.db.query(
         `SELECT COALESCE(c.nombre,'sin_categoria') AS categoria, a.sexo, COUNT(*)::int AS n
          FROM animales a LEFT JOIN categorias c ON c.id = a.id_categoria
          WHERE a.id_granja = $1 AND a.estado = 'activo'
@@ -176,21 +175,20 @@ function createReportsRepository({ db }) {
         [farmId]
       );
       return rows;
-    },
-
-    async getMetricasGranja(farmId, year, month, mesFilter) {
+    }
+  async getMetricasGranja(farmId, year, month, mesFilter) {
       const nacParams = mesFilter ? [farmId, year, month] : [farmId, year];
-      const nac = await db.query(
+      const nac = await this.db.query(
         `SELECT COALESCE(SUM(vivos_m+vivos_h),0)::int AS n FROM partos
          WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha_parto)=$2${mesFilter.replace('{{col}}', 'fecha_parto')}`,
         nacParams
       );
-      const mort = await db.query(
+      const mort = await this.db.query(
         `SELECT COALESCE(SUM(cantidad),0)::int AS n FROM mortalidad
          WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha)=$2${mesFilter.replace('{{col}}', 'fecha')}`,
         nacParams
       );
-      const vent = await db.query(
+      const vent = await this.db.query(
         `SELECT COALESCE(SUM(cantidad),0)::int AS n FROM ventas
          WHERE id_granja=$1 AND EXTRACT(YEAR FROM fecha)=$2${mesFilter.replace('{{col}}', 'fecha')}`,
         nacParams
@@ -198,10 +196,7 @@ function createReportsRepository({ db }) {
       return {
         nacimientos: Number(nac.rows[0].n),
         mortalidad: Number(mort.rows[0].n),
-        ventas: Number(vent.rows[0].n),
+        ventas: Number(vent.rows[0].n)
       };
-    },
-  };
+  }
 }
-
-module.exports = { createReportsRepository };

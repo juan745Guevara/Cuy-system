@@ -32,14 +32,23 @@ import { BirthsRepository } from './repositories/births.repository';
 import { BirthsService } from './services/births.service';
 import { InventoryRepository } from './repositories/inventory.repository';
 import { InventoryService } from './services/inventory.service';
+import { AlertsRepository } from './repositories/alerts.repository';
 import { AlertsService } from './services/alerts.service';
+import { RankingRepository } from './repositories/ranking.repository';
 import { RankingService } from './services/ranking.service';
+import { TreatmentsRepository } from './repositories/treatments.repository';
 import { TreatmentsService } from './services/treatments.service';
-import { AnimalsService } from './services/animals.service';
+import { CagesRepository } from './repositories/cages.repository';
 import { CagesService } from './services/cages.service';
+import { WeighingsRepository } from './repositories/weighings.repository';
 import { WeighingsService } from './services/weighings.service';
+import { AnimalsRepository } from './repositories/animals.repository';
+import { AnimalsService } from './services/animals.service';
+import { MovementsRepository } from './repositories/movements.repository';
 import { MovementsService } from './services/movements.service';
+import { BreedingsRepository } from './repositories/breedings.repository';
 import { BreedingsService } from './services/breedings.service';
+import { ReportsRepository } from './repositories/reports.repository';
 import { ReportsService } from './services/reports.service';
 
 function migrated(
@@ -48,10 +57,6 @@ function migrated(
   Service: Type<unknown>,
 ): Provider[] {
   return [Repository, Service, { provide: token, useExisting: Service }];
-}
-
-function delegated(token: symbol, Service: Type<unknown>): Provider[] {
-  return [Service, { provide: token, useExisting: Service }];
 }
 
 export const cuyesProviders: Provider[] = [
@@ -63,13 +68,13 @@ export const cuyesProviders: Provider[] = [
   ...migrated(CATALOGS_SERVICE, CatalogsRepository, CatalogsService),
   ...migrated(BIRTHS_SERVICE, BirthsRepository, BirthsService),
   ...migrated(INVENTORY_SERVICE, InventoryRepository, InventoryService),
-  ...delegated(CAGES_SERVICE, CagesService),
-  ...delegated(ANIMALS_SERVICE, AnimalsService),
-  ...delegated(MOVEMENTS_SERVICE, MovementsService),
-  ...delegated(WEIGHINGS_SERVICE, WeighingsService),
-  ...delegated(TREATMENTS_SERVICE, TreatmentsService),
-  ...delegated(REPORTS_SERVICE, ReportsService),
-  ...delegated(BREEDINGS_SERVICE, BreedingsService),
-  ...delegated(ALERTS_SERVICE, AlertsService),
-  ...delegated(RANKING_SERVICE, RankingService),
+  ...migrated(CAGES_SERVICE, CagesRepository, CagesService),
+  ...migrated(ANIMALS_SERVICE, AnimalsRepository, AnimalsService),
+  ...migrated(MOVEMENTS_SERVICE, MovementsRepository, MovementsService),
+  ...migrated(WEIGHINGS_SERVICE, WeighingsRepository, WeighingsService),
+  ...migrated(TREATMENTS_SERVICE, TreatmentsRepository, TreatmentsService),
+  ...migrated(REPORTS_SERVICE, ReportsRepository, ReportsService),
+  ...migrated(BREEDINGS_SERVICE, BreedingsRepository, BreedingsService),
+  ...migrated(ALERTS_SERVICE, AlertsRepository, AlertsService),
+  ...migrated(RANKING_SERVICE, RankingRepository, RankingService),
 ];

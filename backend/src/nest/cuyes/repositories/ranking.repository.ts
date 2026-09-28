@@ -1,21 +1,33 @@
-function createRankingRepository({ db }) {
-  return {
-    async findConfig(farmId) {
-      const { rows } = await db.query(`SELECT * FROM ranking_config WHERE id_granja = $1`, [farmId]);
-      return rows[0] || null;
-    },
+import { Injectable } from '@nestjs/common';
+import { CuyesDepsService } from '../cuyes-deps.service';
 
-    async insertDefaultConfig(farmId) {
-      const { rows } = await db.query(
-        `INSERT INTO ranking_config (id_granja) VALUES ($1) RETURNING *`,
-        [farmId]
-      );
-      return rows[0];
-    },
+@Injectable()
+export class RankingRepository {
+  constructor(private readonly cuyesDeps: CuyesDepsService) {}
 
-    async upsertConfig(farmId, cfg) {
-      const { rows } = await db.query(
-        `INSERT INTO ranking_config
+  private get db() {
+    return this.cuyesDeps.toDeps().db;
+  }
+
+  async findConfig(farmId: number) {
+    const { rows } = await this.db.query(
+      `SELECT * FROM ranking_config WHERE id_granja = $1`,
+      [farmId],
+    );
+    return rows[0] || null;
+  }
+
+  async insertDefaultConfig(farmId: number) {
+    const { rows } = await this.db.query(
+      `INSERT INTO ranking_config (id_granja) VALUES ($1) RETURNING *`,
+      [farmId],
+    );
+    return rows[0];
+  }
+
+  async upsertConfig(farmId: number, cfg: Record<string, number>) {
+    const { rows } = await this.db.query(
+      `INSERT INTO ranking_config
           (id_granja, peso_partos, peso_camada, peso_destete, peso_mortalidad,
            peso_peso_nac, peso_peso_dest, peso_prenez_macho, updated_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
@@ -29,23 +41,23 @@ function createRankingRepository({ db }) {
            peso_prenez_macho = EXCLUDED.peso_prenez_macho,
            updated_at = NOW()
          RETURNING *`,
-        [
-          farmId,
-          cfg.peso_partos,
-          cfg.peso_camada,
-          cfg.peso_destete,
-          cfg.peso_mortalidad,
-          cfg.peso_peso_nac,
-          cfg.peso_peso_dest,
-          cfg.peso_prenez_macho,
-        ]
-      );
-      return rows[0];
-    },
+      [
+        farmId,
+        cfg.peso_partos,
+        cfg.peso_camada,
+        cfg.peso_destete,
+        cfg.peso_mortalidad,
+        cfg.peso_peso_nac,
+        cfg.peso_peso_dest,
+        cfg.peso_prenez_macho,
+      ],
+    );
+    return rows[0];
+  }
 
-    async findRankingHembras(farmId, idRaza, idCategoria) {
-      const { rows } = await db.query(
-        `SELECT an.id, an.codigo, r.nombre AS raza, c.nombre AS categoria,
+  async findRankingHembras(farmId: number, idRaza: number | null, idCategoria: number | null) {
+    const { rows } = await this.db.query(
+      `SELECT an.id, an.codigo, r.nombre AS raza, c.nombre AS categoria,
                 COUNT(p.id)::int AS partos,
                 COALESCE(AVG(p.vivos_m + p.vivos_h),0)::numeric(10,2) AS camada_promedio,
                 COALESCE(AVG(
@@ -75,14 +87,14 @@ function createRankingRepository({ db }) {
            AND ($3::int IS NULL OR an.id_categoria = $3)
          GROUP BY an.id, an.codigo, r.nombre, c.nombre
          ORDER BY an.codigo`,
-        [farmId, idRaza, idCategoria]
-      );
-      return rows;
-    },
+      [farmId, idRaza, idCategoria],
+    );
+    return rows;
+  }
 
-    async findRankingMachos(farmId, idRaza, idCategoria) {
-      const { rows } = await db.query(
-        `SELECT an.id, an.codigo, r.nombre AS raza, c.nombre AS categoria,
+  async findRankingMachos(farmId: number, idRaza: number | null, idCategoria: number | null) {
+    const { rows } = await this.db.query(
+      `SELECT an.id, an.codigo, r.nombre AS raza, c.nombre AS categoria,
                 COUNT(DISTINCT e.id)::int AS empadres,
                 COUNT(DISTINCT eh.id_hembra)::int AS hembras,
                 COUNT(DISTINCT eh.id_hembra) FILTER (WHERE eh.resultado = 'prenez')::int AS prenadas,
@@ -98,59 +110,56 @@ function createRankingRepository({ db }) {
            AND ($3::int IS NULL OR an.id_categoria = $3)
          GROUP BY an.id, an.codigo, r.nombre, c.nombre
          ORDER BY an.codigo`,
-        [farmId, idRaza, idCategoria]
-      );
-      return rows;
-    },
+      [farmId, idRaza, idCategoria],
+    );
+    return rows;
+  }
 
-    async findAnimal(farmId, animalId) {
-      const { rows } = await db.query(
-        `SELECT * FROM animales WHERE id = $1 AND id_granja = $2`,
-        [animalId, farmId]
-      );
-      return rows[0] || null;
-    },
+  async findAnimal(farmId: number, animalId: number) {
+    const { rows } = await this.db.query(
+      `SELECT * FROM animales WHERE id = $1 AND id_granja = $2`,
+      [animalId, farmId],
+    );
+    return rows[0] || null;
+  }
 
-    async markDescarte(animalId) {
-      const { rows } = await db.query(
-        `UPDATE animales
+  async markDescarte(animalId: number) {
+    const { rows } = await this.db.query(
+      `UPDATE animales
          SET estado = 'descarte', fecha_baja = CURRENT_DATE,
              motivo_baja = 'Marcado desde ranking', updated_at = NOW()
          WHERE id = $1 RETURNING *`,
-        [animalId]
-      );
-      return rows[0];
-    },
+      [animalId],
+    );
+    return rows[0];
+  }
 
-    async findCategoriaReemplazo(farmId) {
-      const { rows } = await db.query(
-        `SELECT c.id FROM categorias c
+  async findCategoriaReemplazo(farmId: number) {
+    const { rows } = await this.db.query(
+      `SELECT c.id FROM categorias c
          JOIN granjas g ON g.id_especie = c.id_especie
          WHERE g.id = $1 AND LOWER(c.nombre) LIKE '%reemplazo%'
          LIMIT 1`,
-        [farmId]
-      );
-      return rows[0]?.id || null;
-    },
+      [farmId],
+    );
+    return rows[0]?.id || null;
+  }
 
-    async markReemplazo(animalId, categoriaId) {
-      const { rows } = await db.query(
-        `UPDATE animales
+  async markReemplazo(animalId: number, categoriaId: number | null) {
+    const { rows } = await this.db.query(
+      `UPDATE animales
          SET id_categoria = COALESCE($1, id_categoria), updated_at = NOW()
          WHERE id = $2 RETURNING *`,
-        [categoriaId, animalId]
-      );
-      return rows[0];
-    },
+      [categoriaId, animalId],
+    );
+    return rows[0];
+  }
 
-    async insertParticularidad(animalId, texto, userId) {
-      await db.query(
-        `INSERT INTO animal_particularidades (id_animal, texto, created_by)
+  async insertParticularidad(animalId: number, texto: string, userId: number) {
+    await this.db.query(
+      `INSERT INTO animal_particularidades (id_animal, texto, created_by)
          VALUES ($1, $2, $3)`,
-        [animalId, texto, userId]
-      );
-    },
-  };
+      [animalId, texto, userId],
+    );
+  }
 }
-
-module.exports = { createRankingRepository };
