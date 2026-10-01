@@ -18,10 +18,10 @@ import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
 import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
-import { TREATMENTS_SERVICE } from '../../cuyes.tokens';
+import { TREATMENTS_SERVICE } from '../../platform.tokens';
 
-@ApiTags('Cuyes · Sanidad')
-@Controller('cuyes/treatments')
+@ApiTags('Tratamientos')
+@Controller('treatments')
 @FarmScope()
 export class TreatmentsController {
   constructor(@Inject(TREATMENTS_SERVICE) private readonly service: any) {}

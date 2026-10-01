@@ -15,10 +15,10 @@ import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
 import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
-import { MORTALITY_SERVICE } from '../../cuyes.tokens';
+import { MORTALITY_SERVICE } from '../../platform.tokens';
 
-@ApiTags('Cuyes · Mortalidad')
-@Controller('cuyes/mortality')
+@ApiTags('Mortalidad')
+@Controller('mortality')
 @FarmScope()
 export class MortalityController {
   constructor(@Inject(MORTALITY_SERVICE) private readonly service: any) {}

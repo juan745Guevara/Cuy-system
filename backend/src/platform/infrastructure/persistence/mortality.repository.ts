@@ -1,13 +1,13 @@
 import { MortalityRepositoryPort } from '../../domain/ports/mortality.repository.port';
 import { Injectable } from '@nestjs/common';
-import { CuyesDepsService } from '../../application/cuyes-deps.service';
+import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
 
 @Injectable()
 export class MortalityRepository extends MortalityRepositoryPort {
-  constructor(private readonly cuyesDeps: CuyesDepsService) { super(); }
+  constructor(private readonly sharedDeps: SharedDepsService) { super(); }
 
   private get db() {
-    return this.cuyesDeps.toDeps().db;
+    return this.sharedDeps.db;
   }
 
   async countPopulation(farmId: number, categoria?: string) {
@@ -40,7 +40,7 @@ export class MortalityRepository extends MortalityRepositoryPort {
       const { rows } = await client.query(
         `INSERT INTO mortalidad
           (id_granja, id_animal, fecha, clasificacion, categoria, cantidad, causa, id_jaula, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+         VALUES ($1,$2,$3::date,$4,$5,$6,$7,$8,$9) RETURNING *`,
         [
           farmId,
           data.id_animal || null,
@@ -55,7 +55,7 @@ export class MortalityRepository extends MortalityRepositoryPort {
       );
       if (data.id_animal) {
         await client.query(
-          `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1,
+          `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1::date,
              motivo_baja = COALESCE($2, 'Mortalidad'), updated_at = NOW()
            WHERE id = $3 AND id_granja = $4`,
           [data.fecha, data.causa || null, data.id_animal, farmId],

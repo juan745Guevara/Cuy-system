@@ -37,9 +37,9 @@ const Sanidad = () => {
     try {
       const paramsCurso = filtroArea ? { id_area: filtroArea } : {};
       const [t, c, a, ar, j] = await Promise.all([
-        api.get('/cuyes/treatments'),
-        api.get('/cuyes/treatments/in-progress', { params: paramsCurso }),
-        api.get('/cuyes/animals', { params: { estado: 'activo' } }),
+        api.get('/treatments'),
+        api.get('/treatments/in-progress', { params: paramsCurso }),
+        api.get('/animals', { params: { estado: 'activo' } }),
         api.get('/areas'),
         api.get('/recintos'),
       ]);
@@ -66,7 +66,7 @@ const Sanidad = () => {
     setError('');
     setOk('');
     try {
-      const { data } = await api.post('/cuyes/treatments', {
+      const { data } = await api.post('/treatments', {
         ...form,
         id_animal: form.id_animal ? Number(form.id_animal) : null,
         id_jaula: form.id_jaula ? Number(form.id_jaula) : null,
@@ -85,7 +85,7 @@ const Sanidad = () => {
   const complete = async (id) => {
     const motivo = window.prompt('Motivo de cierre (opcional)') || '';
     try {
-      await api.patch(`/cuyes/treatments/${id}/complete`, { motivo_cierre: motivo });
+      await api.patch(`/treatments/${id}/complete`, { motivo_cierre: motivo });
       setOk('Tratamiento cerrado');
       load();
     } catch (err) {

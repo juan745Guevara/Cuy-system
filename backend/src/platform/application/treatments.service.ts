@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { TreatmentsRepositoryPort } from '../domain/ports/treatments.repository.port';
-import { CuyesDepsService } from './cuyes-deps.service';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
 
 import { isValidDateStr, esFechaFutura } from '../../shared/utils/helpers';
 
@@ -15,11 +15,11 @@ function addDays(fechaISO: string, dias: number) {
 export class TreatmentsService {
   constructor(
     private readonly repository: TreatmentsRepositoryPort,
-    private readonly cuyesDeps: CuyesDepsService,
+    private readonly sharedDeps: SharedDepsService,
   ) {}
 
   private get audit() {
-    return this.cuyesDeps.toDeps().audit;
+    return this.sharedDeps.audit;
   }
 
   async create({

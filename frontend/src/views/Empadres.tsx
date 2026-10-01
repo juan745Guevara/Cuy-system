@@ -32,8 +32,8 @@ const Empadres = () => {
   const load = useCallback(async () => {
     try {
       const [h, m, j] = await Promise.all([
-        api.get('/cuyes/animals', { params: { sexo: 'H', estado: 'activo' } }),
-        api.get('/cuyes/animals', { params: { sexo: 'M', estado: 'activo' } }),
+        api.get('/animals', { params: { sexo: 'H', estado: 'activo' } }),
+        api.get('/animals', { params: { sexo: 'M', estado: 'activo' } }),
         api.get('/recintos'),
       ]);
       setHembras(h.data.data || h.data);

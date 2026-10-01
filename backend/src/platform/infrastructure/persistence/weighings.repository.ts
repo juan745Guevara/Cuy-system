@@ -4,19 +4,19 @@ import {
   RANGOS_DEFAULT,
 } from '../../domain/weighings.constants';
 import { Injectable } from '@nestjs/common';
-import { CuyesDepsService } from '../../application/cuyes-deps.service';
+import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
 
 @Injectable()
 export class WeighingsRepository extends WeighingsRepositoryPort {
-  constructor(private readonly cuyesDeps: CuyesDepsService) { super(); }
+  constructor(private readonly sharedDeps: SharedDepsService) { super(); }
 
   private get db() {
-    return this.cuyesDeps.toDeps().db;
+    return this.sharedDeps.db;
   }
 
   async getRangeRows(farmId: number) {
     const { rows } = await this.db.query(
-      `SELECT categoria, min, max FROM peso_rangos WHERE id_granja = $1`,
+      `SELECT categoria, min_gramos AS min, max_gramos AS max FROM peso_rangos WHERE id_granja = $1`,
       [farmId],
     );
     return rows;
@@ -26,7 +26,7 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     for (const cat of CATEGORIAS_RANGO) {
       const r = RANGOS_DEFAULT[cat];
       await this.db.query(
-        `INSERT INTO peso_rangos (id_granja, categoria, min, max)
+        `INSERT INTO peso_rangos (id_granja, categoria, min_gramos, max_gramos)
            VALUES ($1,$2,$3,$4) ON CONFLICT (id_granja, categoria) DO NOTHING`,
         [farmId, cat, r.min, r.max],
       );
@@ -44,10 +44,10 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
       for (const cat of CATEGORIAS_RANGO) {
         if (!next[cat]) continue;
         await client.query(
-          `INSERT INTO peso_rangos (id_granja, categoria, min, max, updated_by, updated_at)
+          `INSERT INTO peso_rangos (id_granja, categoria, min_gramos, max_gramos, updated_by, updated_at)
              VALUES ($1,$2,$3,$4,$5,NOW())
              ON CONFLICT (id_granja, categoria) DO UPDATE SET
-               min = EXCLUDED.min, max = EXCLUDED.max,
+               min_gramos = EXCLUDED.min_gramos, max_gramos = EXCLUDED.max_gramos,
                updated_by = EXCLUDED.updated_by, updated_at = NOW()`,
           [farmId, cat, next[cat].min, next[cat].max, userId || null],
         );
@@ -85,7 +85,7 @@ export class WeighingsRepository extends WeighingsRepositoryPort {
     const q = client || this.db;
     const { rows } = await q.query(
       `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+         VALUES ($1,$2,$3::date,$4,$5,$6) RETURNING *`,
       [data.farmId, data.animalId, data.fecha, data.pesoNum, data.fuera, data.userId],
     );
     return rows[0];

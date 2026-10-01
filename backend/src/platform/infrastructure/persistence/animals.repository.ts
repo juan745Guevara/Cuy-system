@@ -4,7 +4,7 @@ import {
   ReuseDischargedCodeParams,
 } from '../../domain/ports/animals.repository.port';
 import { Injectable } from '@nestjs/common';
-import { CuyesDepsService } from '../../application/cuyes-deps.service';
+import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
 
 const ANIMAL_SELECT = `
   SELECT a.*, r.nombre AS raza, c.nombre AS categoria, j.codigo AS jaula, ar.nombre AS area
@@ -70,10 +70,10 @@ const HISTORIAL_SQL = `
 
 @Injectable()
 export class AnimalsRepository extends AnimalsRepositoryPort {
-  constructor(private readonly cuyesDeps: CuyesDepsService) { super(); }
+  constructor(private readonly sharedDeps: SharedDepsService) { super(); }
 
   private get db() {
-    return this.cuyesDeps.toDeps().db;
+    return this.sharedDeps.db;
   }
 
   async list(farmId, filters) {

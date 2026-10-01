@@ -1,13 +1,13 @@
 import { TreatmentsRepositoryPort } from '../../domain/ports/treatments.repository.port';
 import { Injectable } from '@nestjs/common';
-import { CuyesDepsService } from '../../application/cuyes-deps.service';
+import { SharedDepsService } from '../../../shared/deps/shared-deps.service';
 
 @Injectable()
 export class TreatmentsRepository extends TreatmentsRepositoryPort {
-  constructor(private readonly cuyesDeps: CuyesDepsService) { super(); }
+  constructor(private readonly sharedDeps: SharedDepsService) { super(); }
 
   private get db() {
-    return this.cuyesDeps.toDeps().db;
+    return this.sharedDeps.db;
   }
 
   async getAnimalsByCage(jaulaId: number, farmId: number) {
@@ -51,7 +51,7 @@ export class TreatmentsRepository extends TreatmentsRepositoryPort {
       `INSERT INTO tratamientos
           (id_granja, id_animal, id_jaula, id_area, tipo, producto, dosis, via,
            fecha_inicio, duracion_dias, fecha_termino, diagnostico, responsable, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::date,$10,$11::date,$12,$13,$14) RETURNING *`,
       [
         data.farmId,
         data.idAnimal,

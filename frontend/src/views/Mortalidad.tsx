@@ -31,8 +31,8 @@ const Mortalidad = () => {
   const load = useCallback(async () => {
     try {
       const [m, a, c, r, j] = await Promise.all([
-        api.get('/cuyes/mortality'),
-        api.get('/cuyes/animals', { params: { estado: 'activo' } }),
+        api.get('/mortality'),
+        api.get('/animals', { params: { estado: 'activo' } }),
         api.get('/cuyes/catalogs/categories'),
         api.get('/cuyes/catalogs/breeds'),
         api.get('/recintos'),
@@ -65,7 +65,7 @@ const Mortalidad = () => {
       return;
     }
     try {
-      await api.post('/cuyes/mortality', {
+      await api.post('/mortality', {
         fecha: form.fecha,
         id_animal: form.id_animal ? Number(form.id_animal) : null,
         clasificacion: form.clasificacion || null,

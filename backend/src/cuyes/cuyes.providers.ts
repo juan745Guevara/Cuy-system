@@ -1,24 +1,17 @@
 import { Provider, Type } from '@nestjs/common';
 import {
-  MORTALITY_SERVICE,
   SALES_SERVICE,
   WEANINGS_SERVICE,
   CATALOGS_SERVICE,
   BIRTHS_SERVICE,
   INVENTORY_SERVICE,
-  ANIMALS_SERVICE,
   MOVEMENTS_SERVICE,
-  WEIGHINGS_SERVICE,
-  TREATMENTS_SERVICE,
   REPORTS_SERVICE,
   BREEDINGS_SERVICE,
   ALERTS_SERVICE,
   RANKING_SERVICE,
 } from './cuyes.tokens';
 import { CuyesDepsService } from './application/cuyes-deps.service';
-import { MortalityRepositoryPort } from './domain/ports/mortality.repository.port';
-import { MortalityRepository } from './infrastructure/persistence/mortality.repository';
-import { MortalityService } from './application/mortality.service';
 import { SalesRepositoryPort } from './domain/ports/sales.repository.port';
 import { SalesRepository } from './infrastructure/persistence/sales.repository';
 import { SalesService } from './application/sales.service';
@@ -40,15 +33,6 @@ import { AlertsService } from './application/alerts.service';
 import { RankingRepositoryPort } from './domain/ports/ranking.repository.port';
 import { RankingRepository } from './infrastructure/persistence/ranking.repository';
 import { RankingService } from './application/ranking.service';
-import { TreatmentsRepositoryPort } from './domain/ports/treatments.repository.port';
-import { TreatmentsRepository } from './infrastructure/persistence/treatments.repository';
-import { TreatmentsService } from './application/treatments.service';
-import { WeighingsRepositoryPort } from './domain/ports/weighings.repository.port';
-import { WeighingsRepository } from './infrastructure/persistence/weighings.repository';
-import { WeighingsService } from './application/weighings.service';
-import { AnimalsRepositoryPort } from './domain/ports/animals.repository.port';
-import { AnimalsRepository } from './infrastructure/persistence/animals.repository';
-import { AnimalsService } from './application/animals.service';
 import { MovementsRepositoryPort } from './domain/ports/movements.repository.port';
 import { MovementsRepository } from './infrastructure/persistence/movements.repository';
 import { MovementsService } from './application/movements.service';
@@ -76,16 +60,12 @@ function migrated(
 
 export const cuyesProviders: Provider[] = [
   CuyesDepsService,
-  ...migrated(MORTALITY_SERVICE, MortalityRepositoryPort, MortalityRepository, MortalityService),
   ...migrated(SALES_SERVICE, SalesRepositoryPort, SalesRepository, SalesService),
   ...migrated(WEANINGS_SERVICE, WeaningsRepositoryPort, WeaningsRepository, WeaningsService),
   ...migrated(CATALOGS_SERVICE, CatalogsRepositoryPort, CatalogsRepository, CatalogsService),
   ...migrated(BIRTHS_SERVICE, BirthsRepositoryPort, BirthsRepository, BirthsService),
   ...migrated(INVENTORY_SERVICE, InventoryRepositoryPort, InventoryRepository, InventoryService),
-  ...migrated(ANIMALS_SERVICE, AnimalsRepositoryPort, AnimalsRepository, AnimalsService),
   ...migrated(MOVEMENTS_SERVICE, MovementsRepositoryPort, MovementsRepository, MovementsService),
-  ...migrated(WEIGHINGS_SERVICE, WeighingsRepositoryPort, WeighingsRepository, WeighingsService),
-  ...migrated(TREATMENTS_SERVICE, TreatmentsRepositoryPort, TreatmentsRepository, TreatmentsService),
   ...migrated(REPORTS_SERVICE, ReportsRepositoryPort, ReportsRepository, ReportsService),
   ...migrated(BREEDINGS_SERVICE, BreedingsRepositoryPort, BreedingsRepository, BreedingsService),
   ...migrated(ALERTS_SERVICE, AlertsRepositoryPort, AlertsRepository, AlertsService),

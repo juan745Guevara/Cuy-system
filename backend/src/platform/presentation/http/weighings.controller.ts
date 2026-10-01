@@ -18,10 +18,10 @@ import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
 import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
-import { WEIGHINGS_SERVICE } from '../../cuyes.tokens';
+import { WEIGHINGS_SERVICE } from '../../platform.tokens';
 
-@ApiTags('Cuyes · Pesajes')
-@Controller('cuyes/weighings')
+@ApiTags('Pesajes')
+@Controller('weighings')
 @FarmScope()
 export class WeighingsController {
   constructor(@Inject(WEIGHINGS_SERVICE) private readonly service: any) {}

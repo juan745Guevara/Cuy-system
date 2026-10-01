@@ -1,12 +1,8 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { AnimalsController } from './presentation/http/animals.controller';
 import { CatalogsController } from './presentation/http/catalogs.controller';
 import { MovementsController } from './presentation/http/movements.controller';
-import { MortalityController } from './presentation/http/mortality.controller';
 import { SalesController } from './presentation/http/sales.controller';
 import { InventoryController } from './presentation/http/inventory.controller';
-import { WeighingsController } from './presentation/http/weighings.controller';
-import { TreatmentsController } from './presentation/http/treatments.controller';
 import { ReportsController } from './presentation/http/reports.controller';
 import { BreedingsController } from './presentation/http/breedings.controller';
 import { BirthsController } from './presentation/http/births.controller';
@@ -22,14 +18,10 @@ import { PlatformModule } from '../platform/platform.module';
 @Module({
   imports: [PlatformModule],
   controllers: [
-    AnimalsController,
     CatalogsController,
     MovementsController,
-    MortalityController,
     SalesController,
     InventoryController,
-    WeighingsController,
-    TreatmentsController,
     ReportsController,
     BreedingsController,
     BirthsController,

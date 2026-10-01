@@ -43,7 +43,7 @@ const Reproductoras = () => {
         api.get('/cuyes/catalogs/breeds'),
         api.get('/cuyes/catalogs/categories'),
         api.get('/recintos'),
-        api.get('/cuyes/animals', { params: { sexo: 'H', estado: 'activo' } }),
+        api.get('/animals', { params: { sexo: 'H', estado: 'activo' } }),
       ]);
       setRazas(r.data);
       setCategorias(c.data);

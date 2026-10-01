@@ -28,7 +28,7 @@ const Reproductores = () => {
         api.get('/cuyes/catalogs/breeds'),
         api.get('/cuyes/catalogs/categories'),
         api.get('/recintos'),
-        api.get('/cuyes/animals', { params: { sexo: 'M', estado: 'activo' } }),
+        api.get('/animals', { params: { sexo: 'M', estado: 'activo' } }),
       ]);
       setRazas(r.data);
       setCategorias(c.data);

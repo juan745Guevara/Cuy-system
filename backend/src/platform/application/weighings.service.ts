@@ -6,7 +6,7 @@ import {
   CATEGORIAS_RANGO,
   ESPECIE_ABS,
 } from '../domain/weighings.constants';
-import { CuyesDepsService } from './cuyes-deps.service';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
@@ -32,11 +32,11 @@ function rangoPara(
 export class WeighingsService {
   constructor(
     private readonly repository: WeighingsRepositoryPort,
-    private readonly cuyesDeps: CuyesDepsService,
+    private readonly sharedDeps: SharedDepsService,
   ) {}
 
   private get audit() {
-    return this.cuyesDeps.toDeps().audit;
+    return this.sharedDeps.audit;
   }
 
   private async loadRanges(farmId: number) {

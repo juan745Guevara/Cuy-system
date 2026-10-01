@@ -36,7 +36,7 @@ const Partos = () => {
     try {
       const [p, h] = await Promise.all([
         api.get('/cuyes/births'),
-        api.get('/cuyes/animals', { params: { sexo: 'H', estado: 'activo' } }),
+        api.get('/animals', { params: { sexo: 'H', estado: 'activo' } }),
       ]);
       setLista(p.data);
       setHembras(h.data.data || h.data);

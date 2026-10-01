@@ -7,6 +7,10 @@ import {
   SPECIES_SERVICE,
   USERS_SERVICE,
   RECINTOS_SERVICE,
+  WEIGHINGS_SERVICE,
+  TREATMENTS_SERVICE,
+  MORTALITY_SERVICE,
+  ANIMALS_SERVICE,
 } from './platform.tokens';
 import { AreasService } from './application/areas.service';
 import { AreasRepositoryPort } from './domain/ports/areas.repository.port';
@@ -14,6 +18,18 @@ import { AreasRepository } from './infrastructure/persistence/areas.repository';
 import { RecintosService } from './application/recintos.service';
 import { RecintosRepositoryPort } from './domain/ports/recintos.repository.port';
 import { RecintosRepository } from './infrastructure/persistence/recintos.repository';
+import { WeighingsService } from './application/weighings.service';
+import { WeighingsRepositoryPort } from './domain/ports/weighings.repository.port';
+import { WeighingsRepository } from './infrastructure/persistence/weighings.repository';
+import { TreatmentsService } from './application/treatments.service';
+import { TreatmentsRepositoryPort } from './domain/ports/treatments.repository.port';
+import { TreatmentsRepository } from './infrastructure/persistence/treatments.repository';
+import { MortalityService } from './application/mortality.service';
+import { MortalityRepositoryPort } from './domain/ports/mortality.repository.port';
+import { MortalityRepository } from './infrastructure/persistence/mortality.repository';
+import { AnimalsService } from './application/animals.service';
+import { AnimalsRepositoryPort } from './domain/ports/animals.repository.port';
+import { AnimalsRepository } from './infrastructure/persistence/animals.repository';
 import { AuthService } from './application/auth.service';
 import { UsersService } from './application/users.service';
 import { FarmsService } from './application/farms.service';
@@ -43,6 +59,10 @@ const tokenAliases: Provider[] = [
   { provide: SPECIES_SERVICE, useExisting: SpeciesService },
   { provide: AUDIT_SERVICE, useExisting: AuditService },
   { provide: RECINTOS_SERVICE, useExisting: RecintosService },
+  { provide: WEIGHINGS_SERVICE, useExisting: WeighingsService },
+  { provide: TREATMENTS_SERVICE, useExisting: TreatmentsService },
+  { provide: MORTALITY_SERVICE, useExisting: MortalityService },
+  { provide: ANIMALS_SERVICE, useExisting: AnimalsService },
 ];
 
 export const platformProviders: Provider[] = [
@@ -54,11 +74,19 @@ export const platformProviders: Provider[] = [
   ...bindRepo(SpeciesRepositoryPort, SpeciesRepository),
   ...bindRepo(AuditRepositoryPort, AuditRepository),
   ...bindRepo(RecintosRepositoryPort, RecintosRepository),
+  ...bindRepo(WeighingsRepositoryPort, WeighingsRepository),
+  ...bindRepo(TreatmentsRepositoryPort, TreatmentsRepository),
+  ...bindRepo(MortalityRepositoryPort, MortalityRepository),
+  ...bindRepo(AnimalsRepositoryPort, AnimalsRepository),
   AuthService,
   UsersService,
   FarmsService,
   SpeciesService,
   AuditService,
   RecintosService,
+  WeighingsService,
+  TreatmentsService,
+  MortalityService,
+  AnimalsService,
   ...tokenAliases,
 ];

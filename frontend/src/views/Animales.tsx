@@ -80,7 +80,7 @@ const Animales = () => {
     setNotFoundCodigo('');
     try {
       const params = buildParams();
-      const { data } = await api.get('/cuyes/animals', { params });
+      const { data } = await api.get('/animals', { params });
       const rows = Array.isArray(data.data || data) ? [...(data.data || data)] : [];
       if (params.sort === 'fecha_nacimiento') {
         rows.sort((a, b) =>
@@ -132,7 +132,7 @@ const Animales = () => {
     setDetalle(null);
     setNotFoundCodigo('');
     try {
-      const { data } = await api.get(`/cuyes/animals/search/${encodeURIComponent(q.trim())}`);
+      const { data } = await api.get(`/animals/search/${encodeURIComponent(q.trim())}`);
       setItems([data]);
       setTotal(1);
       setDetalle(data);
@@ -170,7 +170,7 @@ const Animales = () => {
         particularidad: form.particularidad || null,
       };
       if (form.confirmar_reuso) body.confirmar_reuso = true;
-      await api.post('/cuyes/animals', body);
+      await api.post('/animals', body);
       setOk(`Animal ${form.codigo} registrado`);
       setShowForm(false);
       clearDraft(DRAFT_KEY);
@@ -192,7 +192,7 @@ const Animales = () => {
     if (!bajaModal) return;
     setError('');
     try {
-      await api.patch(`/cuyes/animals/${bajaModal.id}`, {
+      await api.patch(`/animals/${bajaModal.id}`, {
         estado: bajaModal.estado,
         fecha_baja: bajaFecha,
         motivo_baja: bajaMotivo || (bajaModal.estado === 'descarte' ? 'Descarte' : 'Baja operativa'),
@@ -211,10 +211,10 @@ const Animales = () => {
     if (!detalle?.id || !partTexto.trim()) return;
     setError('');
     try {
-      await api.patch(`/cuyes/animals/${detalle.id}`, { particularidad: partTexto.trim() });
+      await api.patch(`/animals/${detalle.id}`, { particularidad: partTexto.trim() });
       setOk('Particularidad registrada');
       setPartTexto('');
-      const { data } = await api.get(`/cuyes/animals/search/${encodeURIComponent(detalle.codigo)}`);
+      const { data } = await api.get(`/animals/search/${encodeURIComponent(detalle.codigo)}`);
       setDetalle(data);
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo guardar particularidad');
@@ -235,7 +235,7 @@ const Animales = () => {
     } catch (err) {
       if (err.response?.status === 404) {
         try {
-          const { data } = await api.get('/cuyes/animals', { params });
+          const { data } = await api.get('/animals', { params });
           const rows = data.data || data;
           const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' });
           const url = window.URL.createObjectURL(blob);
@@ -568,7 +568,7 @@ const Animales = () => {
                         style={s.btnGhost}
                         onClick={async () => {
                           try {
-                            const { data } = await api.get(`/cuyes/animals/search/${encodeURIComponent(a.codigo)}`
+                            const { data } = await api.get(`/animals/search/${encodeURIComponent(a.codigo)}`
                             );
                             setDetalle(data);
                           } catch (err) {

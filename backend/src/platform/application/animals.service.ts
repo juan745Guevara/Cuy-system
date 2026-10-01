@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { AnimalsRepositoryPort } from '../domain/ports/animals.repository.port';
-import { CuyesDepsService } from './cuyes-deps.service';
+import { SharedDepsService } from '../../shared/deps/shared-deps.service';
 import { NewAnimal } from '../domain/entities/animal.entity';
 import { PastDate } from '../domain/value-objects/past-date.vo';
 import { NormalizedCode } from '../domain/value-objects/normalized-code.vo';
@@ -11,11 +11,11 @@ import { DomainValidationError } from '../domain/errors/domain-validation.error'
 export class AnimalsService {
   constructor(
     private readonly repository: AnimalsRepositoryPort,
-    private readonly cuyesDeps: CuyesDepsService,
+    private readonly sharedDeps: SharedDepsService,
   ) {}
 
   private get audit() {
-    return this.cuyesDeps.toDeps().audit;
+    return this.sharedDeps.audit;
   }
 
   async list({ farmId, query }: { farmId: number; query?: Record<string, unknown> }) {

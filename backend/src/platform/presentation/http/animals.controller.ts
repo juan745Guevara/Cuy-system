@@ -18,10 +18,10 @@ import { FarmId } from '../../../shared/decorators/farm-id.decorator';
 import { AuthUser } from '../../../shared/auth/auth-user.types';
 import { unwrapServiceResult } from '../../../shared/http/service-result';
 import { FarmScope } from '../../../shared/decorators/farm-scope.decorator';
-import { ANIMALS_SERVICE } from '../../cuyes.tokens';
+import { ANIMALS_SERVICE } from '../../platform.tokens';
 
-@ApiTags('Cuyes · Animales')
-@Controller('cuyes/animals')
+@ApiTags('Animales')
+@Controller('animals')
 @FarmScope()
 export class AnimalsController {
   constructor(@Inject(ANIMALS_SERVICE) private readonly service: any) {}
@@ -32,7 +32,7 @@ export class AnimalsController {
     return unwrapServiceResult(await this.service.list({ farmId, query }));
   }
 
-  @Get('buscar/:codigo')
+  @Get('search/:codigo')
   @ApiOperation({ summary: 'Buscar animal por código' })
   async findByCode(@FarmId() farmId: number, @Param('codigo') codigo: string) {
     return unwrapServiceResult(

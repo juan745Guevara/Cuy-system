@@ -37,7 +37,7 @@ const Ventas = () => {
     try {
       const [v, a, c, r] = await Promise.all([
         api.get('/cuyes/sales'),
-        api.get('/cuyes/animals', { params: { estado: 'activo' } }),
+        api.get('/animals', { params: { estado: 'activo' } }),
         api.get('/cuyes/catalogs/categories'),
         api.get('/cuyes/catalogs/breeds'),
       ]);
