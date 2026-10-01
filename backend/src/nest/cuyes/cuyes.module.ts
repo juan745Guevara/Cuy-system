@@ -16,7 +16,7 @@ import { RankingController } from './presentation/http/ranking.controller';
 import { cuyesProviders } from './cuyes.providers';
 import { CuyesDepsService } from './application/cuyes-deps.service';
 import { AreaRulesRegistry } from '../shared/species/area-rules-registry.service';
-import { cuyesAreaRules } from '../shared/species/cuyes/cuyes-area-rules';
+import { cuyesAreaRules } from './domain/area-rules/cuyes-area-rules';
 import { PlatformModule } from '../platform/platform.module';
 
 @Module({

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SharedDepsService } from '../../shared/deps/shared-deps.service';
-import { cuyesAreaRules } from '../../shared/species/cuyes/cuyes-area-rules';
+import { cuyesAreaRules } from '../domain/area-rules/cuyes-area-rules';
 
 /** Cuyes module deps (shared kernel + species area rules). */
 @Injectable()

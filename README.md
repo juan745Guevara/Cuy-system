@@ -39,9 +39,9 @@ Los casos de uso dependen de **ports**, no de implementaciones concretas. Nest e
 
 Los repositorios usan **Prisma** y, donde hace falta, SQL raw vía puente en `nest/shared/database/sql-bridge.ts`.
 
-### Frontend (`frontend/src/`)
+### Frontend (`frontend/`)
 
-Next.js App Router (`app/`). Vistas en `src/views/`; hubs para granjas, eventos y configuración. API: prefijo `/cuyes/` para operaciones; plataforma sin prefijo (`/auth`, `/farms`, `/species`). Variable `NEXT_PUBLIC_API_URL`.
+Next.js 15 App Router + **TypeScript** (`src/app/`). Pantallas en `src/views/`; layout y auth en `src/components/` y `src/context/`. Utilidades en `src/lib/` (`api`, `ui`, `navigation`). Alias `@/*` → `src/*`. Variable `NEXT_PUBLIC_API_URL`.
 
 ### API (resumen)
 
@@ -56,8 +56,8 @@ Headers requeridos en operaciones de granja: `Authorization`, `x-species-id`, `x
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 15 (React 18), axios |
-| Backend | NestJS 12 (TypeScript); lógica de dominio aún en JS |
+| Frontend | Next.js 15 (React 18, TypeScript), axios |
+| Backend | NestJS 12 (TypeScript) |
 | ORM | Prisma 6 + PostgreSQL |
 | Auth | JWT, bcrypt |
 | Despliegue | Docker (objetivo) |
@@ -116,7 +116,11 @@ Cuy-system/
 │       ├── nest/                 API Nest (platform, cuyes, shared)
 │       ├── database/schema.sql   SQL inicial (db:migrate)
 │       └── scripts/db/           migrate.ts, seed.ts
-├── frontend/                     Next.js App Router (React)
+├── frontend/
+│   ├── src/app/                  Rutas App Router
+│   ├── src/views/                Pantallas (importadas desde page.tsx)
+│   ├── src/lib/                  API client, tema UI, navegación
+│   └── public/                   Assets estáticos
 └── docs/                         Requisitos, backlog, guías
 ```
 
