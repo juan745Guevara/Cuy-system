@@ -71,7 +71,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
           `INSERT INTO empadres
             (id_granja, id_macho, id_jaula, fecha_empadre, peso_antes, peso_despues,
              cantidad_hembras, cantidad_prenadas, notas, created_by)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+           VALUES ($1,$2,$3,$4::date,$5,$6,$7,$8,$9,$10) RETURNING *`,
           [
             farmId,
             id_macho || null,
@@ -152,7 +152,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
       try {
         await client.query('BEGIN');
         await client.query(
-          `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1,
+          `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1::date,
              motivo_baja = 'Died during breeding cycle', updated_at = NOW()
            WHERE id = $2 AND id_granja = $3`,
           [fechaRes, hembraId, farmId]
@@ -160,7 +160,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
         await client.query(
           `INSERT INTO mortalidad
             (id_granja, id_animal, fecha, categoria, cantidad, causa, created_by)
-           VALUES ($1,$2,$3,'reproductora',1,'Died during breeding cycle',$4)`,
+           VALUES ($1,$2,$3::date,'reproductora',1,'Died during breeding cycle',$4)`,
           [farmId, hembraId, fechaRes, userId]
         );
         await client.query('COMMIT');
@@ -281,7 +281,7 @@ export class BreedingsRepository extends BreedingsRepositoryPort {
           `INSERT INTO movimientos
             (tipo, id_animal, id_granja_origen, id_granja_destino,
              id_jaula_origen, id_jaula_destino, fecha, motivo, created_by)
-           VALUES ('relocate',$1,$2,$2,$3,$4,$5,$6,$7)`,
+           VALUES ('relocate',$1,$2,$2,$3,$4,$5::date,$6,$7)`,
           [
             emp.id_macho,
             farmId,

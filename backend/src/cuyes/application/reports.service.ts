@@ -158,7 +158,7 @@ private async hojaMensual(wb, farmId, year, month) {
           ws.getCell(row, 9).value = h.raza || '';
           ws.getCell(row, 15).value = 'Birth date:';
           ws.getCell(row, 17).value = h.fecha_nacimiento
-            ? String(h.fecha_nacimiento).slice(0, 10)
+            ? new Date(h.fecha_nacimiento).toISOString().slice(0, 10)
             : '';
           row += 1;
           ws.getCell(row, 1).value = 'Notes:';
@@ -201,7 +201,7 @@ private async hojaMensual(wb, farmId, year, month) {
               ws.getCell(row, 1).value = n;
               ws.getCell(row, 2).value = c.macho_codigo || '';
               ws.getCell(row, 3).value = c.fecha_empadre
-                ? String(c.fecha_empadre).slice(0, 10)
+                ? new Date(c.fecha_empadre).toISOString().slice(0, 10)
                 : '';
               ws.getCell(row, 4).value = String(c.resultado).toUpperCase();
               row += 1;
@@ -222,8 +222,8 @@ private async hojaMensual(wb, farmId, year, month) {
             const vals = [
               n,
               c.macho_codigo || '',
-              c.fecha_empadre ? String(c.fecha_empadre).slice(0, 10) : '',
-              c.fecha_parto ? String(c.fecha_parto).slice(0, 10) : '',
+              c.fecha_empadre ? new Date(c.fecha_empadre).toISOString().slice(0, 10) : '',
+              c.fecha_parto ? new Date(c.fecha_parto).toISOString().slice(0, 10) : '',
               vivos || '',
               c.muertos ?? '',
               c.peso_m1,
@@ -233,7 +233,7 @@ private async hojaMensual(wb, farmId, year, month) {
               c.peso_h2,
               c.peso_h3,
               promN,
-              c.fecha_destete ? String(c.fecha_destete).slice(0, 10) : '',
+              c.fecha_destete ? new Date(c.fecha_destete).toISOString().slice(0, 10) : '',
               c.fecha_destete ? (c.destetados_m || 0) + (c.destetados_h || 0) : '',
               c.muertos_destete ?? '',
               c.dm1,
@@ -283,7 +283,7 @@ private async hojaMensual(wb, farmId, year, month) {
           ws.getCell(row, 6).value = m.raza || '';
           ws.getCell(row, 8).value = 'Birth date:';
           ws.getCell(row, 10).value = m.fecha_nacimiento
-            ? String(m.fecha_nacimiento).slice(0, 10)
+            ? new Date(m.fecha_nacimiento).toISOString().slice(0, 10)
             : '';
           row += 1;
           ws.getCell(row, 1).value = 'Notes:';
@@ -309,7 +309,7 @@ private async hojaMensual(wb, farmId, year, month) {
           list.forEach((e, idx) => {
             const vals = [
               idx + 1,
-              e.fecha_empadre ? String(e.fecha_empadre).slice(0, 10) : '',
+              e.fecha_empadre ? new Date(e.fecha_empadre).toISOString().slice(0, 10) : '',
               e.hembras_codigos || '',
               e.cantidad_hembras ?? e.cant_hembras,
               e.cantidad_prenadas ?? e.cant_prenadas,

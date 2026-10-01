@@ -40,7 +40,7 @@ export class SalesRepository extends SalesRepositoryPort {
       const { rows } = await client.query(
         `INSERT INTO ventas
           (id_granja, id_animal, fecha, clasificacion, categoria, cantidad, comprador, precio, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+         VALUES ($1,$2,$3::date,$4,$5,$6,$7,$8,$9) RETURNING *`,
         [
           farmId,
           data.id_animal || null,
@@ -55,7 +55,7 @@ export class SalesRepository extends SalesRepositoryPort {
       );
       if (data.id_animal) {
         await client.query(
-          `UPDATE animales SET estado = 'baja_venta', fecha_baja = $1,
+          `UPDATE animales SET estado = 'baja_venta', fecha_baja = $1::date,
              motivo_baja = 'Venta', updated_at = NOW()
            WHERE id = $2 AND id_granja = $3`,
           [data.fecha, data.id_animal, farmId],
@@ -118,11 +118,11 @@ export class SalesRepository extends SalesRepositoryPort {
         const { rows } = await client.query(
           `INSERT INTO ventas
             (id_granja, id_animal, fecha, clasificacion, cantidad, comprador, precio, created_by)
-           VALUES ($1,$2,$3,'descarte',1,$4,$5,$6) RETURNING *`,
+           VALUES ($1,$2,$3::date,'descarte',1,$4,$5,$6) RETURNING *`,
           [farmId, a.id, fecha, comprador || null, precio || null, userId],
         );
         await client.query(
-          `UPDATE animales SET estado='baja_venta', fecha_baja=$2,
+          `UPDATE animales SET estado='baja_venta', fecha_baja=$2::date,
                motivo_baja='Venta de descarte agrupado', updated_at=NOW()
            WHERE id=$1`,
           [a.id, fecha],

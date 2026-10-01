@@ -41,7 +41,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
         `INSERT INTO partos
           (id_granja, id_hembra, id_empadre, fecha_parto, vivos_m, vivos_h, muertos,
            peso_m1, peso_m2, peso_m3, peso_h1, peso_h2, peso_h3, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+         VALUES ($1,$2,$3,$4::date,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
         [
           farmId,
           data.id_hembra,
@@ -89,7 +89,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
           `INSERT INTO animales
             (id_granja, codigo, codigo_norm, sexo, id_raza, id_categoria, id_jaula,
              fecha_nacimiento, created_by, id_parto_origen)
-           VALUES ($1,$2,$3,'M',$4,$5,$6,$7,$8,$9) RETURNING id, codigo, sexo`,
+           VALUES ($1,$2,$3,'M',$4,$5,$6,$7::date,$8,$9) RETURNING id, codigo, sexo`,
           [
             farmId,
             codigo,
@@ -108,7 +108,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
         if (pesoCria && Number(pesoCria) > 0) {
           await client.query(
             `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
-             VALUES ($1,$2,$3,$4,false,$5)`,
+             VALUES ($1,$2,$3::date,$4,false,$5)`,
             [farmId, ins.rows[0].id, data.fecha_parto, Number(pesoCria), userId],
           );
         }
@@ -119,7 +119,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
           `INSERT INTO animales
             (id_granja, codigo, codigo_norm, sexo, id_raza, id_categoria, id_jaula,
              fecha_nacimiento, created_by, id_parto_origen)
-           VALUES ($1,$2,$3,'H',$4,$5,$6,$7,$8,$9) RETURNING id, codigo, sexo`,
+           VALUES ($1,$2,$3,'H',$4,$5,$6,$7::date,$8,$9) RETURNING id, codigo, sexo`,
           [
             farmId,
             codigo,
@@ -138,7 +138,7 @@ export class BirthsRepository extends BirthsRepositoryPort {
         if (pesoCria && Number(pesoCria) > 0) {
           await client.query(
             `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
-             VALUES ($1,$2,$3,$4,false,$5)`,
+             VALUES ($1,$2,$3::date,$4,false,$5)`,
             [farmId, ins.rows[0].id, data.fecha_parto, Number(pesoCria), userId],
           );
         }

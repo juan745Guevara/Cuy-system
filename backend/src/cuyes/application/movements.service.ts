@@ -60,7 +60,7 @@ export class MovementsService {
         }
 
         for (const a of animales) {
-          if (a.fecha_nacimiento && fecha < String(a.fecha_nacimiento).slice(0, 10)) {
+          if (a.fecha_nacimiento && fecha < new Date(a.fecha_nacimiento).toISOString().slice(0, 10)) {
             return fail(`Date before birth of ${a.codigo}`);
           }
         }
@@ -192,7 +192,7 @@ export class MovementsService {
         }
 
         for (const a of animales) {
-          if (a.fecha_nacimiento && fecha < String(a.fecha_nacimiento).slice(0, 10)) {
+          if (a.fecha_nacimiento && fecha < new Date(a.fecha_nacimiento).toISOString().slice(0, 10)) {
             return fail(`Date before birth of ${a.codigo}`);
           }
           const clash = await this.repository.codeExistsInFarm(

@@ -42,7 +42,7 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
         `INSERT INTO destetes
           (id_parto, fecha_destete, destetados_m, destetados_h, muertos,
            peso_m1, peso_m2, peso_m3, peso_h1, peso_h2, peso_h3, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+         VALUES ($1,$2::date,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
         [
           data.id_parto,
           data.fecha_destete,
@@ -96,14 +96,14 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
       for (let i = 0; i < Math.min(machos.length, pesosM.length); i += 1) {
         await client.query(
           `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
-           VALUES ($1,$2,$3,$4,false,$5)`,
+           VALUES ($1,$2,$3::date,$4,false,$5)`,
           [farmId, machos[i].id, data.fecha_destete, Number(pesosM[i]), userId],
         );
       }
       for (let i = 0; i < Math.min(hembras.length, pesosH.length); i += 1) {
         await client.query(
           `INSERT INTO pesajes (id_granja, id_animal, fecha, peso_gramos, fuera_rango, created_by)
-           VALUES ($1,$2,$3,$4,false,$5)`,
+           VALUES ($1,$2,$3::date,$4,false,$5)`,
           [farmId, hembras[i].id, data.fecha_destete, Number(pesosH[i]), userId],
         );
       }
@@ -115,7 +115,7 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
         const toKill = (gazapos.rows as any[]).slice(dm + dh);
         for (const g of toKill.slice(0, mu)) {
           await client.query(
-            `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1,
+            `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1::date,
                motivo_baja = 'Muerto al destete', updated_at = NOW()
              WHERE id = $2`,
             [data.fecha_destete, g.id],
@@ -124,7 +124,7 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
         await client.query(
           `INSERT INTO mortalidad
             (id_granja, fecha, clasificacion, categoria, cantidad, causa, created_by)
-           VALUES ($1,$2,$3,'gazapo',$4,'Muertos al destete',$5)`,
+           VALUES ($1,$2::date,$3,'gazapo',$4,'Muertos al destete',$5)`,
           [farmId, data.fecha_destete, null, mu, userId],
         );
       }

@@ -164,7 +164,9 @@ export class CatalogsService {
     for (const an of rows) {
       const edadDias = Math.floor(
         (hoy.getTime() -
-          new Date(`${String(an.fecha_nacimiento).slice(0, 10)}T00:00:00`).getTime()) /
+          new Date(
+            `${new Date(an.fecha_nacimiento).toISOString().slice(0, 10)}T00:00:00`,
+          ).getTime()) /
           86400000,
       );
       const cat = String(an.categoria || '').toLowerCase();

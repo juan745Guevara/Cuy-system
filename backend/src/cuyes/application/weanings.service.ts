@@ -54,7 +54,8 @@ export class WeaningsService {
 
     const parto = await this.repository.findBirth(farmId, Number(id_parto));
     if (!parto) return fail('Birth record not found', 404);
-    if (String(fecha_destete) <= String(parto.fecha_parto).slice(0, 10)) {
+    const fechaPartoISO = new Date(parto.fecha_parto).toISOString().slice(0, 10);
+    if (String(fecha_destete) <= fechaPartoISO) {
       return fail('fecha_destete must be after the birth date', 400, {
         campo: 'fecha_destete',
       });

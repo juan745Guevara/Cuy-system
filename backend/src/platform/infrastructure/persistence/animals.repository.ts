@@ -231,7 +231,7 @@ export class AnimalsRepository extends AnimalsRepositoryPort {
     }
   async insertNote({ id, texto, fecha, userId }) {
       await this.db.query(
-        `INSERT INTO animal_particularidades (id_animal, texto, fecha, created_by) VALUES ($1,$2,COALESCE($3,CURRENT_DATE),$4)`,
+        `INSERT INTO animal_particularidades (id_animal, texto, fecha, created_by) VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4)`,
         [id, texto, fecha || null, userId]
       );
   }

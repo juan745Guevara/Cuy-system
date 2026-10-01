@@ -4,7 +4,8 @@ import { AlertsRepositoryPort } from '../domain/ports/alerts.repository.port';
 import { CuyesDepsService } from './cuyes-deps.service';
 
 function addDays(fecha: unknown, dias: number) {
-  const d = new Date(`${String(fecha).slice(0, 10)}T00:00:00`);
+  const isoDate = new Date(fecha as string | Date).toISOString().slice(0, 10);
+  const d = new Date(`${isoDate}T00:00:00`);
   d.setDate(d.getDate() + Number(dias));
   return d.toISOString().slice(0, 10);
 }

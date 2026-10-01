@@ -56,7 +56,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
               (tipo, id_animal, id_granja_origen, id_granja_destino,
                id_jaula_origen, id_jaula_destino, fecha, motivo,
                excedio_capacidad, aviso_area, created_by)
-             VALUES ('relocate',$1,$2,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+             VALUES ('relocate',$1,$2,$2,$3,$4,$5::date,$6,$7,$8,$9) RETURNING *`,
             [
               a.id,
               farmId,
@@ -144,7 +144,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
               (tipo, id_animal, id_granja_origen, id_granja_destino,
                id_jaula_origen, id_jaula_destino, fecha, motivo,
                excedio_capacidad, created_by)
-             VALUES ('transfer',$1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+             VALUES ('transfer',$1,$2,$3,$4,$5,$6::date,$7,$8,$9) RETURNING *`,
             [
               a.id,
               granjaOrigen,
@@ -253,7 +253,7 @@ export class MovementsRepository extends MovementsRepositoryPort {
          LEFT JOIN recintos jd ON jd.id = m.id_jaula_destino
          LEFT JOIN areas ad ON ad.id = jd.id_area
          WHERE (m.id_jaula_origen = $1 OR m.id_jaula_destino = $1)
-           AND m.fecha <= $2
+           AND m.fecha <= $2::date
            AND (m.id_granja_origen = $3 OR m.id_granja_destino = $3)
          ORDER BY m.fecha DESC, m.id DESC
          LIMIT 100`,
