@@ -63,8 +63,8 @@ async function seed() {
     }
 
     const { rows: granjas } = await client.query(
-      `INSERT INTO granjas (nombre, id_especie, ubicacion, responsable, fecha_inicio)
-       VALUES ('Granja Cuyes 1', $1, 'UNAS - Facultad de Zootecnia', 'Encargado Cuyes', CURRENT_DATE)
+      `INSERT INTO granjas (nombre, id_especie, ubicacion)
+       VALUES ('Granja Cuyes 1', $1, 'UNAS - Facultad de Zootecnia')
        ON CONFLICT (nombre) DO UPDATE SET ubicacion = EXCLUDED.ubicacion
        RETURNING id`,
       [idEspecie],

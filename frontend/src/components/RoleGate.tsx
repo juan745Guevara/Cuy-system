@@ -4,6 +4,11 @@ import { usePathname } from 'next/navigation';
 import { Navigate } from '@/lib/navigation';
 import type { ReactNode } from 'react';
 import type { UserRole } from '@/types/auth';
+import {
+  isSuperadmin,
+  isSuperadminRouteAllowed,
+  SUPERADMIN_HOME,
+} from '@/lib/roles';
 
 /** Restricts admin-only routes (replaces nested RoleRoute). */
 export default function RoleGate({
@@ -18,6 +23,11 @@ export default function RoleGate({
   userRole?: UserRole;
 }) {
   const pathname = usePathname() || '/';
+
+  if (isSuperadmin(userRole) && !isSuperadminRouteAllowed(pathname)) {
+    return <Navigate to={SUPERADMIN_HOME} replace />;
+  }
+
   const restricted = paths.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );

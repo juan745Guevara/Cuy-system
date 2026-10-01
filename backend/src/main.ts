@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { RequestMethod, ValidationPipe } from '@nestjs/common';
+import { setupSwagger, SWAGGER_PATH } from './shared/http/swagger';
 
 async function bootstrap() {
   if (!process.env.JWT_SECRET) {
@@ -27,9 +28,15 @@ async function bootstrap() {
     exclude: [{ path: 'api/health', method: RequestMethod.GET }],
   });
 
+  const docsEnabled = process.env.NODE_ENV !== 'production';
+  if (docsEnabled) setupSwagger(app);
+
   const port = Number(process.env.PORT || 3001);
   await app.listen(port);
   console.log(`Server running on port ${port} (NestJS)`);
+  if (docsEnabled) {
+    console.log(`API docs: http://localhost:${port}/${SWAGGER_PATH}`);
+  }
 }
 
 bootstrap();

@@ -23,8 +23,6 @@ CREATE TABLE IF NOT EXISTS granjas (
   nombre VARCHAR(100) NOT NULL UNIQUE,
   id_especie INTEGER NOT NULL REFERENCES especies(id),
   ubicacion VARCHAR(200),
-  responsable VARCHAR(100),
-  fecha_inicio DATE,
   activa BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -50,7 +48,8 @@ CREATE TABLE IF NOT EXISTS areas (
 
 CREATE TABLE IF NOT EXISTS recintos (
   id SERIAL PRIMARY KEY,
-  id_area INTEGER NOT NULL REFERENCES areas(id) ON DELETE CASCADE,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id) ON DELETE CASCADE,
+  id_area INTEGER REFERENCES areas(id) ON DELETE SET NULL,
   codigo VARCHAR(50) NOT NULL,
   capacidad_maxima INTEGER,
   activa BOOLEAN DEFAULT true,
@@ -305,3 +304,12 @@ DO $$ BEGIN
   ALTER TABLE empadres ADD COLUMN IF NOT EXISTS cantidad_prenadas INTEGER;
 EXCEPTION WHEN others THEN NULL;
 END $$;
+ALTER TABLE recintos ADD COLUMN IF NOT EXISTS id_granja INTEGER REFERENCES granjas(id) ON DELETE CASCADE;
+UPDATE recintos j SET id_granja = a.id_granja FROM areas a WHERE j.id_area = a.id AND j.id_granja IS NULL;
+ALTER TABLE recintos ALTER COLUMN id_granja SET NOT NULL;
+ALTER TABLE recintos ALTER COLUMN id_area DROP NOT NULL;
+ALTER TABLE recintos DROP CONSTRAINT IF EXISTS recintos_id_area_fkey;
+ALTER TABLE recintos ADD CONSTRAINT recintos_id_area_fkey FOREIGN KEY (id_area) REFERENCES areas(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_recintos_granja ON recintos(id_granja);
+ALTER TABLE granjas DROP COLUMN IF EXISTS responsable;
+ALTER TABLE granjas DROP COLUMN IF EXISTS fecha_inicio;

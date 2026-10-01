@@ -15,6 +15,7 @@ import type {
   LoginResponse,
   UserFarm,
 } from '../types/auth';
+import { isSuperadmin } from '@/lib/roles';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -25,19 +26,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedFarm = Number(localStorage.getItem('farmId')) || null;
-    setToken(storedToken);
-    setGranjaActiva(storedFarm);
-    if (!storedToken) setLoading(false);
-  }, []);
-
   const applySession = useCallback((data: LoginResponse) => {
     localStorage.setItem('token', data.token);
     setToken(data.token);
     setUser(data.user);
     setGranjas(data.granjas || []);
+    if (isSuperadmin(data.user?.rol)) {
+      localStorage.removeItem('farmId');
+      localStorage.removeItem('speciesId');
+      setGranjaActiva(null);
+      return;
+    }
     if (data.granjas?.length === 1) {
       localStorage.setItem('farmId', String(data.granjas[0].id));
       setGranjaActiva(data.granjas[0].id);
@@ -49,23 +48,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    api
-      .get('/auth/me')
-      .then((res) => {
+    let alive = true;
+
+    const bootstrap = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedFarm = Number(localStorage.getItem('farmId')) || null;
+      if (!alive) return;
+
+      setToken(storedToken);
+      setGranjaActiva(storedFarm);
+
+      if (!storedToken) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await api.get('/auth/me');
+        if (!alive) return;
         setUser(res.data.user);
         setGranjas(res.data.granjas || []);
-      })
-      .catch(() => {
+      } catch {
+        if (!alive) return;
         localStorage.removeItem('token');
+        localStorage.removeItem('farmId');
+        localStorage.removeItem('speciesId');
         setToken(null);
         setUser(null);
-      })
-      .finally(() => setLoading(false));
-  }, [token]);
+        setGranjas([]);
+        setGranjaActiva(null);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    };
+
+    void bootstrap();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const login = async (email: string, password: string) => {
     const { data } = await api.post<LoginResponse>('/auth/login', {
@@ -73,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
     });
     applySession(data);
+    setLoading(false);
     return data;
   };
 

@@ -4,6 +4,7 @@ import React, { useState, type CSSProperties } from 'react';
 import { useNavigate } from '@/lib/navigation';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '@/lib/ui';
+import { isSuperadmin, SUPERADMIN_HOME } from '@/lib/roles';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -19,6 +20,10 @@ const Login = () => {
     setSubmitting(true);
     try {
       const data = await login(email, password);
+      if (isSuperadmin(data.user?.rol)) {
+        navigate(SUPERADMIN_HOME);
+        return;
+      }
       if (data.granjas?.length === 1) navigate('/');
       else navigate('/seleccionar-granja');
     } catch (err) {

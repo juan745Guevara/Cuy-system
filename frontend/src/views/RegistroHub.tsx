@@ -96,18 +96,6 @@ const RegistroHub = () => {
     <div style={s.wrap}>
       {/* Encabezado */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <p
-          style={{
-            margin: '0 0 0.35rem',
-            color: theme.maroon,
-            fontSize: '0.78rem',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-          }}
-        >
-          Animales y ubicación
-        </p>
         <h1 style={{ ...s.title, marginBottom: 6 }}>Animales y manejo</h1>
         <p style={{ ...s.sub, marginBottom: 0 }}>
           Altas de cuyes, fichas reproductivas y traslados entre jaulas. Áreas e inventario están en Estructura.

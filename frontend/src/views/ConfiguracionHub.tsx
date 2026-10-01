@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from '@/lib/navigation';
 import { useAuth } from '../context/AuthContext';
 import { page as s, theme } from '@/lib/ui';
+import { isSuperadmin } from '@/lib/roles';
 
 const CONFIG_ITEMS = [
   {
@@ -77,23 +78,6 @@ const CONFIG_ITEMS = [
     path: '/auditoria',
     keywords: ['auditoria', 'logs', 'historial', 'trazabilidad', 'quien modifico', 'seguridad'],
   },
-  {
-    id: 'granjas-admin',
-    title: 'Administración de Granjas',
-    category: 'Infraestructura',
-    adminOnly: true,
-    color: '#2E7D32',
-    bgBadge: 'rgba(46, 125, 50, 0.1)',
-    desc: 'Crear criaderos, fijar especie (inmutable), definir responsables y ubicaciones institucionales.',
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-    path: '/granjas',
-    keywords: ['granjas', 'crear granja', 'especies', 'responsable'],
-  },
 ];
 
 const ConfiguracionHub = () => {
@@ -101,8 +85,12 @@ const ConfiguracionHub = () => {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
   const admin = user?.rol === 'superadmin' || user?.rol === 'admin';
+  const superadmin = isSuperadmin(user?.rol);
 
-  const visibleItems = CONFIG_ITEMS.filter((item) => !item.adminOnly || admin);
+  const visibleItems = CONFIG_ITEMS.filter((item) => {
+    if (superadmin) return item.id === 'usuarios';
+    return !item.adminOnly || admin;
+  });
 
   const filtered = visibleItems.filter((item) => {
     const q = query.trim().toLowerCase();
@@ -118,18 +106,6 @@ const ConfiguracionHub = () => {
     <div style={s.wrap}>
       {/* Encabezado */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <p
-          style={{
-            margin: '0 0 0.35rem',
-            color: theme.maroon,
-            fontSize: '0.78rem',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-          }}
-        >
-          Administración del Sistema
-        </p>
         <h1 style={{ ...s.title, marginBottom: 6 }}>Configuración General</h1>
         <p style={{ ...s.sub, marginBottom: 0 }}>
           Gestión de usuarios, roles, catálogos de razas y categorías, plazos del ciclo biológico y auditoría institucional.

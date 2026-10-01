@@ -20,9 +20,9 @@ Diseñado como plataforma **multigranja y modular por especie**: un núcleo comp
 
 ```
 main.ts, app.module.ts   Entrada NestJS
-nest/shared/             Cross-cutting (Prisma, guards, audit, SQL bridge)
-nest/platform/           Módulo plataforma (Clean Architecture)
-nest/cuyes/              Módulo cuyes (Clean Architecture)
+shared/                  Cross-cutting (Prisma, guards, audit, SQL bridge)
+platform/                Módulo plataforma (Clean Architecture)
+cuyes/                   Módulo cuyes (Clean Architecture)
 database/ + scripts/db/  Migración SQL y seed (CLI TypeScript, fuera del runtime Nest)
 ```
 
@@ -37,7 +37,7 @@ Cada módulo (`platform`, `cuyes`) sigue **Clean Architecture**:
 
 Los casos de uso dependen de **ports**, no de implementaciones concretas. Nest enlaza `{ provide: XRepositoryPort, useExisting: XRepository }`.
 
-Los repositorios usan **Prisma** y, donde hace falta, SQL raw vía puente en `nest/shared/database/sql-bridge.ts`.
+Los repositorios usan **Prisma** y, donde hace falta, SQL raw vía puente en `shared/database/sql-bridge.ts`.
 
 ### Frontend (`frontend/`)
 
@@ -51,6 +51,8 @@ Next.js 15 App Router + **TypeScript** (`src/app/`). Pantallas en `src/views/`; 
 | `GET/POST /api/v1/cuyes/animals`, `/cages`, `/breedings`, … | Módulo cuyes |
 
 Headers requeridos en operaciones de granja: `Authorization`, `x-species-id`, `x-farm-id`.
+
+Documentación interactiva (Swagger), solo en desarrollo (`npm run dev`): [http://localhost:3001/api-docs](http://localhost:3001/api-docs) — especificación OpenAPI en `/api-docs-json`. Con `npm start` (`NODE_ENV=production`) no se publica.
 
 ## Stack
 
@@ -113,7 +115,7 @@ Cuy-system/
 ├── backend/
 │   ├── prisma/schema.prisma      Esquema ORM
 │   └── src/
-│       ├── nest/                 API Nest (platform, cuyes, shared)
+│       ├── platform/ cuyes/ shared/   Módulos Nest (Clean Architecture)
 │       ├── database/schema.sql   SQL inicial (db:migrate)
 │       └── scripts/db/           migrate.ts, seed.ts
 ├── frontend/

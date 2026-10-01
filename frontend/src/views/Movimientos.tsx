@@ -243,7 +243,7 @@ const Movimientos = () => {
               <option value="">Todas las áreas</option>
               {areas.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.nombre} ({a.proposito})
+                  {a.nombre}{a.proposito ? ` (${a.proposito})` : ''}
                 </option>
               ))}
             </select>

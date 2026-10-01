@@ -143,18 +143,6 @@ const BusquedaGlobal = () => {
     <div style={s.wrap}>
       {/* Encabezado */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <p
-          style={{
-            margin: '0 0 0.35rem',
-            color: theme.maroon,
-            fontSize: '0.78rem',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-          }}
-        >
-          Motor de Búsqueda Global
-        </p>
         <h1 style={{ ...s.title, marginBottom: 6 }}>Búsqueda General del Sistema</h1>
         <p style={{ ...s.sub, marginBottom: 0 }}>
           Encuentra al instante cualquier registro: código de cuy, jaula, área, evento reproductivo, venta o usuario en toda la granja.

@@ -175,18 +175,6 @@ const EventosHub = () => {
     <div style={s.wrap}>
       {/* Encabezado */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <p
-          style={{
-            margin: '0 0 0.35rem',
-            color: theme.maroon,
-            fontSize: '0.78rem',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-          }}
-        >
-          Flujo Operativo del Criadero
-        </p>
         <h1 style={{ ...s.title, marginBottom: 6 }}>Registro y Control de Eventos</h1>
         <p style={{ ...s.sub, marginBottom: 0 }}>
           Selecciona o busca el evento productivo que deseas realizar según las normas técnicas de la Facultad de Zootecnia.

@@ -152,6 +152,7 @@ Leyenda: **C** crear · **L** leer · **E** editar · **X** eliminar/anular · *
 ## 5. Reglas transversales
 
 - **Superadmin crea Admins; Admin crea Encargados y Supervisores.** Nadie más crea cuentas.
+- **Eliminar usuario** en la interfaz **no borra** el registro: marca `activo = false`. El **mismo email** al crear una cuenta de nuevo **reactiva** esa fila y actualiza nombre, contraseña, rol y granjas.
 - **Al crear un usuario, solo se asignan granjas del alcance del creador** (regla de no escalada; NUC-08).
 - **Cada granja es de una sola especie.** No se elige especie y granja por separado al asignar alcance: la especie viene dada por la granja.
 - Al entrar, el flujo es **especie → granja** (NUC-02).

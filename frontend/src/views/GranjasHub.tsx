@@ -7,32 +7,25 @@ import { useAuth } from '../context/AuthContext';
 import { page as s, theme } from '@/lib/ui';
 
 const GranjasHub = () => {
-  const { user, granjas, granjaActiva, seleccionarGranja } = useAuth();
-  const [query, setQuery] = useState('');
+  const { granjas, granjaActiva } = useAuth();
   const [ocupacion, setOcupacion] = useState(null);
-  const [pob, setPob] = useState(null);
   const navigate = useNavigate();
-  const admin = user?.rol === 'superadmin' || user?.rol === 'admin';
   const granja = (granjas || []).find((g) => g.id === granjaActiva);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/recintos/occupancy').catch(() => ({ data: null })),
-      api.get('/cuyes/inventory/population').catch(() => ({ data: null })),
-    ]).then(([o, p]) => {
-      setOcupacion(o.data);
-      setPob(p.data);
-    });
+    api
+      .get('/recintos/occupancy')
+      .then((o) => setOcupacion(o.data))
+      .catch(() => setOcupacion(null));
   }, []);
 
   const items = [
     {
       id: 'areas',
-      title: 'Áreas y Distribución',
-      category: 'Zonas',
+      title: 'Áreas',
       color: '#2E7D32',
       bgBadge: 'rgba(46, 125, 50, 0.1)',
-      desc: 'Gestión de áreas físicas: Empadre, Gestación/Maternidad, Recría, Machos, Engorde y Cuarentena.',
+      desc: 'Agrupa jaulas por zona o propósito.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -41,15 +34,13 @@ const GranjasHub = () => {
         </svg>
       ),
       path: '/areas',
-      keywords: ['areas', 'zonas', 'distribucion', 'galpon'],
     },
     {
       id: 'jaulas',
-      title: 'Jaulas y Códigos',
-      category: 'Ubicaciones',
+      title: 'Jaulas',
       color: '#E65100',
       bgBadge: 'rgba(230, 81, 0, 0.1)',
-      desc: 'Nomenclatura uniforme de jaulas, asignación de áreas y consulta de cuyes por jaula.',
+      desc: 'Códigos, capacidad y animales por jaula.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="2" y="7" width="20" height="14" rx="2" />
@@ -57,15 +48,13 @@ const GranjasHub = () => {
         </svg>
       ),
       path: '/jaulas',
-      keywords: ['jaulas', 'codigos', 'pozas', 'ubicacion'],
     },
     {
       id: 'inventario',
-      title: 'Población e Inventario de Granja',
-      category: 'Inventario',
+      title: 'Inventario',
       color: '#7A1216',
       bgBadge: 'rgba(122, 18, 22, 0.1)',
-      desc: 'Resumen poblacional por raza, categoría, área y desglose de jaulas ocupadas vs vacías.',
+      desc: 'Población por raza, categoría y área.',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="18" y1="20" x2="18" y2="10" />
@@ -74,178 +63,17 @@ const GranjasHub = () => {
         </svg>
       ),
       path: '/inventario',
-      keywords: ['inventario', 'poblacion', 'censo', 'resumen', 'reporte'],
     },
-    ...(admin
-      ? [
-          {
-            id: 'admin-granjas',
-            title: 'Administración de Granjas',
-            category: 'Gestión',
-            color: '#1565C0',
-            bgBadge: 'rgba(21, 101, 192, 0.1)',
-            desc: 'Crear granjas, definir especie, responsables, ubicación geográfica y activar/deactivate unidades.',
-            icon: (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            ),
-            path: '/granjas',
-            keywords: ['crear granja', 'administrar', 'especie', 'sedes'],
-          },
-        ]
-      : []),
   ];
-
-  const filtered = items.filter((item) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      item.title.toLowerCase().includes(q) ||
-      item.desc.toLowerCase().includes(q) ||
-      item.keywords.some((k) => k.toLowerCase().includes(q))
-    );
-  });
 
   return (
     <div style={s.wrap}>
       {/* Encabezado */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <p
-          style={{
-            margin: '0 0 0.35rem',
-            color: theme.maroon,
-            fontSize: '0.78rem',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-          }}
-        >
-          Granja · Estructura
-        </p>
         <h1 style={{ ...s.title, marginBottom: 6 }}>Estructura e inventario</h1>
         <p style={{ ...s.sub, marginBottom: 0 }}>
           Áreas, jaulas y censo de la granja activa: {granja?.nombre} ({granja?.especie}). El panel general está en Inicio → Panel.
         </p>
-      </div>
-
-      {/* Tarjeta de Granja Activa con Selector */}
-      <div
-        style={{
-          background: `linear-gradient(135deg, ${theme.maroonDeep} 0%, ${theme.maroon} 100%)`,
-          color: theme.creamSoft,
-          padding: '1.35rem 1.5rem',
-          borderRadius: theme.radiusLg,
-          boxShadow: theme.shadow,
-          marginBottom: '1.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
-        <div>
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '0.2rem 0.6rem',
-              background: 'rgba(255,255,255,0.15)',
-              borderRadius: 12,
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              marginBottom: 6,
-            }}
-          >
-            Granja Activa Seleccionada
-          </span>
-          <h2 style={{ margin: 0, fontFamily: theme.fontDisplay, fontSize: '1.5rem', color: '#FFFFFF' }}>
-            {granja?.nombre || 'Granja de Cuyes'}
-          </h2>
-          <p style={{ margin: '4px 0 0', opacity: 0.88, fontSize: '0.88rem' }}>
-            Especie: <strong>{granja?.especie || 'Cuyes'}</strong> · Total Población:{' '}
-            <strong>{pob?.total ?? '—'} animales</strong>
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            seleccionarGranja(null);
-            localStorage.removeItem('farmId');
-            navigate('/seleccionar-granja');
-          }}
-          style={{
-            background: theme.creamSoft,
-            color: theme.maroonDeep,
-            border: 'none',
-            padding: '0.65rem 1.25rem',
-            borderRadius: theme.radiusSm,
-            fontWeight: 700,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          }}
-        >
-          🔄 Cambiar de Granja
-        </button>
-      </div>
-
-      {/* Buscador de Opciones de Granja */}
-      <div
-        style={{
-          background: theme.creamSoft,
-          padding: '1.25rem 1.4rem',
-          borderRadius: theme.radiusLg,
-          border: `1px solid ${theme.border}`,
-          boxShadow: theme.shadow,
-          marginBottom: '1.5rem',
-        }}
-      >
-        <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span
-              style={{
-                position: 'absolute',
-                left: 14,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: theme.muted,
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Buscar en áreas, jaulas, códigos o gestión de granjas..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{
-                ...s.input,
-                width: '100%',
-                boxSizing: 'border-box',
-                paddingLeft: '2.6rem',
-                fontSize: '0.98rem',
-                borderRadius: theme.radiusSm,
-                border: `1.5px solid ${query ? theme.maroon : theme.border}`,
-                background: '#FFFFFF',
-              }}
-            />
-          </div>
-          {query && (
-            <button onClick={() => setQuery('')} style={s.btnGhost}>
-              Limpiar
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Alerta de sobrecupo de jaulas si hay */}
@@ -279,30 +107,35 @@ const GranjasHub = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '1.25rem',
         }}
       >
-        {filtered.map((item) => (
-          <div
+        {items.map((item) => (
+          <button
+            type="button"
             key={item.id}
             onClick={() => navigate(item.path, { state: { from: '/granjas-panel' } })}
             style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '0.9rem',
+              width: '100%',
+              textAlign: 'left',
               background: theme.creamSoft,
               border: `1.5px solid ${theme.border}`,
               borderRadius: theme.radiusLg,
-              padding: '1.35rem 1.4rem',
+              padding: '1.4rem 1.4rem 1.2rem',
               cursor: 'pointer',
               boxShadow: theme.shadowSoft,
-              transition: 'all 180ms ease',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              transition: 'border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease',
+              fontFamily: theme.fontBody,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = item.color;
-              e.currentTarget.style.transform = 'translateY(-3px)';
-              e.currentTarget.style.boxShadow = '0 12px 24px rgba(79, 12, 16, 0.12)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 10px 20px rgba(79, 12, 16, 0.1)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = theme.border;
@@ -310,88 +143,64 @@ const GranjasHub = () => {
               e.currentTarget.style.boxShadow = theme.shadowSoft;
             }}
           >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
-                <div
-                  style={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: theme.radius,
-                    background: item.bgBadge,
-                    color: item.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {item.icon}
-                </div>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    padding: '0.25rem 0.6rem',
-                    background: item.bgBadge,
-                    color: item.color,
-                    borderRadius: 12,
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                  }}
-                >
-                  {item.category}
-                </span>
-              </div>
-
-              <h3
+            <span
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: theme.radius,
+                background: item.bgBadge,
+                color: item.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {item.icon}
+            </span>
+            <span style={{ display: 'block', width: '100%' }}>
+              <span
                 style={{
-                  margin: '0 0 0.45rem',
+                  display: 'block',
                   color: theme.maroonDeep,
-                  fontSize: '1.2rem',
+                  fontSize: '1.25rem',
                   fontFamily: theme.fontDisplay,
                   fontWeight: 700,
+                  marginBottom: 4,
                 }}
               >
                 {item.title}
-              </h3>
-              <p
-                style={{
-                  margin: '0 0 1.15rem',
-                  color: theme.muted,
-                  fontSize: '0.88rem',
-                  lineHeight: 1.45,
-                }}
-              >
+              </span>
+              <span style={{ display: 'block', color: theme.muted, fontSize: '0.9rem', lineHeight: 1.45 }}>
                 {item.desc}
-              </p>
-            </div>
-
-            <div
+              </span>
+            </span>
+            <span
               style={{
-                borderTop: `1px solid ${theme.border}`,
-                paddingTop: '0.85rem',
-                display: 'flex',
-                justifyContent: 'space-between',
+                display: 'inline-flex',
                 alignItems: 'center',
+                gap: 6,
+                marginTop: 'auto',
+                color: item.color,
+                fontSize: '0.85rem',
+                fontWeight: 700,
               }}
             >
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: item.color }}>
-                Acceder a {item.title}
-              </span>
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  background: item.bgBadge,
-                  color: item.color,
-                }}
+              Abrir
+              <svg
+                aria-hidden
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                →
-              </span>
-            </div>
-          </div>
+                <polyline points="9 6 15 12 9 18" />
+              </svg>
+            </span>
+          </button>
         ))}
       </div>
     </div>

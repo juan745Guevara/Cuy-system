@@ -4,26 +4,29 @@ import React, { useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { page as s } from '@/lib/ui';
 import { useAuth } from '../context/AuthContext';
+import { ChoiceChips, FormModal, ModalSection, fieldFull, fieldLabel } from '@/components/FormModal';
 
-/** Administrar granjas · asignar usuarios */
+const emptyForm = () => ({
+  nombre: '',
+  id_especie: null as number | null,
+  ubicacion: '',
+});
+
+const formatEspecie = (name?: string) => (name ? name.charAt(0).toUpperCase() + name.slice(1) : '—');
+
+/** Administrar granjas (el acceso de usuarios se asigna desde Usuarios) */
 const Granjas = () => {
   const { user } = useAuth();
   const [granjas, setGranjas] = useState([]);
   const [especies, setEspecies] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
-  const [form, setForm] = useState({
-    nombre: '',
-    id_especie: '',
-    ubicacion: '',
-    responsable: '',
-    fecha_inicio: '',
-  });
-  const [asignacion, setAsignacion] = useState({ id_granja: '', usuario_ids: [] });
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [editing, setEditing] = useState(null);
+  const [editForm, setEditForm] = useState({ nombre: '', ubicacion: '' });
 
   const esSuper = user?.rol === 'superadmin';
-  const puedeAsignar = user?.rol === 'superadmin' || user?.rol === 'admin';
 
   const load = useCallback(async () => {
     try {
@@ -33,186 +36,204 @@ const Granjas = () => {
         const e = await api.get('/species');
         setEspecies(e.data);
       }
-      if (puedeAsignar) {
-        const u = await api.get('/users');
-        setUsuarios(u.data);
-      }
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron cargar granjas');
     }
-  }, [esSuper, puedeAsignar]);
+  }, [esSuper]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  const abrirCrear = () => {
+    setError('');
+    setForm(emptyForm());
+    setCreateOpen(true);
+  };
+
+  const cerrarCrear = useCallback(() => {
+    setCreateOpen(false);
+  }, []);
+
   const crear = async (e) => {
     e.preventDefault();
     setError('');
     setOk('');
+    if (!form.id_especie) {
+      setError('Seleccione una especie.');
+      return;
+    }
     try {
-      await api.post('/farms', {
-        ...form,
-        id_especie: Number(form.id_especie),
-      });
-      setOk('Granja creada');
-      setForm({ nombre: '', id_especie: '', ubicacion: '', responsable: '', fecha_inicio: '' });
+      const res = await api.post('/farms', form);
+      setOk(res.data?.reactivada ? 'Granja reactivada' : 'Granja creada');
+      setCreateOpen(false);
       load();
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudo crear');
     }
   };
 
-  const deactivate = async (id) => {
-    try {
-      await api.patch(`/farms/${id}/deactivate`);
-      setOk('Granja desactivada');
-      load();
-    } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo deactivate');
-    }
+  const abrirEditar = (g) => {
+    setError('');
+    setOk('');
+    setEditForm({ nombre: g.nombre, ubicacion: g.ubicacion || '' });
+    setEditing(g);
   };
 
-  const asignar = async (e) => {
+  const cerrarEditar = useCallback(() => {
+    setEditing(null);
+  }, []);
+
+  const guardar = async (e) => {
     e.preventDefault();
     setError('');
     setOk('');
     try {
-      await api.put(`/farms/${asignacion.id_granja}/users`, {
-        usuario_ids: asignacion.usuario_ids,
-      });
-      setOk('Usuarios asignados a la granja');
+      await api.patch(`/farms/${editing.id}`, editForm);
+      setOk('Granja actualizada');
+      setEditing(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo asignar');
+      setError(err.response?.data?.error || 'No se pudo guardar');
     }
   };
 
-  const toggleUser = (id) => {
-    setAsignacion((a) => ({
-      ...a,
-      usuario_ids: a.usuario_ids.includes(id)
-        ? a.usuario_ids.filter((x) => x !== id)
-        : [...a.usuario_ids, id],
-    }));
+  const eliminar = async (g) => {
+    if (!window.confirm(`¿Eliminar ${g.nombre}?`)) return;
+    setError('');
+    setOk('');
+    try {
+      await api.patch(`/farms/${g.id}/deactivate`);
+      setOk(`${g.nombre} eliminada`);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo eliminar');
+    }
   };
 
   return (
     <div style={s.wrap}>
-      <h1 style={s.title}>Granjas</h1>
-      <p style={s.sub}>Administración institucional y alcance de usuarios</p>
-      {error && <div style={s.error}>{error}</div>}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.5rem' }}>
+        <div>
+          <h1 style={{ ...s.title, marginBottom: '0.35rem' }}>Granjas</h1>
+          <p style={{ ...s.sub, marginBottom: 0 }}>Granjas registradas en el sistema.</p>
+        </div>
+        {esSuper && (
+          <button type="button" style={{ ...s.btn, marginTop: '0.25rem' }} onClick={abrirCrear}>
+            + Nueva granja
+          </button>
+        )}
+      </div>
+      {error && !createOpen && !editing && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
 
-      <table style={s.table}>
-        <thead>
-          <tr>
-            <th style={s.th}>Nombre</th>
-            <th style={s.th}>Especie</th>
-            <th style={s.th}>Ubicación</th>
-            <th style={s.th}></th>
-          </tr>
-        </thead>
-        <tbody>
-          {granjas.map((g) => (
-            <tr key={g.id}>
-              <td style={s.td}>{g.nombre}</td>
-              <td style={s.td}>{g.especie}</td>
-              <td style={s.td}>{g.ubicacion || '—'}</td>
-              <td style={s.td}>
-                {esSuper && (
-                  <button type="button" style={s.btnDanger} onClick={() => deactivate(g.id)}>
-                    Desactivar
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {esSuper && (
-        <form onSubmit={crear} style={{ ...s.card, marginTop: '1.5rem' }}>
-          <h3 style={{ marginTop: 0 }}>Nueva granja</h3>
-          <div style={s.row}>
+      {createOpen && (
+        <FormModal
+          title="Nueva granja"
+          onClose={cerrarCrear}
+          onSubmit={crear}
+          error={error}
+          submitLabel="Crear granja"
+        >
+          <ModalSection title="Datos de la granja">
+            <label style={fieldLabel}>Nombre</label>
             <input
-              style={s.input}
+              style={fieldFull}
               required
-              placeholder="Nombre"
+              autoFocus
+              placeholder="Ej. Granja Cuyes 3"
               value={form.nombre}
               onChange={(e) => setForm({ ...form, nombre: e.target.value })}
             />
-            <select
-              style={s.select}
-              required
-              value={form.id_especie}
-              onChange={(e) => setForm({ ...form, id_especie: e.target.value })}
-            >
-              <option value="">Especie</option>
-              {especies.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nombre}
-                </option>
-              ))}
-            </select>
-            <input
-              style={s.input}
-              placeholder="Ubicación"
-              value={form.ubicacion}
-              onChange={(e) => setForm({ ...form, ubicacion: e.target.value })}
-            />
-            <input
-              style={s.input}
-              placeholder="Responsable"
-              value={form.responsable}
-              onChange={(e) => setForm({ ...form, responsable: e.target.value })}
-            />
-            <input
-              style={s.input}
-              type="date"
-              value={form.fecha_inicio}
-              onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
-            />
-            <button type="submit" style={s.btn}>
-              Crear
-            </button>
-          </div>
-        </form>
+            <div style={{ marginTop: '0.85rem' }}>
+              <label style={fieldLabel}>Especie</label>
+              {especies.length === 0 ? (
+                <span style={{ fontSize: '0.9rem' }}>No hay especies registradas.</span>
+              ) : (
+                <ChoiceChips
+                  options={especies.map((e) => ({ value: e.id, label: formatEspecie(e.name) }))}
+                  value={form.id_especie}
+                  onChange={(id_especie) => setForm({ ...form, id_especie })}
+                />
+              )}
+            </div>
+            <div style={{ marginTop: '0.85rem' }}>
+              <label style={fieldLabel}>Ubicación (opcional)</label>
+              <input
+                style={fieldFull}
+                placeholder="Ej. Tingo María"
+                value={form.ubicacion}
+                onChange={(e) => setForm({ ...form, ubicacion: e.target.value })}
+              />
+            </div>
+          </ModalSection>
+        </FormModal>
       )}
 
-      {puedeAsignar && (
-        <form onSubmit={asignar} style={s.card}>
-          <h3 style={{ marginTop: 0 }}>Asignar usuarios a granja</h3>
-          <select
-            style={s.select}
-            required
-            value={asignacion.id_granja}
-            onChange={(e) => setAsignacion({ ...asignacion, id_granja: e.target.value })}
-          >
-            <option value="">Granja</option>
-            {granjas.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.nombre}
-              </option>
-            ))}
-          </select>
-          <div style={{ ...s.row, marginTop: 12 }}>
-            {usuarios.map((u) => (
-              <label key={u.id} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <input
-                  type="checkbox"
-                  checked={asignacion.usuario_ids.includes(u.id)}
-                  onChange={() => toggleUser(u.id)}
-                />
-                {u.nombre} ({u.rol})
-              </label>
-            ))}
-          </div>
-          <button type="submit" style={{ ...s.btn, marginTop: 12 }}>
-            Guardar asignación
-          </button>
-        </form>
+      {editing && (
+        <FormModal
+          title="Editar granja"
+          onClose={cerrarEditar}
+          onSubmit={guardar}
+          error={error}
+          submitLabel="Guardar"
+        >
+          <ModalSection title="Datos de la granja">
+            <label style={fieldLabel}>Nombre</label>
+            <input
+              style={fieldFull}
+              required
+              autoFocus
+              value={editForm.nombre}
+              onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
+            />
+            <div style={{ marginTop: '0.85rem' }}>
+              <label style={fieldLabel}>Ubicación (opcional)</label>
+              <input
+                style={fieldFull}
+                placeholder="Ej. Tingo María"
+                value={editForm.ubicacion}
+                onChange={(e) => setEditForm({ ...editForm, ubicacion: e.target.value })}
+              />
+            </div>
+          </ModalSection>
+        </FormModal>
       )}
+
+      <div style={s.tableWrap}>
+        <table style={s.table}>
+          <thead>
+            <tr>
+              <th style={s.th}>Nombre</th>
+              <th style={s.th}>Especie</th>
+              <th style={s.th}>Ubicación</th>
+              {esSuper && <th style={s.th}>Acciones</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {granjas.map((g) => (
+              <tr key={g.id}>
+                <td style={s.td}>{g.nombre}</td>
+                <td style={s.td}>{formatEspecie(g.especie)}</td>
+                <td style={s.td}>{g.ubicacion || '—'}</td>
+                {esSuper && (
+                  <td style={s.td}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                      <button type="button" style={{ ...s.btnRow, ...s.btnRowOutline }} onClick={() => abrirEditar(g)}>
+                        Editar
+                      </button>
+                      <button type="button" style={{ ...s.btnRow, ...s.btnRowDanger }} onClick={() => eliminar(g)}>
+                        Eliminar
+                      </button>
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
     </div>
   );
 };

@@ -20,16 +20,21 @@ const SeleccionGranja = () => {
     return Array.from(map.values());
   }, [granjas]);
 
-  const [especieId, setEspecieId] = useState(especies.length === 1 ? especies[0].id : '');
+  const especieUnica = especies.length === 1 ? especies[0] : null;
+  const [especieElegida, setEspecieId] = useState<number | string>('');
+  const especieId = especieUnica ? especieUnica.id : especieElegida;
 
   const granjasFiltradas = useMemo(
     () => (granjas || []).filter((g) => !especieId || g.id_especie === Number(especieId)),
     [granjas, especieId]
   );
 
-  const [farmId, setGranjaId] = useState(
-    granjasFiltradas.length === 1 ? granjasFiltradas[0].id : ''
-  );
+  const [farmElegida, setGranjaId] = useState<number | string>('');
+  const farmId = granjasFiltradas.length === 1 ? granjasFiltradas[0].id : farmElegida;
+
+  const nombreEspecie = especieUnica?.nombre
+    ? especieUnica.nombre.charAt(0).toUpperCase() + especieUnica.nombre.slice(1)
+    : '';
 
   const handleContinue = (e) => {
     e.preventDefault();
@@ -141,30 +146,34 @@ const SeleccionGranja = () => {
               Contexto de trabajo
             </h1>
             <p style={{ margin: '0.25rem 0 0', color: theme.muted, fontSize: '0.92rem' }}>
-              Elija especie y granja para registrar
+              {especieUnica ? `${nombreEspecie} · elija la granja` : 'Elija especie y granja para registrar'}
             </p>
           </div>
         </div>
 
-        <label style={{ display: 'block', marginBottom: 6, color: theme.maroonDeep, fontWeight: 650 }}>
-          Especie
-        </label>
-        <select
-          value={especieId}
-          onChange={(e) => {
-            setEspecieId(e.target.value);
-            setGranjaId('');
-          }}
-          required
-          style={field}
-        >
-          <option value="">— Seleccione —</option>
-          {especies.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nombre}
-            </option>
-          ))}
-        </select>
+        {!especieUnica && (
+          <>
+            <label style={{ display: 'block', marginBottom: 6, color: theme.maroonDeep, fontWeight: 650 }}>
+              Especie
+            </label>
+            <select
+              value={especieId}
+              onChange={(e) => {
+                setEspecieId(e.target.value);
+                setGranjaId('');
+              }}
+              required
+              style={field}
+            >
+              <option value="">— Seleccione —</option>
+              {especies.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre ? e.nombre.charAt(0).toUpperCase() + e.nombre.slice(1) : e.nombre}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
 
         <label style={{ display: 'block', marginBottom: 6, color: theme.maroonDeep, fontWeight: 650 }}>
           Granja

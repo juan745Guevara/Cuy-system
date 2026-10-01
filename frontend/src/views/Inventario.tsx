@@ -258,7 +258,7 @@ const Inventario = () => {
         {porArea.map((a) => (
           <div key={a.id} style={{ marginBottom: '0.75rem' }}>
             <strong>
-              {a.nombre} ({a.proposito}) — {a.total} animales
+              {a.nombre}{a.proposito ? ` (${a.proposito})` : ''} — {a.total} animales
             </strong>
             <ul>
               {(a.jaulas || []).map((j) => (

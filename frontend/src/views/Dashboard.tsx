@@ -340,34 +340,6 @@ const Dashboard = () => {
         }}
       >
         <div>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.25rem 0.65rem',
-              background: 'rgba(122, 18, 22, 0.08)',
-              color: theme.maroon,
-              borderRadius: 20,
-              fontSize: '0.74rem',
-              fontWeight: 750,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              marginBottom: '0.45rem',
-            }}
-          >
-            <span
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: '50%',
-                background: '#16A34A',
-                boxShadow: '0 0 0 2px rgba(22, 163, 74, 0.25)',
-              }}
-            />
-            Panel de Control en Tiempo Real
-          </div>
-
           <h1 style={{ ...s.title, margin: '0 0 0.35rem', fontSize: '2.1rem', lineHeight: 1.15 }}>
             Estado Productivo &amp; Telemetría del Criadero
           </h1>

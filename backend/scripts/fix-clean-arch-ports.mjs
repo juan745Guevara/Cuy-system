@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const nest = path.join(__dirname, '../src/nest');
+const srcRoot = path.join(__dirname, '../src');
 
 function methodNamesFromRepo(content) {
   const names = new Set();
@@ -31,7 +31,7 @@ function writePort(portsDir, base, names) {
 
 // Export constants from weighings repo if they were in same file
 const weighRepo = path.join(
-  nest,
+  srcRoot,
   'cuyes/infrastructure/persistence/weighings.repository.ts',
 );
 let wr = fs.readFileSync(weighRepo, 'utf8');
@@ -46,7 +46,7 @@ if (!wr.includes('export const RANGOS_DEFAULT')) {
 }
 
 for (const mod of ['cuyes', 'platform']) {
-  const root = path.join(nest, mod);
+  const root = path.join(srcRoot, mod);
   const infra = path.join(root, 'infrastructure/persistence');
   const portsDir = path.join(root, 'domain/ports');
   for (const f of fs.readdirSync(infra)) {

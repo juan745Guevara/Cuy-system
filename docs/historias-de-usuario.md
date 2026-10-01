@@ -67,7 +67,7 @@ Nota de módulo: las categorías y los accesos directos los define el módulo de
 Como superadmin, quiero crear granjas indicando la especie de cada una para que cada criadero maneje un solo animal con su propia población y reportes.
 
 Criterios de aceptación:
-- Registro nombre, **especie** (obligatoria e inmutable tras crear la granja), ubicación geográfica, responsable y fecha de inicio.
+- Registro nombre, **especie** (obligatoria e inmutable tras crear la granja), y ubicación geográfica (opcional).
 - Una granja **no puede cambiar de especie** una vez creada; para otro animal se crea otra granja.
 - Una granja se desactiva pero no se elimina si tiene registros; al desactivarla deja de admitir nuevos registros y sus datos siguen consultables.
 - El nombre de la granja es único dentro de la institución y aparece en pantallas y reportes (por ejemplo "Granja Cuyes 1").
@@ -89,7 +89,7 @@ Criterios de aceptación:
 - Creo una cuenta con rol Admin indicando nombre, usuario, contraseña inicial y las granjas de su alcance.
 - Un Admin solo ve y configura las granjas asignadas (cuyes, conejos, o ambas según las granjas que tenga).
 - Puedo editar el alcance de un Admin (agregar o quitar granjas) o desactivar su cuenta.
-- Solo el superadmin puede crear, editar o eliminar cuentas Admin.
+- Solo el superadmin puede crear, editar o **desactivar** cuentas Admin (no se borran de la base de datos; quedan inactivas y sin login).
 
 ### NUC-07 — Admin crea cuentas operativas
 Como admin, quiero crear cuentas de encargado, supervisor u otros roles operativos asignándoles granjas de mi alcance para que el personal de campo entre al sistema sin depender del superadmin.

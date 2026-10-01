@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from '@/lib/navigation';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '@/lib/ui';
 import api from '@/lib/api';
+import { isSuperadmin } from '@/lib/roles';
 
 const icons = {
   panel: (
@@ -150,9 +151,32 @@ const navSections = [
   },
 ];
 
-const mainNavItems = navSections.flatMap((s) => s.items);
+/** Superadmin: solo administración institucional (cuentas y granjas para alcance). */
+const superadminNavSections = [
+  {
+    id: 'admin',
+    label: '',
+    items: [
+      {
+        to: '/usuarios',
+        label: 'Usuarios y permisos',
+        icon: icons.config,
+        matchPaths: ['/usuarios'],
+      },
+      {
+        to: '/granjas',
+        label: 'Granjas',
+        icon: icons.estructura,
+        matchPaths: ['/granjas'],
+      },
+    ],
+  },
+];
 
 const HUB_PATHS = ['/dashboard', '/eventos', '/buscar', '/ventas', '/registro', '/granjas-panel', '/configuracion'];
+
+/** Rutas principales del superadmin (no son subpáginas; sin botón «Volver»). */
+const SUPERADMIN_ROOT_PATHS = ['/usuarios', '/granjas'];
 
 const SUBPAGE_HUB = {
   '/empadres': '/eventos',
@@ -177,19 +201,14 @@ const SUBPAGE_HUB = {
   '/granjas': '/configuracion',
 };
 
-const initiales = (nombre) =>
-  (nombre || 'U')
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p.charAt(0).toUpperCase())
-    .join('');
-
 const Layout = ({ children }) => {
   const { user, granjas, granjaActiva, seleccionarGranja, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const granja = (granjas || []).find((g) => g.id === granjaActiva);
+  const superadmin = isSuperadmin(user?.rol);
+  const activeNavSections = superadmin ? superadminNavSections : navSections;
+  const activeMainNavItems = activeNavSections.flatMap((s) => s.items);
 
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === '1');
   const [navBadges, setNavBadges] = useState({ alertasVencidas: 0 });
@@ -202,7 +221,7 @@ const Layout = ({ children }) => {
   }, [collapsed]);
 
   useEffect(() => {
-    if (!granjaActiva) return;
+    if (superadmin || !granjaActiva) return;
     api
       .get('/cuyes/alerts')
       .then((res) => {
@@ -211,10 +230,22 @@ const Layout = ({ children }) => {
         });
       })
       .catch(() => setNavBadges({ alertasVencidas: 0 }));
-  }, [granjaActiva]);
+  }, [granjaActiva, superadmin]);
 
   const rail = collapsed;
   const showLabel = !rail;
+
+  const [farmHover, setFarmHover] = useState(false);
+  const puedeCambiarGranja = (granjas || []).length > 1;
+  const especieLabel = granja?.especie
+    ? granja.especie.charAt(0).toUpperCase() + granja.especie.slice(1)
+    : '';
+  const cambiarGranja = () => {
+    if (!puedeCambiarGranja) return;
+    seleccionarGranja(null);
+    localStorage.removeItem('farmId');
+    navigate('/seleccionar-granja');
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -231,10 +262,18 @@ const Layout = ({ children }) => {
     });
   };
 
-  // Botón "Volver": navega al hub de origen (state.from) o al mapeado por ruta.
-  const backTarget = location.state?.from || SUBPAGE_HUB[location.pathname] || null;
+  // Botón "Volver": subpáginas operativas → hub; superadmin solo usa state.from (no /configuracion).
+  const pathname = location.pathname;
+  let backTarget: string | null = location.state?.from ?? null;
+  if (!backTarget && !superadmin) {
+    backTarget = SUBPAGE_HUB[pathname] ?? null;
+  }
+  if (superadmin && SUPERADMIN_ROOT_PATHS.includes(pathname)) {
+    backTarget = null;
+  }
   const backLabel = backTarget
-    ? (mainNavItems.find((i) => i.to === backTarget)?.label || 'Inicio')
+    ? (activeMainNavItems.find((i) => i.to === backTarget)?.label ||
+        (!superadmin ? 'Inicio' : backTarget.replace('/', '')))
     : '';
 
   return (
@@ -307,9 +346,6 @@ const Layout = ({ children }) => {
               >
                 Control Animales
               </div>
-              <div style={{ fontSize: '0.68rem', opacity: 0.8, letterSpacing: '0.08em', marginTop: 2 }}>
-                FZ · UNAS Tingo María
-              </div>
             </div>
           )}
         </div>
@@ -355,110 +391,116 @@ const Layout = ({ children }) => {
         </button>
 
         {/* Tarjeta de Granja Activa */}
-        {granja && (
-          <div
+        {!superadmin && granja && (
+          <button
+            type="button"
+            disabled={!puedeCambiarGranja}
+            onClick={cambiarGranja}
+            onMouseEnter={() => setFarmHover(true)}
+            onMouseLeave={() => setFarmHover(false)}
+            title={
+              puedeCambiarGranja
+                ? `${granja.nombre} · ${especieLabel} — cambiar granja`
+                : `${granja.nombre} · ${especieLabel}`
+            }
             style={{
-              fontSize: '0.82rem',
+              width: '100%',
               margin: '0 0 1rem',
-              padding: showLabel ? '0.6rem 0.8rem' : '0.4rem',
-              background: 'rgba(255,252,250,0.12)',
+              padding: showLabel ? '0.55rem 0.6rem' : '0.45rem 0',
+              background: farmHover && puedeCambiarGranja ? 'rgba(255,252,250,0.14)' : 'rgba(0,0,0,0.16)',
+              border: '1px solid rgba(245,239,227,0.14)',
               borderRadius: theme.radiusSm,
-              border: '1px solid rgba(245,239,227,0.25)',
-              backdropFilter: 'blur(8px)',
               display: 'flex',
-              justifyContent: showLabel ? 'space-between' : 'center',
               alignItems: 'center',
-              gap: '0.5rem',
+              justifyContent: showLabel ? 'flex-start' : 'center',
+              gap: '0.65rem',
+              color: theme.creamSoft,
+              fontFamily: theme.fontBody,
+              textAlign: 'left',
+              cursor: puedeCambiarGranja ? 'pointer' : 'default',
+              transition: 'background 0.15s ease',
             }}
           >
-            {showLabel ? (
+            <span
+              aria-hidden
+              style={{
+                width: 32,
+                height: 32,
+                flexShrink: 0,
+                borderRadius: 8,
+                background: theme.creamSoft,
+                color: theme.maroon,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 10.5 12 4l9 6.5" />
+                <path d="M5 9.5V20h14V9.5" />
+                <path d="M10 20v-5h4v5" />
+              </svg>
+            </span>
+            {showLabel && (
               <>
-                <div style={{ minWidth: 0 }}>
-                  <strong style={{ display: 'block', color: '#FFF8F0', fontSize: '0.86rem' }}>{granja.especie}</strong>
-                  <span style={{ opacity: 0.85, fontSize: '0.76rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ minWidth: 0, flex: 1 }}>
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      color: '#FFF8F0',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
                     {granja.nombre}
                   </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    seleccionarGranja(null);
-                    localStorage.removeItem('farmId');
-                    navigate('/seleccionar-granja');
-                  }}
-                  title="Cambiar granja"
-                  style={{
-                    background: 'rgba(255,255,255,0.18)',
-                    border: 'none',
-                    color: '#FFFFFF',
-                    padding: '0.3rem 0.55rem',
-                    borderRadius: 4,
-                    cursor: 'pointer',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  Cambiar
-                </button>
+                  <span style={{ display: 'block', fontSize: '0.72rem', opacity: 0.7, marginTop: 1 }}>
+                    {especieLabel}
+                  </span>
+                </span>
+                {puedeCambiarGranja && (
+                  <svg
+                    aria-hidden
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flexShrink: 0, opacity: farmHover ? 1 : 0.6, transition: 'opacity 0.15s ease' }}
+                  >
+                    <polyline points="7 9 12 4 17 9" />
+                    <polyline points="7 15 12 20 17 15" />
+                  </svg>
+                )}
               </>
-            ) : (
-              <div
-                title={`${granja.especie} · ${granja.nombre}`}
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: theme.radiusSm,
-                  background: 'rgba(255,252,250,0.16)',
-                  border: '1px solid rgba(245,239,227,0.3)',
-                  color: '#FFF8F0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.8rem',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                {granja.especie.charAt(0).toUpperCase()}
-              </div>
             )}
-          </div>
+          </button>
         )}
 
         {/* Menú */}
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0.1rem', scrollbarWidth: 'thin' }}>
-          {navSections.map((section, sectionIdx) => (
+          {activeNavSections.map((section, sectionIdx) => (
             <div
               key={section.id}
               style={{
-                marginBottom: sectionIdx < navSections.length - 1 ? (showLabel ? '0.65rem' : '0.45rem') : 0,
+                marginBottom: sectionIdx < activeNavSections.length - 1 ? (showLabel ? '0.65rem' : '0.45rem') : 0,
               }}
             >
-              {showLabel ? (
+              {!showLabel && sectionIdx > 0 && (
                 <div
+                  aria-hidden
                   style={{
-                    fontSize: '0.62rem',
-                    letterSpacing: '0.11em',
-                    textTransform: 'uppercase',
-                    opacity: 0.55,
-                    margin: '0.35rem 0.55rem 0.45rem',
-                    fontWeight: 800,
+                    height: 1,
+                    background: 'rgba(245,239,227,0.18)',
+                    margin: '0.35rem 0.65rem 0.45rem',
                   }}
-                >
-                  {section.label}
-                </div>
-              ) : (
-                sectionIdx > 0 && (
-                  <div
-                    aria-hidden
-                    style={{
-                      height: 1,
-                      background: 'rgba(245,239,227,0.18)',
-                      margin: '0.35rem 0.65rem 0.45rem',
-                    }}
-                  />
-                )
+                />
               )}
               <ul
                 style={{
@@ -474,7 +516,9 @@ const Layout = ({ children }) => {
                 {section.items.map((item) => {
                   const active = isItemActive(item);
                   const badge =
-                    item.badgeKey === 'alertasVencidas' && navBadges.alertasVencidas > 0
+                    'badgeKey' in item &&
+                    item.badgeKey === 'alertasVencidas' &&
+                    navBadges.alertasVencidas > 0
                       ? navBadges.alertasVencidas
                       : 0;
                   return (
@@ -610,70 +654,27 @@ const Layout = ({ children }) => {
           ))}
         </div>
 
-        {/* Footer del sidebar: versión, usuario y logout */}
+        {/* Footer del sidebar: usuario y logout */}
         <div style={{ marginTop: '0.75rem', borderTop: '1px solid rgba(245,239,227,0.2)', paddingTop: '0.85rem' }}>
-          {showLabel && (
-            <div
-              style={{
-                fontSize: '0.66rem',
-                letterSpacing: '0.08em',
-                opacity: 0.65,
-                textTransform: 'uppercase',
-                margin: '0 0.35rem 0.7rem',
-              }}
-            >
-              Control Animales · v2.0 · FZ UNAS
+          {showLabel && user && (
+            <div style={{ marginBottom: '0.75rem', padding: '0 0.35rem', minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  color: '#FFFFFF',
+                }}
+              >
+                {user.nombre}
+              </div>
+              <div style={{ opacity: 0.75, fontSize: '0.74rem', textTransform: 'capitalize' }}>
+                {user.rol || 'Operador'}
+              </div>
             </div>
           )}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.65rem',
-              marginBottom: '0.75rem',
-              padding: showLabel ? '0 0.35rem' : '0',
-              justifyContent: showLabel ? 'flex-start' : 'center',
-            }}
-          >
-            <div
-              title={user?.nombre}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                background: theme.creamSoft,
-                color: theme.maroonDeep,
-                fontWeight: 800,
-                fontSize: '0.82rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-                flexShrink: 0,
-              }}
-            >
-              {initiales(user?.nombre)}
-            </div>
-            {showLabel && user && (
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    color: '#FFFFFF',
-                  }}
-                >
-                  {user.nombre}
-                </div>
-                <div style={{ opacity: 0.75, fontSize: '0.74rem', textTransform: 'capitalize' }}>
-                  {user.rol || 'Operador'}
-                </div>
-              </div>
-            )}
-          </div>
 
           <button
             type="button"
@@ -724,7 +725,9 @@ const Layout = ({ children }) => {
           minHeight: '100vh',
         }}
       >
-        {backTarget && !HUB_PATHS.includes(location.pathname) && (
+        {backTarget &&
+          !HUB_PATHS.includes(pathname) &&
+          !(superadmin && SUPERADMIN_ROOT_PATHS.includes(pathname)) && (
           <div style={{ marginBottom: '0.9rem' }}>
             <button
               type="button"
