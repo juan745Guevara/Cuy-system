@@ -8,3 +8,8 @@ out/
 .env
 .DS_Store
 *.log
+
+# Artefactos de generación de la entrega
+docs/entrega_01/.build/
+docs/entrega_01/img/
+docs/entrega_01/tools/plantuml.jar

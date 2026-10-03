@@ -1,0 +1,21 @@
+{
+  "_comentario": "Datos de la caratula. Edita este archivo y vuelve a ejecutar tools/build.mjs para regenerar el Word.",
+  "institucion": "UNIVERSIDAD NACIONAL AGRARIA DE LA SELVA",
+  "facultad": "FACULTAD DE INGENIERÍA EN INFORMÁTICA Y SISTEMAS",
+  "departamento": "Escuela Profesional de Ingeniería de Sistemas",
+  "institucion_guia": "Laboratorio de crianza de cuyes — Facultad de Zootecnia (UNAS)",
+  "titulo": "SISTEMA DE GESTIÓN Y TRAZABILIDAD DEL CICLO PRODUCTIVO DE CUYES",
+  "subtitulo": "Entregable 1 — Unidad I: Fundamentos y Estrategias de Diseño",
+  "titulo_documento": "Modelo del Dominio, Casos de Uso y Diseño de Aplicación Preliminar",
+  "autores": [
+    "Dávila Isidro, Cristopher Leandro",
+    "Guevara Cuchilla, Juan Alfredo",
+    "Díaz Guzmán, Nicole Geraldine",
+    "Vasquez Serafin, Nicol Angely",
+    "Lopez Gonzales, Lourdes Xiomara"
+  ],
+  "docente": "Acevedo Aliaga, Alberto Lucio",
+  "curso": "Fundamentos y Estrategias de Diseño de Software",
+  "lugar": "Tingo María — Perú",
+  "fecha": "Octubre de 2026"
+}
