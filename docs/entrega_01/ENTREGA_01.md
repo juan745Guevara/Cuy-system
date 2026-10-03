@@ -475,7 +475,7 @@ A continuación se detalla la definición formal y el propósito de cada una de 
 
 ## 5. Glosario de términos
 
-El presente glosario estandariza el vocabulario técnico y conceptual empleado en la documentación del sistema. Se estructura en dos tablas complementarias: los **términos del dominio zootécnico y del negocio** (utilizados en el criadero del laboratorio de la Facultad de Zootecnia de la UNAS) y los **términos técnicos y arquitectónicos del sistema de información**.
+El presente glosario estandariza el vocabulario técnico y conceptual empleado en la documentación del sistema. Se estructura en tres tablas complementarias: los **términos del dominio zootécnico y del negocio** (utilizados en el criadero del laboratorio de la Facultad de Zootecnia de la UNAS) y los **términos técnicos y arquitectónicos del sistema de información**.
 
 ### 5.1. Términos del dominio del negocio (Zootecnia)
 
@@ -512,6 +512,32 @@ El presente glosario estandariza el vocabulario técnico y conceptual empleado e
 | **Sobrecupo** | Condición en la cual la cantidad de cuyes en una jaula supera la capacidad máxima zootécnica permitida, requiriendo confirmación o reubicación. |
 | **Trazabilidad** | Capacidad técnica de reconstruir todo el historial de vida de un cuy: genealogía paterna/materna, jaulas ocupadas, pesajes, controles sanitarios y evento final de egreso. |
 
+| **Alerta** | Aviso generado por el sistema cuando se acerca una fecha relevante (desparasitación, separación del empadre, parto estimado). |
+| **Área** | Nivel de la jerarquía organizativa ubicado entre la granja y la jaula. |
+| **Código único** | Identificador exclusivo de cada cuy (ej. `CUY-00157`) que permite rastrear su historial completo. |
+| **Condición** | Situación particular de un cuy dentro de su etapa: normal, futura reproductora, reemplazo, empadrado, gestante, en tratamiento, descarte, vendido o muerto. |
+| **Cuy** | Animal individual gestionado por el sistema; cuenta con ficha propia, código único e historial de eventos. |
+| **Desparasitación** | Control sanitario que se realiza aproximadamente cada 3 meses; el sistema calcula la próxima fecha y alerta. |
+| **Especie** | Módulo funcional (cuyes, conejos, etc.) que define catálogos, ciclo reproductivo y reglas propias. |
+| **Estado** | Situación general del registro de un cuy (ej. `Activo`, `Descartado`, `Vendido`, `Muerto`). |
+| **Etapa** | Fase del ciclo productivo del cuy: Gazapo, Recría, Engorde o Reproductor. |
+| **Ficha individual** | Registro único de cada cuy con sus datos generales (sexo, raza, nacimiento, madre, padre, etapa, estado, jaula actual) y su historial de eventos. |
+| **Futura reproductora** | Hembra en engorde seleccionada para reproducción, generalmente hija de una madre con buena productividad. |
+| **Gazapo** | Cría recién nacida, desde el nacimiento hasta el destete. |
+| **Genealogía** | Relación de parentesco del cuy (madre y padre) que permite conocer su origen. |
+| **Granja** | Unidad de crianza; pertenece a una sola especie. |
+| **Historial individual** | Registro cronológico de todos los eventos de un cuy: nacimiento, vacunas, destete, cambios de etapa y de jaula, selección, empadres y partos. |
+| **Inventario** | Cantidad y distribución actual de cuyes, generada a partir de los movimientos registrados. |
+| **Jaula** | Espacio de alojamiento con tipo, capacidad, sexo permitido, etapa y cantidad actual de animales. |
+| **Jerarquía** | Estructura organizativa del sistema: especie → granja → área → jaula → animal. |
+| **Peso promedio** | Promedio de las muestras de peso registradas: `(Peso 1 + Peso 2 + Peso 3) / 3`. |
+| **Reemplazo** | Macho o hembra seleccionado para sustituir a reproductores descartados. |
+| **Reproductor** | Cuy en etapa reproductiva que participa en empadres. |
+| **Sanidad** | Proceso de control de salud: vacunación, desparasitación, tratamientos, enfermedades, lesiones y controles rutinarios. |
+| **Selección reproductiva** | Proceso de elegir, según el historial reproductivo de la madre, qué animales serán futuros reproductores o reemplazos. |
+| **Tasa de mortalidad** | Indicador: `(Número de cuyes muertos / Población evaluada) × 100`; puede obtenerse por mes, año, raza, jaula, etapa o sexo. |
+| **Vacunación inicial** | Tratamientos aplicados al nacimiento: vacuna contra salmonelosis y complejo B; se almacenan en el historial sanitario del animal. |
+
 ### 5.2. Términos técnicos y arquitectónicos
 
 | Término | Definición técnica en el sistema |
@@ -529,6 +555,10 @@ El presente glosario estandariza el vocabulario técnico y conceptual empleado e
 | **Borrado lógico (*Soft delete*)** | Mecanismo de persistencia mediante el cual los registros no se destruyen físicamente en la base de datos, sino que se marcan como inactivos para preservar la integridad histórica y la auditoría. |
 | **Bitácora de auditoría (*Audit Log*)** | Registro histórico inmutable de eventos de escritura del sistema que almacena el usuario ejecutor, fecha/hora, acción realizada y los estados anterior y posterior del registro. |
 | **BPMN (*Business Process Model and Notation*)** | Notación gráfica estandarizada para el modelado visual de flujos de procesos de negocio, utilizada para representar los procesos AS-IS de crianza y ventas del criadero. |
+
+| **Contexto de sesión** | Selección que se realiza tras el login: elegir especie → elegir granja → operar. |
+| **Dashboard** | Panel principal con indicadores: cuyes activos por etapa, próximos destetes y partos, desparasitaciones pendientes, mortalidad y candidatos a descarte. |
+| **Multitenancy** | Cada request lleva `x-species-id` y `x-farm-id`; el backend valida el alcance por rol y granja. |
 
 ### 5.3. Siglas y acrónimos
 
