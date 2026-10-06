@@ -10,7 +10,7 @@
 - Guevara Cuchilla, Juan Alfredo
 - Díaz Guzmán, Nicole Geraldine
 - Vasquez Serafin, Nicol Angely
-- Lopez Gonzales, Lourdes Xiomara
+- Lopez Gonzalez, Lourdes Xiomara
 
 **Docente:** Acevedo Aliaga, Alberto Lucio · **Fecha:** Octubre de 2026
 
