@@ -139,12 +139,14 @@ Cuy-system/
 
 ## Documentación
 
-Los requisitos funcionales (65 historias de usuario, backlog por entregas, actores) están en `docs/`:
+Los requisitos (65 historias de usuario, backlog por entregas, actores, RF y RNF) están en `docs/`:
 
 - [Visión y alcance](docs/vision.md)
 - [Actores y permisos](docs/actores.md)
 - [Historias de usuario](docs/historias-de-usuario.md)
 - [Backlog por entregas](docs/backlog.md)
+- [Requisitos funcionales](docs/requisitos-funcionales.md)
+- [Requisitos no funcionales](docs/requisitos-no-funcionales.md)
 - [Agregar nuevas especies](docs/modulos-futuros.md)
 
 ## Roadmap (alto nivel)
