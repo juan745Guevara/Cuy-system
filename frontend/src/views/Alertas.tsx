@@ -47,9 +47,9 @@ const Alertas = () => {
     <div style={s.wrap}>
       <h1 style={s.title}>Alertas</h1>
       <p style={s.sub}>
-        Tareas del ciclo pendientes o vencidas.{' '}
+        Tareas del ciclo pendientes.{' '}
         {admin && (
-          <Link to="/alertas/plazos">Configurar plazos del ciclo</Link>
+          <Link to="/alertas/plazos">Configurar plazos</Link>
         )}
       </p>
       {error && <div style={s.error}>{error}</div>}

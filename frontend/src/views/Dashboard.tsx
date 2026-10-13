@@ -92,53 +92,76 @@ function HeroKpi({ label, badge, badgeColor, badgeBg, value, valueColor, footer,
 }
 
 /** Paso del Pipeline Biológico */
-function BioStep({ n, name, time, count, route, navigate, active }) {
+function BioStep({ n, name, time, count, route, navigate, active, last }) {
   return (
-    <button
-      type="button"
-      onClick={() => navigate(route)}
-      title={`Ir a ${name}`}
+    <div
       style={{
-        flex: 1,
-        minWidth: 128,
-        border: 'none',
-        background: 'transparent',
-        cursor: 'pointer',
-        fontFamily: theme.fontBody,
-        textAlign: 'center',
-        padding: '0.85rem 0.5rem',
-        borderTop: `3px solid ${active ? theme.maroon : theme.border}`,
-        borderRadius: '10px 10px 0 0',
-        transition: 'all 0.15s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'rgba(122,18,22,0.04)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent';
+        display: 'flex',
+        alignItems: 'center',
+        flex: last ? '0 1 auto' : '1 1 auto',
+        minWidth: last ? undefined : 132,
       }}
     >
-      <div
+      <button
+        type="button"
+        onClick={() => navigate(route)}
+        title={`Ir a ${name}`}
         style={{
-          width: 30,
-          height: 30,
-          margin: '0 auto 0.4rem',
-          borderRadius: '50%',
+          flex: 1,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontWeight: 800,
-          fontSize: '0.82rem',
-          color: active ? '#FFF' : theme.maroon,
-          background: active ? theme.maroon : theme.creamDeep,
+          textAlign: 'center',
+          minHeight: 132,
+          gap: '0.4rem',
+          border: `1px solid ${theme.border}`,
+          borderTop: `3px solid ${active ? theme.maroon : theme.border}`,
+          background: '#FFFFFF',
+          cursor: 'pointer',
+          fontFamily: theme.fontBody,
+          padding: '1rem 0.6rem',
+          borderRadius: 10,
+          transition: 'transform 0.12s ease, box-shadow 0.12s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = theme.shadowSoft;
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.transform = 'none';
         }}
       >
-        {n}
-      </div>
-      <div style={{ fontSize: '0.82rem', fontWeight: 750, color: theme.ink, lineHeight: 1.15 }}>{name}</div>
-      <div style={{ fontSize: '0.68rem', color: theme.muted, marginTop: '0.15rem' }}>{time}</div>
-      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: theme.maroon, marginTop: '0.25rem' }}>{count}</div>
-    </button>
+        <span
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: '50%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.8rem',
+            fontWeight: 800,
+            flexShrink: 0,
+            color: active ? '#FFF' : theme.maroon,
+            background: active ? theme.maroon : theme.creamDeep,
+          }}
+        >
+          {n}
+        </span>
+        <span style={{ fontSize: '0.98rem', fontWeight: 750, color: theme.ink, lineHeight: 1.15 }}>{name}</span>
+        <span style={{ fontSize: '0.82rem', color: theme.muted, lineHeight: 1.15 }}>{time}</span>
+        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: theme.maroon, lineHeight: 1.15 }}>{count}</span>
+      </button>
+      {!last && (
+        <span style={{ display: 'flex', alignItems: 'center', color: theme.border, flexShrink: 0, padding: '0 0.1rem' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -353,10 +376,6 @@ const Dashboard = () => {
               'Granja Activa'
             )}{' '}
             — <span style={{ textTransform: 'capitalize' }}>{fechaHoy}</span>
-            <span style={{ color: theme.muted }}>
-              {' '}
-              · Monitoreo de población, ocupación de jaulas y alertas zootécnicas UNAS.
-            </span>
           </p>
         </div>
 
@@ -455,7 +474,7 @@ const Dashboard = () => {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '0.5rem',
-                marginBottom: '0.5rem',
+                marginBottom: '0.75rem',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -467,19 +486,22 @@ const Dashboard = () => {
                   Pipeline Biológico del Cuy — Población por Fase
                 </strong>
               </div>
-              <span style={{ fontSize: '0.78rem', color: theme.muted }}>Ciclo total estándar: ~135 días</span>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: theme.maroonDeep,
+                  background: theme.creamDeep,
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: 20,
+                }}
+              >
+                Ciclo total ~135 días
+              </span>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                borderTop: 'none',
-                overflowX: 'auto',
-                paddingTop: '0.5rem',
-              }}
-            >
-              {pipeline.map((p) => (
-                <BioStep key={p.n} {...p} navigate={navigate} active={p.active} />
+            <div style={{ display: 'flex', alignItems: 'stretch', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+              {pipeline.map((p, i) => (
+                <BioStep key={p.n} {...p} navigate={navigate} active={p.active} last={i === pipeline.length - 1} />
               ))}
             </div>
           </div>

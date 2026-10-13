@@ -3,6 +3,7 @@ export abstract class UsersRepositoryPort {
   protected constructor() {}
   abstract createWithFarms(...args: any[]): Promise<any> | any;
   abstract findActiveFarmIds(...args: any[]): Promise<any> | any;
+  abstract findAllFarmIds(...args: any[]): Promise<any> | any;
   abstract findById(...args: any[]): Promise<any> | any;
   abstract findByEmail(...args: any[]): Promise<any> | any;
   abstract findFarmIdsByUser(...args: any[]): Promise<any> | any;

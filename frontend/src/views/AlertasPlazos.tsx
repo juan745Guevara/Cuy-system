@@ -61,8 +61,8 @@ const AlertasPlazos = () => {
     <div style={s.wrap}>
       <h1 style={s.title}>Plazos de alertas</h1>
       <p style={s.sub}>
-        Días de gestación, destete y reglas de avisos automáticos.{' '}
-        <Link to="/alertas">Ver bandeja de alertas</Link>
+        Días de gestación y destete.{' '}
+        <Link to="/alertas">Ver alertas</Link>
       </p>
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}

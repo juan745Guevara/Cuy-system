@@ -14,7 +14,7 @@ const CONFIG_ITEMS = [
     adminOnly: true,
     color: '#1565C0',
     bgBadge: 'rgba(21, 101, 192, 0.1)',
-    desc: 'Crear usuarios, asignar roles (Admin, Encargado, Supervisor) y definir el alcance de granjas asignadas.',
+    desc: 'Usuarios, roles y granjas asignadas.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -32,7 +32,7 @@ const CONFIG_ITEMS = [
     category: 'Zootecnia',
     color: '#7A1216',
     bgBadge: 'rgba(122, 18, 22, 0.1)',
-    desc: 'Razas oficiales (Perú, Andina, Mantaro, Inti, Tipos 2-4) y Categorías biológicas (Gazapo, Recría, Reproductor/a).',
+    desc: 'Razas y categorías biológicas.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -48,7 +48,7 @@ const CONFIG_ITEMS = [
     category: 'Alertas',
     color: '#D84315',
     bgBadge: 'rgba(216, 67, 21, 0.1)',
-    desc: 'Configuración de días de gestación (~67 días), días al destete (~14-21 días) y reglas de avisos automáticos.',
+    desc: 'Días de gestación, destete y avisos.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
@@ -65,7 +65,7 @@ const CONFIG_ITEMS = [
     adminOnly: true,
     color: '#455A64',
     bgBadge: 'rgba(69, 90, 100, 0.1)',
-    desc: 'Historial inmutable de cambios, qué usuario registró, modificó o anuló datos con fecha y hora.',
+    desc: 'Historial de cambios y anulaciones.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />

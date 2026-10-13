@@ -43,40 +43,40 @@ model Especie {
   nombre String   @unique @db.VarChar(50)
   activo Boolean? @default(true)
 
-  granjas     Granja[]
-  razas       Raza[]
-  categorias  Categoria[]
+  granjas    Granja[]
+  razas      Raza[]
+  categorias Categoria[]
 
   @@map("especies")
 }
 
 model Granja {
-  id           Int       @id @default(autoincrement())
-  nombre       String    @unique @db.VarChar(100)
-  id_especie   Int
-  ubicacion    String?   @db.VarChar(200)
-  activa       Boolean?  @default(true)
-  created_at   DateTime? @default(now()) @db.Timestamp(6)
-  updated_at   DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+  id         Int       @id @default(autoincrement())
+  nombre     String    @unique @db.VarChar(100)
+  id_especie Int
+  ubicacion  String?   @db.VarChar(200)
+  activa     Boolean?  @default(true)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
-  especie           Especie          @relation(fields: [id_especie], references: [id])
-  usuarios          UsuarioGranja[]
-  areas             Area[]
-  recintos          Recinto[]
-  animales          Animal[]
-  empadres          Empadre[]
-  partos            Parto[]
-  mortalidad        Mortalidad[]
-  ventas            Venta[]
-  movimientos_origen  Movimiento[]   @relation("MovimientoOrigen")
-  movimientos_destino Movimiento[]   @relation("MovimientoDestino")
-  pesajes           Pesaje[]
-  tratamientos      Tratamiento[]
-  alerta_config     AlertaConfig[]
-  peso_rangos       PesoRango[]
-  alertas_descarte  AlertaDescarte[]
-  ranking_config    RankingConfig?
-  audit_logs        AuditLog[]
+  especie             Especie          @relation(fields: [id_especie], references: [id])
+  usuarios            UsuarioGranja[]
+  areas               Area[]
+  recintos            Recinto[]
+  animales            Animal[]
+  empadres            Empadre[]
+  partos              Parto[]
+  mortalidad          Mortalidad[]
+  ventas              Venta[]
+  movimientos_origen  Movimiento[]     @relation("MovimientoOrigen")
+  movimientos_destino Movimiento[]     @relation("MovimientoDestino")
+  pesajes             Pesaje[]
+  tratamientos        Tratamiento[]
+  alerta_config       AlertaConfig[]
+  peso_rangos         PesoRango[]
+  alertas_descarte    AlertaDescarte[]
+  ranking_config      RankingConfig?
+  audit_logs          AuditLog[]
 
   @@map("granjas")
 }
@@ -122,13 +122,13 @@ model Recinto {
   created_at       DateTime? @default(now()) @db.Timestamp(6)
   updated_at       DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
-  granja              Granja       @relation(fields: [id_granja], references: [id], onDelete: Cascade)
-  area                Area?        @relation(fields: [id_area], references: [id], onDelete: SetNull)
+  granja              Granja        @relation(fields: [id_granja], references: [id], onDelete: Cascade)
+  area                Area?         @relation(fields: [id_area], references: [id], onDelete: SetNull)
   animales            Animal[]
   empadres            Empadre[]
   mortalidad          Mortalidad[]
-  movimientos_origen  Movimiento[] @relation("MovOrigenRecinto")
-  movimientos_destino Movimiento[] @relation("MovDestinoRecinto")
+  movimientos_origen  Movimiento[]  @relation("MovOrigenRecinto")
+  movimientos_destino Movimiento[]  @relation("MovDestinoRecinto")
   tratamientos        Tratamiento[]
 
   @@unique([id_area, codigo])
@@ -163,38 +163,39 @@ model Categoria {
 }
 
 model Animal {
-  id                Int       @id @default(autoincrement())
-  id_granja         Int
-  codigo            String    @db.VarChar(50)
-  codigo_norm       String    @db.VarChar(50)
-  sexo              String    @db.Char(1)
-  id_raza           Int?
-  id_categoria      Int?
-  id_jaula          Int?
-  fecha_nacimiento  DateTime? @db.Date
-  estado            String?   @default("activo") @db.VarChar(20)
-  fecha_baja        DateTime? @db.Date
-  motivo_baja       String?
-  id_parto_origen   Int?
-  created_by        Int?
-  created_at        DateTime? @default(now()) @db.Timestamp(6)
-  updated_at        DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+  id               Int       @id @default(autoincrement())
+  id_granja        Int
+  codigo           String    @db.VarChar(50)
+  codigo_norm      String    @db.VarChar(50)
+  sexo             String    @db.Char(1)
+  id_raza          Int?
+  id_categoria     Int?
+  id_jaula         Int?
+  fecha_nacimiento DateTime? @db.Date
+  estado           String?   @default("activo") @db.VarChar(20)
+  fecha_baja       DateTime? @db.Date
+  motivo_baja      String?
+  destino_descarte String?   @db.VarChar(100)
+  id_parto_origen  Int?
+  created_by       Int?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
-  granja              Granja                 @relation(fields: [id_granja], references: [id])
-  raza                Raza?                  @relation(fields: [id_raza], references: [id])
-  categoria           Categoria?             @relation(fields: [id_categoria], references: [id])
-  recinto             Recinto?               @relation(fields: [id_jaula], references: [id])
-  parto_origen        Parto?                 @relation("AnimalPartoOrigen", fields: [id_parto_origen], references: [id])
-  creador             Usuario?               @relation("AnimalCreatedBy", fields: [created_by], references: [id])
-  particularidades    AnimalParticularidad[]
-  empadres_macho      Empadre[]              @relation("EmpadreMacho")
-  empadre_hembras     EmpadreHembra[]
-  partos              Parto[]                @relation("PartoHembra")
-  mortalidad          Mortalidad[]
-  ventas              Venta[]
-  movimientos         Movimiento[]
-  pesajes             Pesaje[]
-  tratamientos        Tratamiento[]
+  granja           Granja                 @relation(fields: [id_granja], references: [id])
+  raza             Raza?                  @relation(fields: [id_raza], references: [id])
+  categoria        Categoria?             @relation(fields: [id_categoria], references: [id])
+  recinto          Recinto?               @relation(fields: [id_jaula], references: [id])
+  parto_origen     Parto?                 @relation("AnimalPartoOrigen", fields: [id_parto_origen], references: [id])
+  creador          Usuario?               @relation("AnimalCreatedBy", fields: [created_by], references: [id])
+  particularidades AnimalParticularidad[]
+  empadres_macho   Empadre[]              @relation("EmpadreMacho")
+  empadre_hembras  EmpadreHembra[]
+  partos           Parto[]                @relation("PartoHembra")
+  mortalidad       Mortalidad[]
+  ventas           Venta[]
+  movimientos      Movimiento[]
+  pesajes          Pesaje[]
+  tratamientos     Tratamiento[]
 
   @@unique([id_granja, codigo_norm])
   @@index([codigo_norm], map: "idx_animales_codigo_norm")
@@ -216,35 +217,35 @@ model AnimalParticularidad {
 }
 
 model Empadre {
-  id                 Int       @id @default(autoincrement())
-  id_granja          Int
-  id_macho           Int?
-  id_jaula           Int?
-  fecha_empadre      DateTime  @db.Date
-  peso_antes         Decimal?  @db.Decimal(10, 2)
-  peso_despues       Decimal?  @db.Decimal(10, 2)
-  cantidad_hembras   Int?
-  cantidad_prenadas  Int?
-  notas              String?
-  created_by         Int?
-  created_at         DateTime? @default(now()) @db.Timestamp(6)
-  updated_at         DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+  id                Int       @id @default(autoincrement())
+  id_granja         Int
+  id_macho          Int?
+  id_jaula          Int?
+  fecha_empadre     DateTime  @db.Date
+  peso_antes        Decimal?  @db.Decimal(10, 2)
+  peso_despues      Decimal?  @db.Decimal(10, 2)
+  cantidad_hembras  Int?
+  cantidad_prenadas Int?
+  notas             String?
+  created_by        Int?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
-  granja   Granja          @relation(fields: [id_granja], references: [id])
-  macho    Animal?         @relation("EmpadreMacho", fields: [id_macho], references: [id])
-  recinto  Recinto?        @relation(fields: [id_jaula], references: [id])
-  creador  Usuario?        @relation("EmpadreCreatedBy", fields: [created_by], references: [id])
-  hembras  EmpadreHembra[]
-  partos   Parto[]
+  granja  Granja          @relation(fields: [id_granja], references: [id])
+  macho   Animal?         @relation("EmpadreMacho", fields: [id_macho], references: [id])
+  recinto Recinto?        @relation(fields: [id_jaula], references: [id])
+  creador Usuario?        @relation("EmpadreCreatedBy", fields: [created_by], references: [id])
+  hembras EmpadreHembra[]
+  partos  Parto[]
 
   @@map("empadres")
 }
 
 model EmpadreHembra {
-  id          Int     @id @default(autoincrement())
-  id_empadre  Int
-  id_hembra   Int
-  resultado   String? @default("abierto") @db.VarChar(20)
+  id         Int     @id @default(autoincrement())
+  id_empadre Int
+  id_hembra  Int
+  resultado  String? @default("abierto") @db.VarChar(20)
 
   empadre Empadre @relation(fields: [id_empadre], references: [id], onDelete: Cascade)
   hembra  Animal  @relation(fields: [id_hembra], references: [id])
@@ -289,6 +290,9 @@ model Destete {
   destetados_m  Int?      @default(0)
   destetados_h  Int?      @default(0)
   muertos       Int?      @default(0)
+  peso_promedio Decimal?  @db.Decimal(10, 2)
+  id_jaula_m    Int?
+  id_jaula_h    Int?
   peso_m1       Decimal?  @db.Decimal(10, 2)
   peso_m2       Decimal?  @db.Decimal(10, 2)
   peso_m3       Decimal?  @db.Decimal(10, 2)
@@ -305,22 +309,24 @@ model Destete {
 }
 
 model Mortalidad {
-  id             Int       @id @default(autoincrement())
-  id_granja      Int
-  id_animal      Int?
-  fecha          DateTime  @db.Date
-  clasificacion  String?   @db.VarChar(50)
-  categoria      String?   @db.VarChar(50)
-  cantidad       Int
-  causa          String?
-  id_jaula       Int?
-  anulado        Boolean?  @default(false)
+  id               Int       @id @default(autoincrement())
+  id_granja        Int
+  id_animal        Int?
+  fecha            DateTime  @db.Date
+  clasificacion    String?   @db.VarChar(50)
+  categoria        String?   @db.VarChar(50)
+  cantidad         Int
+  causa            String?
+  tipo             String?   @db.VarChar(20)
+  observaciones    String?
+  id_jaula         Int?
+  anulado          Boolean?  @default(false)
   motivo_anulacion String?
-  created_by     Int?
-  created_at     DateTime? @default(now()) @db.Timestamp(6)
+  created_by       Int?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
 
-  granja  Granja  @relation(fields: [id_granja], references: [id])
-  animal  Animal? @relation(fields: [id_animal], references: [id])
+  granja  Granja   @relation(fields: [id_granja], references: [id])
+  animal  Animal?  @relation(fields: [id_animal], references: [id])
   recinto Recinto? @relation(fields: [id_jaula], references: [id])
   creador Usuario? @relation("MortalidadCreatedBy", fields: [created_by], references: [id])
 
@@ -328,38 +334,43 @@ model Mortalidad {
 }
 
 model Venta {
-  id            Int       @id @default(autoincrement())
-  id_granja     Int
-  id_animal     Int?
-  fecha         DateTime  @db.Date
-  clasificacion String?   @db.VarChar(50)
-  categoria     String?   @db.VarChar(50)
-  cantidad      Int
-  comprador     String?   @db.VarChar(100)
-  precio        Decimal?  @db.Decimal(10, 2)
-  anulado       Boolean?  @default(false)
+  id               Int       @id @default(autoincrement())
+  id_granja        Int
+  id_animal        Int?
+  fecha            DateTime  @db.Date
+  clasificacion    String?   @db.VarChar(50)
+  categoria        String?   @db.VarChar(50)
+  cantidad         Int
+  comprador        String?   @db.VarChar(100)
+  precio           Decimal?  @db.Decimal(10, 2)
+  tipo_comprobante String?   @db.VarChar(20)
+  serie            String?   @db.VarChar(10)
+  numero           String?   @db.VarChar(20)
+  observaciones    String?
+  estado           String?   @default("registrada") @db.VarChar(20)
+  anulado          Boolean?  @default(false)
   motivo_anulacion String?
-  created_by    Int?
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  created_by       Int?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
 
-  granja  Granja  @relation(fields: [id_granja], references: [id])
-  animal  Animal? @relation(fields: [id_animal], references: [id])
+  granja  Granja   @relation(fields: [id_granja], references: [id])
+  animal  Animal?  @relation(fields: [id_animal], references: [id])
   creador Usuario? @relation("VentaCreatedBy", fields: [created_by], references: [id])
 
   @@map("ventas")
 }
 
 model AuditLog {
-  id          Int       @id @default(autoincrement())
-  id_usuario  Int?
-  accion      String    @db.VarChar(100)
-  detalle     String?
-  entidad     String?   @db.VarChar(80)
-  id_entidad  Int?
-  id_granja   Int?
-  antes       Json?
-  despues     Json?
-  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  id         Int       @id @default(autoincrement())
+  id_usuario Int?
+  accion     String    @db.VarChar(100)
+  detalle    String?
+  entidad    String?   @db.VarChar(80)
+  id_entidad Int?
+  id_granja  Int?
+  antes      Json?
+  despues    Json?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
 
   usuario Usuario? @relation(fields: [id_usuario], references: [id])
   granja  Granja?  @relation(fields: [id_granja], references: [id])
@@ -368,23 +379,23 @@ model AuditLog {
 }
 
 model Movimiento {
-  id                 Int       @id @default(autoincrement())
-  tipo               String    @db.VarChar(20)
-  id_animal          Int
-  id_granja_origen   Int?
-  id_granja_destino  Int?
-  id_jaula_origen    Int?
-  id_jaula_destino   Int?
-  fecha              DateTime  @db.Date
-  motivo             String?
-  excedio_capacidad  Boolean?  @default(false)
-  aviso_area         Boolean?  @default(false)
-  created_by         Int?
-  created_at         DateTime? @default(now()) @db.Timestamp(6)
+  id                Int       @id @default(autoincrement())
+  tipo              String    @db.VarChar(20)
+  id_animal         Int
+  id_granja_origen  Int?
+  id_granja_destino Int?
+  id_jaula_origen   Int?
+  id_jaula_destino  Int?
+  fecha             DateTime  @db.Date
+  motivo            String?
+  excedio_capacidad Boolean?  @default(false)
+  aviso_area        Boolean?  @default(false)
+  created_by        Int?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
 
-  animal          Animal  @relation(fields: [id_animal], references: [id])
-  granja_origen   Granja? @relation("MovimientoOrigen", fields: [id_granja_origen], references: [id])
-  granja_destino  Granja? @relation("MovimientoDestino", fields: [id_granja_destino], references: [id])
+  animal          Animal   @relation(fields: [id_animal], references: [id])
+  granja_origen   Granja?  @relation("MovimientoOrigen", fields: [id_granja_origen], references: [id])
+  granja_destino  Granja?  @relation("MovimientoDestino", fields: [id_granja_destino], references: [id])
   recinto_origen  Recinto? @relation("MovOrigenRecinto", fields: [id_jaula_origen], references: [id])
   recinto_destino Recinto? @relation("MovDestinoRecinto", fields: [id_jaula_destino], references: [id])
   creador         Usuario? @relation("MovimientoCreatedBy", fields: [created_by], references: [id])
@@ -394,17 +405,17 @@ model Movimiento {
 }
 
 model Pesaje {
-  id           Int       @id @default(autoincrement())
-  id_granja    Int
-  id_animal    Int
-  fecha        DateTime  @db.Date
-  peso_gramos  Decimal   @db.Decimal(10, 2)
-  fuera_rango  Boolean?  @default(false)
-  created_by   Int?
-  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  id          Int       @id @default(autoincrement())
+  id_granja   Int
+  id_animal   Int
+  fecha       DateTime  @db.Date
+  peso_gramos Decimal   @db.Decimal(10, 2)
+  fuera_rango Boolean?  @default(false)
+  created_by  Int?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
 
-  granja  Granja  @relation(fields: [id_granja], references: [id])
-  animal  Animal  @relation(fields: [id_animal], references: [id])
+  granja  Granja   @relation(fields: [id_granja], references: [id])
+  animal  Animal   @relation(fields: [id_animal], references: [id])
   creador Usuario? @relation("PesajeCreatedBy", fields: [created_by], references: [id])
 
   @@index([id_animal], map: "idx_pesajes_animal")
@@ -431,10 +442,10 @@ model Tratamiento {
   created_by    Int?
   created_at    DateTime? @default(now()) @db.Timestamp(6)
 
-  granja  Granja  @relation(fields: [id_granja], references: [id])
-  animal  Animal? @relation(fields: [id_animal], references: [id])
+  granja  Granja   @relation(fields: [id_granja], references: [id])
+  animal  Animal?  @relation(fields: [id_animal], references: [id])
   recinto Recinto? @relation(fields: [id_jaula], references: [id])
-  area    Area?   @relation(fields: [id_area], references: [id])
+  area    Area?    @relation(fields: [id_area], references: [id])
   creador Usuario? @relation("TratamientoCreatedBy", fields: [created_by], references: [id])
 
   @@index([id_granja, estado], map: "idx_tratamientos_granja")
@@ -486,16 +497,16 @@ model AlertaDescarte {
 }
 
 model RankingConfig {
-  id                 Int       @id @default(autoincrement())
-  id_granja          Int       @unique
-  peso_partos        Decimal?  @default(20) @db.Decimal(6, 2)
-  peso_camada        Decimal?  @default(25) @db.Decimal(6, 2)
-  peso_destete       Decimal?  @default(20) @db.Decimal(6, 2)
-  peso_mortalidad    Decimal?  @default(15) @db.Decimal(6, 2)
-  peso_peso_nac      Decimal?  @default(10) @db.Decimal(6, 2)
-  peso_peso_dest     Decimal?  @default(10) @db.Decimal(6, 2)
-  peso_prenez_macho  Decimal?  @default(30) @db.Decimal(6, 2)
-  updated_at         DateTime? @default(now()) @db.Timestamp(6)
+  id                Int       @id @default(autoincrement())
+  id_granja         Int       @unique
+  peso_partos       Decimal?  @default(20) @db.Decimal(6, 2)
+  peso_camada       Decimal?  @default(25) @db.Decimal(6, 2)
+  peso_destete      Decimal?  @default(20) @db.Decimal(6, 2)
+  peso_mortalidad   Decimal?  @default(15) @db.Decimal(6, 2)
+  peso_peso_nac     Decimal?  @default(10) @db.Decimal(6, 2)
+  peso_peso_dest    Decimal?  @default(10) @db.Decimal(6, 2)
+  peso_prenez_macho Decimal?  @default(30) @db.Decimal(6, 2)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
 
   granja Granja @relation(fields: [id_granja], references: [id], onDelete: Cascade)
 

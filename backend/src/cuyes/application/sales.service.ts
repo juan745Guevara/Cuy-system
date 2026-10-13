@@ -25,8 +25,19 @@ export class SalesService {
     userId: number;
     body: Record<string, unknown>;
   }) {
-    const { id_animal, fecha, clasificacion, categoria, cantidad, comprador, precio } =
-      body || {};
+    const {
+      id_animal,
+      fecha,
+      clasificacion,
+      categoria,
+      cantidad,
+      comprador,
+      precio,
+      tipo_comprobante,
+      serie,
+      numero,
+      observaciones,
+    } = body || {};
     if (!fecha || !cantidad) return fail('date and quantity are required');
     if (!isValidDateStr(fecha)) return fail('Invalid date', 400, { campo: 'fecha' });
     if (esFechaFutura(fecha)) {
@@ -35,6 +46,16 @@ export class SalesService {
     const cant = Number(cantidad);
     if (!Number.isFinite(cant) || cant <= 0) {
       return fail('quantity must be greater than zero', 400, { campo: 'cantidad' });
+    }
+    if (tipo_comprobante && !serie) {
+      return fail('serie is required when tipo_comprobante is set', 400, {
+        campo: 'serie',
+      });
+    }
+    if (tipo_comprobante && !numero) {
+      return fail('numero is required when tipo_comprobante is set', 400, {
+        campo: 'numero',
+      });
     }
 
     if (!id_animal) {
@@ -63,6 +84,10 @@ export class SalesService {
           cantidad: cant,
           comprador,
           precio,
+          tipo_comprobante,
+          serie,
+          numero,
+          observaciones,
         },
       });
       await this.audit.write({
@@ -72,7 +97,9 @@ export class SalesService {
         entidad: 'venta',
         idEntidad: row.id,
         despues: row,
-        detalle: `Sale of ${cant} ${categoria || (id_animal ? `animal ${id_animal}` : 'animals')}`,
+        detalle: `Sale of ${cant} ${
+          categoria || (id_animal ? `animal ${id_animal}` : 'animals')
+        }${tipo_comprobante ? ` - ${tipo_comprobante} ${serie}-${numero}` : ''}`,
       });
       return ok(row, 201);
     } catch (err) {

@@ -162,7 +162,7 @@ const Areas = () => {
             </div>
           </ModalSection>
 
-          <ModalSection step={2} title="Jaulas" hint={modal.mode === 'editar' ? 'Jaulas de esta área y jaulas libres.' : 'Solo aparecen las jaulas libres.'}>
+          <ModalSection step={2} title="Jaulas" hint={modal.mode === 'editar' ? 'Jaulas del área y libres.' : 'Solo jaulas libres.'}>
             {jaulasDisponibles.length === 0 ? (
               <span style={{ fontSize: '0.9rem' }}>No hay jaulas libres. Créelas en la pantalla Jaulas.</span>
             ) : (

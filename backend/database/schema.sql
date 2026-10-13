@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS animales (
     CHECK (estado IN ('activo','baja_muerte','baja_venta','descarte')),
   fecha_baja DATE,
   motivo_baja TEXT,
+  destino_descarte VARCHAR(100),
   created_by INTEGER REFERENCES usuarios(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -152,6 +153,9 @@ CREATE TABLE IF NOT EXISTS destetes (
   destetados_m INTEGER DEFAULT 0,
   destetados_h INTEGER DEFAULT 0,
   muertos INTEGER DEFAULT 0,
+  peso_promedio NUMERIC(10,2),
+  id_jaula_m INTEGER,
+  id_jaula_h INTEGER,
   peso_m1 NUMERIC(10,2), peso_m2 NUMERIC(10,2), peso_m3 NUMERIC(10,2),
   peso_h1 NUMERIC(10,2), peso_h2 NUMERIC(10,2), peso_h3 NUMERIC(10,2),
   created_by INTEGER REFERENCES usuarios(id),
@@ -167,6 +171,8 @@ CREATE TABLE IF NOT EXISTS mortalidad (
   categoria VARCHAR(50),
   cantidad INTEGER NOT NULL CHECK (cantidad > 0),
   causa TEXT,
+  tipo VARCHAR(20) DEFAULT 'general',
+  observaciones TEXT,
   id_jaula INTEGER REFERENCES recintos(id),
   created_by INTEGER REFERENCES usuarios(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -182,6 +188,11 @@ CREATE TABLE IF NOT EXISTS ventas (
   cantidad INTEGER NOT NULL CHECK (cantidad > 0),
   comprador VARCHAR(100),
   precio NUMERIC(10,2),
+  tipo_comprobante VARCHAR(20),
+  serie VARCHAR(10),
+  numero VARCHAR(20),
+  observaciones TEXT,
+  estado VARCHAR(20) DEFAULT 'registrada',
   created_by INTEGER REFERENCES usuarios(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -313,3 +324,19 @@ ALTER TABLE recintos ADD CONSTRAINT recintos_id_area_fkey FOREIGN KEY (id_area) 
 CREATE INDEX IF NOT EXISTS idx_recintos_granja ON recintos(id_granja);
 ALTER TABLE granjas DROP COLUMN IF EXISTS responsable;
 ALTER TABLE granjas DROP COLUMN IF EXISTS fecha_inicio;
+
+-- BPMN columns (Crianza/Reproducción/Ventas)
+DO $$ BEGIN
+  ALTER TABLE animales ADD COLUMN IF NOT EXISTS destino_descarte VARCHAR(100);
+  ALTER TABLE destetes ADD COLUMN IF NOT EXISTS peso_promedio NUMERIC(10,2);
+  ALTER TABLE destetes ADD COLUMN IF NOT EXISTS id_jaula_m INTEGER;
+  ALTER TABLE destetes ADD COLUMN IF NOT EXISTS id_jaula_h INTEGER;
+  ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS tipo VARCHAR(20) DEFAULT 'general';
+  ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS observaciones TEXT;
+  ALTER TABLE ventas ADD COLUMN IF NOT EXISTS tipo_comprobante VARCHAR(20);
+  ALTER TABLE ventas ADD COLUMN IF NOT EXISTS serie VARCHAR(10);
+  ALTER TABLE ventas ADD COLUMN IF NOT EXISTS numero VARCHAR(20);
+  ALTER TABLE ventas ADD COLUMN IF NOT EXISTS observaciones TEXT;
+  ALTER TABLE ventas ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'registrada';
+EXCEPTION WHEN others THEN NULL;
+END $$;

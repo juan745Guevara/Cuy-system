@@ -12,7 +12,7 @@ const EVENTOS_LIST = [
     category: 'Reproducción',
     color: '#7A1216',
     bgBadge: 'rgba(122, 18, 22, 0.1)',
-    desc: 'Registrar empadre por macho o por jaula, asignación de hembras, fechas y pesos.',
+    desc: 'Registro de empadres y asignación de hembras.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -27,7 +27,7 @@ const EVENTOS_LIST = [
     category: 'Reproducción',
     color: '#9C27B0',
     bgBadge: 'rgba(156, 39, 176, 0.1)',
-    desc: 'Registro de nacimientos, tamaño de camada, crías vivas/muertas, sexo y pesos al nacer.',
+    desc: 'Registro de partos, camada y pesos al nacer.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
@@ -43,7 +43,7 @@ const EVENTOS_LIST = [
     category: 'Reproducción',
     color: '#E65100',
     bgBadge: 'rgba(230, 81, 0, 0.1)',
-    desc: 'Separación de crías de la madre, recuento, pesaje y asignación a jaulas de recría.',
+    desc: 'Destete de crías y paso a recría.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -61,7 +61,7 @@ const EVENTOS_LIST = [
     category: 'Sanidad & Control',
     color: '#C62828',
     bgBadge: 'rgba(198, 40, 40, 0.1)',
-    desc: 'Registro de muertes por categoría, raza, jaula o causa sanitaria/accidental.',
+    desc: 'Registro de mortalidad y causa.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
@@ -78,7 +78,7 @@ const EVENTOS_LIST = [
     category: 'Manejo',
     color: '#2E7D32',
     bgBadge: 'rgba(46, 125, 50, 0.1)',
-    desc: 'Pesaje individual o por lote (jaula completa), evolución y ganancia de peso.',
+    desc: 'Pesaje individual o por lote.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 3v18" />
@@ -96,7 +96,7 @@ const EVENTOS_LIST = [
     category: 'Sanidad & Control',
     color: '#00838F',
     bgBadge: 'rgba(0, 131, 143, 0.1)',
-    desc: 'Registro de tratamientos preventivos o curativos, dosis, producto, vía y seguimiento.',
+    desc: 'Tratamientos y seguimiento sanitario.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
@@ -113,7 +113,7 @@ const EVENTOS_LIST = [
     category: 'Planificación',
     color: '#D84315',
     bgBadge: 'rgba(216, 67, 21, 0.1)',
-    desc: 'Avisos automáticos de partos próximos, destetes pendientes y revisiones.',
+    desc: 'Avisos de partos y destetes pendientes.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -129,7 +129,7 @@ const EVENTOS_LIST = [
     category: 'Genética',
     color: '#6A1B9A',
     bgBadge: 'rgba(106, 27, 154, 0.1)',
-    desc: 'Evaluación de desempeño, camadas promedio, fertilidad y selección de élite / descarte.',
+    desc: 'Ranking de desempeño y descarte.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />

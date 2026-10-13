@@ -11,7 +11,7 @@ const REGISTROS_ITEMS = [
     category: 'Población',
     color: '#7A1216',
     bgBadge: 'rgba(122, 18, 22, 0.1)',
-    desc: 'Alta individual de cuyes: Código único, Género (M/H), Raza o línea, Categoría y asignación de Jaula.',
+    desc: 'Alta individual de cuyes.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -29,7 +29,7 @@ const REGISTROS_ITEMS = [
     category: 'Reproducción',
     color: '#AD1457',
     bgBadge: 'rgba(173, 20, 87, 0.1)',
-    desc: 'Fichas individuales de hembras (códigos U01, U102...), historial de partos, camadas y fertilidad.',
+    desc: 'Fichas de hembras y su historial.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="8" r="5" />
@@ -46,7 +46,7 @@ const REGISTROS_ITEMS = [
     category: 'Reproducción',
     color: '#1565C0',
     bgBadge: 'rgba(21, 101, 192, 0.1)',
-    desc: 'Fichas individuales de machos (códigos UM01, UM24...), control de empadres y % de preñez.',
+    desc: 'Fichas de machos y control de empadres.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="10" cy="14" r="5" />
@@ -64,7 +64,7 @@ const REGISTROS_ITEMS = [
     category: 'Manejo',
     color: '#00838F',
     bgBadge: 'rgba(0, 131, 143, 0.1)',
-    desc: 'Mover animales entre jaulas, por área, o lote completo manteniendo el historial de ubicación.',
+    desc: 'Traslado de animales entre jaulas.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <polyline points="17 1 21 5 17 9" />

@@ -54,7 +54,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
               COALESCE(SUM(vivos_m),0)::int AS nac_m,
               COALESCE(SUM(vivos_h),0)::int AS nac_h
        FROM partos
-       WHERE id_granja = $1 AND fecha_parto BETWEEN $2 AND $3`,
+       WHERE id_granja = $1 AND fecha_parto BETWEEN $2::date AND $3::date`,
       [farmId, ini, fin],
     );
     return rows[0];
@@ -65,7 +65,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
       `SELECT COALESCE(SUM(cantidad),0)::int AS mortalidad,
               COALESCE(categoria,'sin_categoria') AS categoria
        FROM mortalidad
-       WHERE id_granja = $1 AND fecha BETWEEN $2 AND $3
+       WHERE id_granja = $1 AND fecha BETWEEN $2::date AND $3::date
        GROUP BY COALESCE(categoria,'sin_categoria')`,
       [farmId, ini, fin],
     );
@@ -77,7 +77,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
       `SELECT COALESCE(SUM(cantidad),0)::int AS ventas,
               COALESCE(categoria,'sin_categoria') AS categoria
        FROM ventas
-       WHERE id_granja = $1 AND fecha BETWEEN $2 AND $3
+       WHERE id_granja = $1 AND fecha BETWEEN $2::date AND $3::date
        GROUP BY COALESCE(categoria,'sin_categoria')`,
       [farmId, ini, fin],
     );
@@ -91,7 +91,7 @@ export class InventoryRepository extends InventoryRepositoryPort {
          COALESCE(SUM(CASE WHEN tipo = 'transfer' AND id_granja_origen = $1 THEN 1 ELSE 0 END),0)::int AS tout
        FROM movimientos
        WHERE tipo = 'transfer'
-         AND fecha BETWEEN $2 AND $3
+         AND fecha BETWEEN $2::date AND $3::date
          AND (id_granja_origen = $1 OR id_granja_destino = $1)`,
       [farmId, ini, fin],
     );

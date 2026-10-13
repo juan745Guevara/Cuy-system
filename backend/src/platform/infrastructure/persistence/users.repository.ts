@@ -14,6 +14,13 @@ export class UsersRepository extends UsersRepositoryPort {
     return rows.map((r) => r.id);
   }
 
+  async findAllFarmIds() {
+    const rows = await this.prisma.granja.findMany({
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
+  }
+
   findFarmsByIds(ids: number[]) {
     if (!ids.length) return Promise.resolve([]);
     return this.prisma.granja.findMany({

@@ -9,6 +9,7 @@ import { BirthsController } from './presentation/http/births.controller';
 import { WeaningsController } from './presentation/http/weanings.controller';
 import { AlertsController } from './presentation/http/alerts.controller';
 import { RankingController } from './presentation/http/ranking.controller';
+import { ProcesosController } from './presentation/http/procesos.controller';
 import { cuyesProviders } from './cuyes.providers';
 import { CuyesDepsService } from './application/cuyes-deps.service';
 import { AreaRulesRegistry } from '../shared/species/area-rules-registry.service';
@@ -28,6 +29,7 @@ import { PlatformModule } from '../platform/platform.module';
     WeaningsController,
     AlertsController,
     RankingController,
+    ProcesosController,
   ],
   providers: [...cuyesProviders],
   exports: [CuyesDepsService],

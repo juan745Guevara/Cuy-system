@@ -39,6 +39,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     if (data.granjas?.length === 1) {
       localStorage.setItem('farmId', String(data.granjas[0].id));
+      if (data.granjas[0].id_especie) {
+        localStorage.setItem('speciesId', String(data.granjas[0].id_especie));
+      }
       setGranjaActiva(data.granjas[0].id);
     } else {
       localStorage.removeItem('farmId');
@@ -67,7 +70,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const res = await api.get('/auth/me');
         if (!alive) return;
         setUser(res.data.user);
-        setGranjas(res.data.granjas || []);
+        const farms = res.data.granjas || [];
+        setGranjas(farms);
+        const current = farms.find((g) => Number(g.id) === Number(storedFarm));
+        if (current?.id_especie) {
+          localStorage.setItem('speciesId', String(current.id_especie));
+        }
       } catch {
         if (!alive) return;
         localStorage.removeItem('token');
@@ -123,6 +131,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('farmId', String(id));
       if (farm?.id_especie) {
         localStorage.setItem('speciesId', String(farm.id_especie));
+      } else {
+        localStorage.removeItem('speciesId');
       }
     }
   };

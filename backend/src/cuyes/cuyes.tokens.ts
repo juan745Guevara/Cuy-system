@@ -8,6 +8,7 @@ export const BIRTHS_SERVICE = Symbol('CUYES_BIRTHS_SERVICE');
 export const WEANINGS_SERVICE = Symbol('CUYES_WEANINGS_SERVICE');
 export const ALERTS_SERVICE = Symbol('CUYES_ALERTS_SERVICE');
 export const RANKING_SERVICE = Symbol('CUYES_RANKING_SERVICE');
+export const PROCESOS_SERVICE = Symbol('CUYES_PROCESOS_SERVICE');
 
 export const CUYES_SERVICE_TOKENS = {
   catalogs: CATALOGS_SERVICE,
@@ -20,4 +21,5 @@ export const CUYES_SERVICE_TOKENS = {
   weanings: WEANINGS_SERVICE,
   alerts: ALERTS_SERVICE,
   ranking: RANKING_SERVICE,
+  procesos: PROCESOS_SERVICE,
 } as const;

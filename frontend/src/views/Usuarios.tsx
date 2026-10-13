@@ -44,6 +44,7 @@ const Usuarios = () => {
     email: string;
     rol: string;
   } | null>(null);
+  const [editOriginalGranjaIds, setEditOriginalGranjaIds] = useState<number[]>([]);
   const editandoSuper = editUser?.rol === 'superadmin';
   const emptyCreateForm = () => ({
     nombre: '',
@@ -142,6 +143,7 @@ const Usuarios = () => {
   const cerrarEditar = () => {
     setEditId(null);
     setEditUser(null);
+    setEditOriginalGranjaIds([]);
     setEditForm({ activo: true, especie_ids: [], granja_ids: [], password: '' });
   };
 
@@ -205,6 +207,7 @@ const Usuarios = () => {
       : [];
     setEditId(u.id);
     setEditUser({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol });
+    setEditOriginalGranjaIds(granja_ids);
     setEditForm({
       activo: u.activo !== false,
       especie_ids,
@@ -234,7 +237,10 @@ const Usuarios = () => {
       }
       return;
     }
-    if (esSuper) {
+    const cambioGranjas =
+      editForm.granja_ids.length !== editOriginalGranjaIds.length ||
+      editForm.granja_ids.some((id) => !editOriginalGranjaIds.includes(id));
+    if (esSuper && cambioGranjas) {
       if (!editForm.especie_ids.length) {
         setError('Seleccione al menos un módulo.');
         return;
@@ -258,8 +264,10 @@ const Usuarios = () => {
     try {
       const body: Record<string, unknown> = {
         activo: editForm.activo,
-        granja_ids: editForm.granja_ids.map(Number),
       };
+      if (cambioGranjas) {
+        body.granja_ids = editForm.granja_ids.map(Number);
+      }
       if (editForm.password.trim()) body.password = editForm.password;
       await api.patch(`/users/${editId}`, body);
       setOk('Usuario actualizado');
@@ -282,10 +290,7 @@ const Usuarios = () => {
     setError('');
     setOk('');
     try {
-      await api.patch(`/users/${u.id}`, {
-        activo: false,
-        granja_ids: (u.granjas || []).map((g) => g.id),
-      });
+      await api.patch(`/users/${u.id}`, { activo: false });
       setOk(`${u.nombre} eliminado`);
       if (editId === u.id) cerrarEditar();
       load();
@@ -469,7 +474,7 @@ const Usuarios = () => {
             </ModalSection>
           )}
 
-          <ModalSection step={esSuper ? 4 : 3} title="Granjas" hint={esSuper ? 'Al menos una por módulo.' : undefined}>
+          <ModalSection step={esSuper ? 4 : 3} title="Granjas" hint={esSuper ? 'Mín. una por módulo.' : undefined}>
             {granjasPicker(form, granjasEnModulosSeleccionados, 'create')}
           </ModalSection>
         </FormModal>
@@ -520,7 +525,7 @@ const Usuarios = () => {
           )}
 
           {!editandoSuper && (
-            <ModalSection step={esSuper ? 3 : 2} title="Granjas" hint={esSuper ? 'Al menos una por módulo.' : undefined}>
+            <ModalSection step={esSuper ? 3 : 2} title="Granjas" hint={esSuper ? 'Mín. una por módulo.' : undefined}>
               {granjasPicker(editForm, granjasEnModulosEdit, 'edit')}
             </ModalSection>
           )}

@@ -112,6 +112,29 @@ export class BreedingsService {
       for (const hid of hembras) {
         const h = await this.assertAnimal(farmId, hid, 'H');
         if (h.error) return fail(h.error);
+        const fechaNac = h.animal?.fecha_nacimiento
+          ? String(h.animal.fecha_nacimiento).slice(0, 10)
+          : null;
+        if (fechaNac) {
+          const min = new Date(fechaNac);
+          min.setMonth(min.getMonth() + 3);
+          const minISO = min.toISOString().slice(0, 10);
+          if (String(fecha_empadre) < minISO) {
+            return fail('female must be at least 3 months old to breed', 400, {
+              campo: 'hembras',
+              id_hembra: hid,
+              edad_minima_meses: 3,
+            });
+          }
+        }
+        const partos = await this.repository.getBirthsByFemale(hid);
+        if (Array.isArray(partos) && partos.length >= 6) {
+          return fail(
+            'female has reached 6 births and must be discarded (no further breeding)',
+            400,
+            { campo: 'hembras', id_hembra: hid, partos: partos.length, requiere_descarte: true },
+          );
+        }
         const lastParto = await this.repository.getLastBirthDate(hid);
         if (lastParto && fecha_empadre < String(lastParto).slice(0, 10)) {
           return fail('breeding date cannot be before the female last birth', 400, {

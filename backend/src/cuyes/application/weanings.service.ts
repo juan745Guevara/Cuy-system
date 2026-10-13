@@ -75,6 +75,14 @@ export class WeaningsService {
     }
 
     try {
+      const pesoPromedio = promedioPesos(
+        peso_m1,
+        peso_m2,
+        peso_m3,
+        peso_h1,
+        peso_h2,
+        peso_h3,
+      );
       const { destete, gazaposCount } = await this.repository.createWeaning({
         farmId,
         userId,
@@ -85,6 +93,7 @@ export class WeaningsService {
           dm,
           dh,
           mu,
+          peso_promedio: pesoPromedio,
           peso_m1,
           peso_m2,
           peso_m3,
@@ -107,14 +116,7 @@ export class WeaningsService {
       return ok(
         {
           ...destete,
-          peso_promedio_destete: promedioPesos(
-            peso_m1,
-            peso_m2,
-            peso_m3,
-            peso_h1,
-            peso_h2,
-            peso_h3,
-          ),
+          peso_promedio_destete: pesoPromedio,
           crias_actualizadas: gazaposCount,
         },
         201,

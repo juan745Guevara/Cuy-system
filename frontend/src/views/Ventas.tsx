@@ -14,6 +14,9 @@ const emptyForm = () => ({
   cantidad: 1,
   comprador: '',
   precio: '',
+  tipo_comprobante: '',
+  serie: '',
+  numero: '',
 });
 
 /** Ventas y descartes */
@@ -114,6 +117,9 @@ const Ventas = () => {
         cantidad,
         comprador: form.comprador || null,
         precio: form.precio ? Number(form.precio) : null,
+        tipo_comprobante: form.tipo_comprobante || null,
+        serie: form.serie || null,
+        numero: form.numero || null,
       });
       setOk('Venta registrada');
       clearDraft(DRAFT_KEY);
@@ -198,6 +204,29 @@ const Ventas = () => {
           value={form.precio}
           onChange={(e) => setForm({ ...form, precio: e.target.value })}
         />
+        <select
+          style={s.select}
+          value={form.tipo_comprobante}
+          onChange={(e) => setForm({ ...form, tipo_comprobante: e.target.value })}
+        >
+          <option value="">Comprobante (opc.)</option>
+          <option value="boleta">Boleta</option>
+          <option value="factura">Factura</option>
+          <option value="recibo">Recibo</option>
+          <option value="nota_venta">Nota de venta</option>
+        </select>
+        <input
+          style={s.input}
+          placeholder="Serie"
+          value={form.serie}
+          onChange={(e) => setForm({ ...form, serie: e.target.value })}
+        />
+        <input
+          style={s.input}
+          placeholder="Número"
+          value={form.numero}
+          onChange={(e) => setForm({ ...form, numero: e.target.value })}
+        />
         <button type="submit" style={s.btn}>
           Registrar venta
         </button>
@@ -269,6 +298,7 @@ const Ventas = () => {
             <th style={s.th}>Clasificación</th>
             <th style={s.th}>Comprador</th>
             <th style={s.th}>Precio</th>
+            <th style={s.th}>Comprobante</th>
           </tr>
         </thead>
         <tbody>
@@ -280,6 +310,11 @@ const Ventas = () => {
               <td style={s.td}>{v.clasificacion || '—'}</td>
               <td style={s.td}>{v.comprador || '—'}</td>
               <td style={s.td}>{v.precio ?? '—'}</td>
+              <td style={s.td}>
+                {v.tipo_comprobante
+                  ? `${v.tipo_comprobante} ${v.serie || ''}-${v.numero || ''}`
+                  : '—'}
+              </td>
             </tr>
           ))}
         </tbody>

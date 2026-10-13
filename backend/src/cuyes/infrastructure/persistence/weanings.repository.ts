@@ -41,14 +41,18 @@ export class WeaningsRepository extends WeaningsRepositoryPort {
       const { rows } = await client.query(
         `INSERT INTO destetes
           (id_parto, fecha_destete, destetados_m, destetados_h, muertos,
+           peso_promedio, id_jaula_m, id_jaula_h,
            peso_m1, peso_m2, peso_m3, peso_h1, peso_h2, peso_h3, created_by)
-         VALUES ($1,$2::date,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+         VALUES ($1,$2::date,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
         [
           data.id_parto,
           data.fecha_destete,
           data.dm,
           data.dh,
           data.mu,
+          data.peso_promedio || null,
+          data.id_jaula_m || null,
+          data.id_jaula_h || null,
           data.peso_m1 || null,
           data.peso_m2 || null,
           data.peso_m3 || null,

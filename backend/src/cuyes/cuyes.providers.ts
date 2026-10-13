@@ -10,6 +10,7 @@ import {
   BREEDINGS_SERVICE,
   ALERTS_SERVICE,
   RANKING_SERVICE,
+  PROCESOS_SERVICE,
 } from './cuyes.tokens';
 import { CuyesDepsService } from './application/cuyes-deps.service';
 import { SalesRepositoryPort } from './domain/ports/sales.repository.port';
@@ -42,6 +43,9 @@ import { BreedingsService } from './application/breedings.service';
 import { ReportsRepositoryPort } from './domain/ports/reports.repository.port';
 import { ReportsRepository } from './infrastructure/persistence/reports.repository';
 import { ReportsService } from './application/reports.service';
+import { ProcesosRepositoryPort } from './domain/ports/procesos.repository.port';
+import { ProcesosRepository } from './infrastructure/persistence/procesos.repository';
+import { ProcesosService } from './application/procesos.service';
 
 function migrated(
   token: symbol,
@@ -70,4 +74,5 @@ export const cuyesProviders: Provider[] = [
   ...migrated(BREEDINGS_SERVICE, BreedingsRepositoryPort, BreedingsRepository, BreedingsService),
   ...migrated(ALERTS_SERVICE, AlertsRepositoryPort, AlertsRepository, AlertsService),
   ...migrated(RANKING_SERVICE, RankingRepositoryPort, RankingRepository, RankingService),
+  ...migrated(PROCESOS_SERVICE, ProcesosRepositoryPort, ProcesosRepository, ProcesosService),
 ];

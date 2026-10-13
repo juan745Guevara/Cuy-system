@@ -25,7 +25,7 @@ export class UsersService {
   }
 
   private async creatorFarmIds(userId: number, rol: string) {
-    if (rol === 'superadmin') return this.repository.findActiveFarmIds();
+    if (rol === 'superadmin') return this.repository.findAllFarmIds();
     return this.repository.findFarmIdsByUser(userId);
   }
 
