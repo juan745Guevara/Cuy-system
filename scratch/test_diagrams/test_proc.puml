@@ -1,0 +1,31 @@
+@startuml
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultFontSize 11
+skinparam packageStyle rectangle
+
+|Encargada del criadero|
+start
+:Nacimiento en maternidad;
+if (¿Está vivo?) then (no)
+  :Registrar mortalidad;
+  stop
+else (sí)
+  :Alta de gazapo con madre;
+  :Lactancia (15 días);
+  :Destetar y trasladar a recría;
+  :Pase a engorde;
+  if (¿Apto reproducción?) then (sí)
+    :Registrar reproductor;
+  else (no)
+    :Permanecer en engorde / descarte;
+  endif
+  :Control sanitario e historial;
+  :Inventario mensual de jaulas y cuyes;
+  :Elaborar reporte mensual;
+endif
+
+|Ingeniera Zootecnista|
+:Revisar reporte mensual (curvas y población);
+stop
+@enduml

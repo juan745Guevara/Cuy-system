@@ -1,0 +1,11 @@
+flowchart LR
+    Ini([Inicio]) --> CC["1. Crianza y control<br/>(Lactancia, recría, engorde)"]
+    CC --> DecDest{"¿Destino zootécnico?"}
+    DecDest -->|Selección reproductiva| Rep["2. Reproducción y empadre<br/>(Lotes, gestación ~67d, parto)"]
+    DecDest -->|Engorde / Saca cárnica| Vta["3. Ventas y comercialización<br/>(Pago caja UNAS, salida)"]
+    DecDest -->|Mortalidad en poza| Mort["4. Registro de mortalidad<br/>(Baja de piara activa)"]
+    Rep -->|Nuevas crías| CC
+    Rep -->|Término 6.° parto / Descarte| Vta
+    Rep -->|Pérdida gestacional| Mort
+    Vta --> FinV([Fin: Venta y baja])
+    Mort --> FinM([Fin: Baja])

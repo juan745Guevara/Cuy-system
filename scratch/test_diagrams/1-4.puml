@@ -1,0 +1,34 @@
+@startuml
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultFontSize 10
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+skinparam ArrowColor Black
+
+|Cliente|
+start
+:Solicitar compra de cuyes;
+
+|Encargado del área de cuyes|
+:Recepcionar solicitud del cliente;
+:Verificar disponibilidad en jaulas e inventario;
+if (¿Hay disponibilidad?) then (no)
+  :Informar al cliente falta de stock;
+  stop
+else (sí)
+  :Acordar cantidad, peso y precio oficial;
+endif
+
+|Cliente|
+:Realizar pago en Caja Central UNAS;
+:Obtener comprobante de pago oficial físico;
+:Presentar comprobante en criadero;
+
+|Encargado del área de cuyes|
+:Verificar autenticidad, fecha e importe del comprobante;
+:Registrar venta con serie y número de comprobante;
+:Entregar físicamente los cuyes al cliente;
+:Actualizar inventario activo y aforo de jaula;
+stop
+@enduml

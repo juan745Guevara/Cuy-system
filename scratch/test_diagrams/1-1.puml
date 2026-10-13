@@ -1,0 +1,33 @@
+@startuml
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultFontSize 11
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+skinparam ArrowColor Black
+
+start
+:Ingreso / Nacimiento en poza;
+:1. Crianza y control de cuyes
+(Lactancia 15d, recría, engorde);
+if (¿Destino zootécnico del cuy?) then (Selección reproductores)
+  :2. Reproducción y empadre
+(Lotes, gestación ~67d, parto);
+  split
+    :Nuevas crías viables
+(Retornan a crianza);
+    detach
+  split again
+    :Hembras con 6 partos / Descarte;
+    :3. Ventas y comercialización
+(Comprobante de pago UNAS);
+    :Baja de inventario activo;
+    stop
+  end split
+else (Engorde cárnico / Saca)
+  :3. Ventas y comercialización
+(Pago en caja externa UNAS);
+  :Entrega y baja de inventario;
+  stop
+endif
+@enduml

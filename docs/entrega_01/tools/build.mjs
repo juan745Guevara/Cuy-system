@@ -28,9 +28,9 @@ const REFERENCE = path.join(ROOT, 'reference.docx');
 const MERMAID_CONFIG = path.join(HERE, 'mermaid.config.json');
 const PLANTUML_JAR = path.join(HERE, 'plantuml.jar');
 
-/** Tamaño de una imagen dentro de la hoja A4 con márgenes de 2.5 cm. */
+/** Tamaño de una imagen dentro de la hoja A4 con márgenes de 1.9 cm. */
 const MAX_W = 6.2;
-const MAX_H = 8.4;
+const MAX_H = 3.4;
 
 /** Lee el ancho y alto de un PNG desde la cabecera IHDR. */
 async function pngSize(file) {
@@ -63,6 +63,10 @@ const CAPITULOS = [
 
 /* Pie de cada figura: clave "<capitulo>-<indice>". */
 const FIGURAS = {
+  '1-1': 'Estructura macro del proceso de negocio AS-IS (Nivel 0)',
+  '1-2': 'Subproceso operativo AS-IS: Crianza y control de cuyes (Nivel 1)',
+  '1-3': 'Subproceso operativo AS-IS: Ciclo reproductivo y empadre (Nivel 1)',
+  '1-4': 'Subproceso operativo AS-IS: Comercialización y ventas (Nivel 1)',
   '4-1': 'Modelo conceptual del dominio: estructura de alojamiento y razas',
   '4-2': 'Modelo conceptual del dominio: reproducción, camadas y genealogía',
   '4-3': 'Modelo conceptual del dominio: crecimiento biométrico, destete y sanidad',

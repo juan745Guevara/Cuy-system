@@ -1,0 +1,21 @@
+flowchart LR
+    subgraph V1 ["1. Solicitud y verificación"]
+        IniV([Inicio]) --> SolV["Cliente solicita compra<br/>de cuyes"]
+        SolV --> VerV["Encargado verifica<br/>disponibilidad en pozas"]
+        VerV --> DecSt{"¿Hay stock?"}
+        DecSt -->|No| NoSt["Informar falta de stock"] --> FinNo([Fin])
+        DecSt -->|Sí| AcuV["Acordar cantidad, peso<br/>y precio oficial"]
+    end
+    
+    subgraph V2 ["2. Pago en caja externa UNAS"]
+        AcuV --> PagoCaja["Cliente realiza pago en<br/>Caja Central UNAS"]
+        PagoCaja --> ObtRec["Caja emite comprobante de<br/>pago oficial físico"]
+    end
+    
+    subgraph V3 ["3. Verificación, despacho y baja"]
+        ObtRec --> PresRec["Cliente presenta comprobante<br/>físico en criadero"]
+        PresRec --> VerRec["Encargado valida autenticidad,<br/>importe y fecha"]
+        VerRec --> RegVta["Registrar venta con serie<br/>y número de comprobante"]
+        RegVta --> Entreg["Entregar cuyes físicamente<br/>al cliente"]
+        Entreg --> BajInv["Actualizar inventario y<br/>aforo inmediatamente"] --> FinOk([Fin])
+    end

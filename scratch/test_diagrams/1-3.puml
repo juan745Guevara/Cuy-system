@@ -1,0 +1,61 @@
+@startuml
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultFontSize 10
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+skinparam ArrowColor Black
+
+|Ingeniera Zootecnista|
+start
+:Revisar reporte mensual (crecimiento y población);
+:Planificar lotes de empadre;
+
+|Encargada del criadero|
+:Revisar registro de hembras (código, raza, edad, partos);
+if (¿Edad ≥ 3 meses?) then (no)
+  :Mantener en jaula de crianza;
+  stop
+else (sí)
+endif
+if (¿Ya tuvo su 6.° parto?) then (sí)
+  :Marcar hembra en rojo en Excel;
+  :Registrar motivo de descarte y derivar a venta;
+  stop
+else (no)
+  :Agrupar 5 a 8 hembras por 1 macho reproductor;
+  :Definir jaula de empadre, trasladar y registrar;
+  :Período de gestación (~67 días);
+  if (¿Gestación llegó a parto?) then (no: aborto)
+    :Registrar aborto en historial sanitario;
+    if (¿Se descarta?) then (sí)
+      :Marcar en rojo y derivar a venta;
+      stop
+    else (no)
+      :Descanso para nuevo empadre;
+      stop
+    endif
+  else (sí: parto)
+    :Registrar parto y pesos de crías en cuaderno;
+    if (¿Hubo mortinatos?) then (sí)
+      :Registrar en mortalidad;
+    endif
+    if (¿Hembra élite?) then (sí)
+      :Aretar cría hembra con código único;
+    endif
+    :Actualizar Ficha Individual de reproductora en Excel;
+    split
+      :Crías pasan a Crianza y Control;
+      detach
+    split again
+      :Evaluar salud de la madre;
+      if (¿Se descarta?) then (sí)
+        :Marcar en rojo y derivar a venta;
+      else (no)
+        :Habilitar para nuevo empadre;
+      endif
+      stop
+    end split
+  endif
+endif
+@enduml

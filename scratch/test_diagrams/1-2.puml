@@ -1,0 +1,37 @@
+@startuml
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultFontSize 10
+skinparam ActivityBackgroundColor White
+skinparam ActivityBorderColor Black
+skinparam ArrowColor Black
+
+|Encargada del criadero|
+start
+:Nacimiento del cuy en poza;
+if (¿Está vivo?) then (no)
+  :Registrar mortalidad en cuaderno;
+  :Actualizar cantidad en jaula y Excel;
+  stop
+else (sí)
+  :Registrar gazapo en jaula materna;
+  :Sanidad inicial y abrir historial clínico;
+  :Lactancia materna (15 días);
+  :Destetar y definir jaula de recría;
+  :Trasladar a recría y actualizar aforo;
+  :Pase a etapa de engorde;
+  if (¿Apto para reproducción?) then (sí)
+    :Registrar etapa de reproductor;
+  else (no)
+    :Registrar permanencia en engorde o descarte;
+  endif
+  :Control sanitario preventivo/curativo;
+  :Toma de inventario físico de jaulas y cuyes;
+  :Transcribir a Excel y elaborar reporte mensual;
+endif
+
+|Ingeniera Zootecnista|
+:Revisar reporte mensual consolidado;
+:Evaluar curvas de crecimiento, mortalidad y población;
+stop
+@enduml

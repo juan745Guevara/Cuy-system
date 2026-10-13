@@ -1,0 +1,39 @@
+flowchart TD
+    subgraph FilaR1 ["Fase 1: Planificación, evaluación y empadre"]
+        direction LR
+        subgraph RP1 ["Selección y calificación de hembras"]
+            IniR([Inicio]) --> PlanR["Planificar empadres<br/>(Ingeniera)"]
+            PlanR --> RevH["Revisar registro de hembras<br/>(Encargada)"]
+            RevH --> DecE{"¿Edad ≥ 3 meses?"}
+            DecE -->|No| MantC["Mantener en crianza"] --> FinC([Fin])
+            DecE -->|Sí| Dec6{"¿Alcanzó 6.° parto?"}
+            Dec6 -->|Sí| MarcRojo["Marcar en rojo en Excel<br/>y derivar a venta"] --> FinV([Fin])
+            Dec6 -->|No| LoteR["Agrupar 5 a 8 hembras<br/>con 1 macho en poza"]
+        end
+        subgraph RP2 ["Empadre y gestación (~67 días)"]
+            LoteR --> RegEmp["Registrar empadre en<br/>cuaderno y Excel"]
+            RegEmp --> Gest["Período de gestación<br/>(~67 días promedio)"]
+            Gest --> DecP{"¿Llegó a parto?"}
+            DecP -->|No: Aborto| RegAb["Registrar aborto;<br/>evaluar descarte"]
+            RegAb --> DecD1{"¿Descarte?"}
+            DecD1 -->|Sí| MarcRojo
+            DecD1 -->|No| RevH
+        end
+    end
+
+    subgraph FilaR2 ["Fase 2: Parto, descendencia y evaluación de reproductora"]
+        direction LR
+        subgraph RP3 ["Atención de parto y crías"]
+            DecP -->|Sí: Parto| RegNac["Registrar camada, pesos<br/>y mortinatos en cuaderno"]
+            RegNac --> RegMortP["Registrar mortinatos<br/>si existieron"]
+            RegMortP --> AretarP["Aretar hembras élite<br/>si aplica"]
+            AretarP --> TranscExc["Transcribir a Excel y actualizar<br/>Ficha Individual"]
+            TranscExc --> CriasOut(["Crías pasan a lactancia<br/>en Crianza y Control"])
+        end
+        subgraph RP4 ["Evaluación de la madre postparto"]
+            TranscExc --> EvalMadre["Evaluar salud y desempeño<br/>de la reproductora"]
+            EvalMadre --> DecD2{"¿Descarte?"}
+            DecD2 -->|Sí| MarcRojo
+            DecD2 -->|No| RevH
+        end
+    end

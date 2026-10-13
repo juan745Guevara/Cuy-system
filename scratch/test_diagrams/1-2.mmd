@@ -1,0 +1,34 @@
+flowchart TD
+    subgraph Fila1 ["Fases iniciales: Nacimiento, lactancia y recría"]
+        direction LR
+        subgraph F1 ["Fase 1: Nacimiento y lactancia"]
+            Ini1([Inicio]) --> Nac["Nacimiento<br/>en maternidad"]
+            Nac --> DecVivo{"¿Está vivo?"}
+            DecVivo -->|No| Mort1["Registrar mortalidad<br/>en cuaderno y Excel"] --> FinM1([Fin])
+            DecVivo -->|Sí| Alta1["Alta de gazapo con madre<br/>+ sanidad inicial e historial"]
+            Alta1 --> Lact1["Lactancia con la madre<br/>hasta cumplir 15 días"]
+        end
+        subgraph F2 ["Fase 2: Destete y recría"]
+            Lact1 --> Dest2["Destetar y asignar<br/>jaula de recría"]
+            Dest2 --> TrasRec2["Trasladar y actualizar<br/>aforo en Excel"]
+            TrasRec2 --> CuidRec2["Cuidados en recría<br/>hasta madurez"]
+        end
+    end
+
+    subgraph Fila2 ["Fases avanzadas: Engorde, selección, sanidad y cierre"]
+        direction LR
+        subgraph F3 ["Fase 3: Engorde y selección"]
+            CuidRec2 --> Eng3["Pase a etapa<br/>de engorde"]
+            Eng3 --> Eval3["Evaluar antecedentes<br/>y desarrollo"]
+            Eval3 --> DecRep3{"¿Apto para<br/>reproducción?"}
+            DecRep3 -->|Sí| Rep3["Registrar etapa<br/>reproductor"]
+            DecRep3 -->|No| Desc3["Permanencia en engorde<br/>o descarte"]
+        end
+        subgraph F4 ["Fase 4: Sanidad, inventario y cierre"]
+            Rep3 --> San4["Controles sanitarios<br/>periódicos e historial"]
+            Desc3 --> San4
+            San4 --> Inv4["Inventario mensual<br/>de jaulas y cuyes"]
+            Inv4 --> RepM4["Elaborar reporte mensual<br/>(Encargada)"]
+            RepM4 --> RevIng4["Validar curvas e índices<br/>(Ingeniera)"] --> FinTot([Fin])
+        end
+    end
