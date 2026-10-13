@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
@@ -33,7 +33,7 @@ async function blobErrorMessage(err, fallback) {
 }
 
 /**
- * UI Entrega 1 — ficha de animal
+ * UI Entrega 1 â€” ficha de animal
  * Registrar, actualizar, buscar y list/filtrar animales
  */
 const Animales = () => {
@@ -113,7 +113,7 @@ const Animales = () => {
       setJaulas(j.data);
       setAreas(a.data);
     } catch {
-      /* catálogos opcionales al inicio */
+      /* catÃ¡logos opcionales al inicio */
     }
   }, []);
 
@@ -180,7 +180,7 @@ const Animales = () => {
       const data = err.response?.data;
       if (err.response?.status === 409 && data?.animal) {
         setError(
-          `${data.error || 'Código en conflicto'}. Animal existente: ${data.animal.codigo || ''} (${data.animal.estado || ''})`
+          `${data.error || 'CÃ³digo en conflicto'}. Animal existente: ${data.animal.codigo || ''} (${data.animal.estado || ''})`
         );
       } else {
         setError(data?.error || 'No se pudo registrar');
@@ -244,7 +244,7 @@ const Animales = () => {
           a.download = 'animales-filtrados.json';
           a.click();
           window.URL.revokeObjectURL(url);
-          setOk('Exportación vía listado (reporte Excel no disponible)');
+          setOk('ExportaciÃ³n vÃ­a listado (reporte Excel no disponible)');
         } catch (e2) {
           setError(e2.response?.data?.error || 'No se pudo exportar');
         }
@@ -261,7 +261,7 @@ const Animales = () => {
   return (
     <div style={s.wrap}>
       <h1 style={s.title}>Animales</h1>
-      <p style={s.sub}>Registro, búsqueda y listado de la granja activa</p>
+      <p style={s.sub}>Registro, bÃºsqueda y listado de la granja activa</p>
 
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
@@ -269,7 +269,7 @@ const Animales = () => {
       {notFoundCodigo && (
         <div style={s.row}>
           <button type="button" style={s.btn} onClick={() => prefillRegistrar(notFoundCodigo)}>
-            Registrar este código ({notFoundCodigo})
+            Registrar este cÃ³digo ({notFoundCodigo})
           </button>
         </div>
       )}
@@ -280,7 +280,7 @@ const Animales = () => {
         </button>
         <input
           style={s.input}
-          placeholder="Buscar por código…"
+          placeholder="Buscar por cÃ³digoâ€¦"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && buscarCodigo()}
@@ -313,7 +313,7 @@ const Animales = () => {
           value={idCategoria}
           onChange={(e) => setIdCategoria(e.target.value)}
         >
-          <option value="">Categoría</option>
+          <option value="">CategorÃ­a</option>
           {categorias.map((c) => (
             <option key={c.id} value={c.id}>
               {c.nombre}
@@ -321,7 +321,7 @@ const Animales = () => {
           ))}
         </select>
         <select style={s.select} value={idArea} onChange={(e) => setIdArea(e.target.value)}>
-          <option value="">Área</option>
+          <option value="">Ãrea</option>
           {areas.map((a) => (
             <option key={a.id} value={a.id}>
               {a.nombre}
@@ -338,9 +338,9 @@ const Animales = () => {
           ))}
         </select>
         <select style={s.select} value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="codigo">Orden: código</option>
+          <option value="codigo">Orden: cÃ³digo</option>
           <option value="fecha_nacimiento">Orden: nacimiento</option>
-          <option value="ubicacion">Orden: ubicación</option>
+          <option value="ubicacion">Orden: ubicaciÃ³n</option>
         </select>
         <button type="button" style={s.btnGhost} onClick={load}>
           Filtrar
@@ -358,7 +358,7 @@ const Animales = () => {
             <input
               style={s.input}
               required
-              placeholder="Código *"
+              placeholder="CÃ³digo *"
               value={form.codigo}
               onChange={(e) => setForm({ ...form, codigo: e.target.value })}
             />
@@ -387,7 +387,7 @@ const Animales = () => {
               value={form.id_categoria}
               onChange={(e) => setForm({ ...form, id_categoria: e.target.value })}
             >
-              <option value="">Categoría</option>
+              <option value="">CategorÃ­a</option>
               {categorias.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nombre}
@@ -425,7 +425,7 @@ const Animales = () => {
                 checked={!!form.confirmar_reuso}
                 onChange={(e) => setForm({ ...form, confirmar_reuso: e.target.checked })}
               />
-              Confirmar reuso de código en baja
+              Confirmar reuso de cÃ³digo en baja
             </label>
             <button type="submit" style={s.btn}>
               Guardar
@@ -438,8 +438,8 @@ const Animales = () => {
         <div style={s.card}>
           <h3 style={{ marginTop: 0 }}>Ficha de {detalle.codigo}</h3>
           <p style={s.sub}>
-            {detalle.sexo} · {detalle.raza || '—'} · {detalle.categoria || '—'} ·{' '}
-            {detalle.area || '—'} / {detalle.jaula || '—'} · {detalle.estado}
+            {detalle.sexo} Â· {detalle.raza || 'â€”'} Â· {detalle.categoria || 'â€”'} Â·{' '}
+            {detalle.area || 'â€”'} / {detalle.jaula || 'â€”'} Â· {detalle.estado}
           </p>
           {detalle.historial && (
             <ul>
@@ -456,7 +456,7 @@ const Animales = () => {
               <ul>
                 {detalle.tratamientos.map((t) => (
                   <li key={t.id}>
-                    {t.tipo} · {t.producto} · {t.estado} · {String(t.fecha_inicio).slice(0, 10)} →{' '}
+                    {t.tipo} Â· {t.producto} Â· {t.estado} Â· {String(t.fecha_inicio).slice(0, 10)} â†’{' '}
                     {String(t.fecha_termino).slice(0, 10)}
                   </li>
                 ))}
@@ -482,7 +482,7 @@ const Animales = () => {
       {bajaModal && (
         <div style={s.card}>
           <h3 style={{ marginTop: 0 }}>
-            Confirmar {bajaModal.estado} — {bajaModal.codigo}
+            Confirmar {bajaModal.estado} â€” {bajaModal.codigo}
           </h3>
           <div style={s.row}>
             <input
@@ -511,11 +511,11 @@ const Animales = () => {
       <table style={s.table}>
         <thead>
           <tr>
-            <th style={s.th}>Código</th>
+            <th style={s.th}>CÃ³digo</th>
             <th style={s.th}>Sexo</th>
             <th style={s.th}>Raza</th>
-            <th style={s.th}>Categoría</th>
-            <th style={s.th}>Área / Jaula</th>
+            <th style={s.th}>CategorÃ­a</th>
+            <th style={s.th}>Ãrea / Jaula</th>
             <th style={s.th}>Estado</th>
             <th style={s.th}>Acciones</th>
           </tr>
@@ -532,10 +532,10 @@ const Animales = () => {
               <tr key={a.id}>
                 <td style={s.td}>{a.codigo}</td>
                 <td style={s.td}>{a.sexo}</td>
-                <td style={s.td}>{a.raza || '—'}</td>
-                <td style={s.td}>{a.categoria || '—'}</td>
+                <td style={s.td}>{a.raza || 'â€”'}</td>
+                <td style={s.td}>{a.categoria || 'â€”'}</td>
                 <td style={s.td}>
-                  {a.area || '—'} / {a.jaula || '—'}
+                  {a.area || 'â€”'} / {a.jaula || 'â€”'}
                 </td>
                 <td style={s.td}>{a.estado}</td>
                 <td style={s.td}>
@@ -591,3 +591,4 @@ const Animales = () => {
 };
 
 export default Animales;
+

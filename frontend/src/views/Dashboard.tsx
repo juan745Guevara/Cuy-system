@@ -334,8 +334,8 @@ const Dashboard = () => {
   const pipeline = [
     { n: 1, name: 'Empadre / Monta', time: 'Día 0 - 30', count: `${repos.hembrasRepro} Hembras`, route: '/empadres', active: true },
     { n: 2, name: 'Gestación', time: '68 días prom.', count: `${partosProyectados} Partos prox.`, route: '/alertas', active: true },
-    { n: 3, name: 'Parto & Lactancia', time: 'Día 0 - 14', count: `${nacimientosMes} Nacimientos`, route: '/births', active: true },
-    { n: 4, name: 'Destete', time: 'Día 14 - 21', count: `${destetesPendientes} Camadas`, route: '/weanings', active: true },
+    { n: 3, name: 'Parto & Lactancia', time: 'Día 0 - 14', count: `${nacimientosMes} Nacimientos`, route: '/partos', active: true },
+    { n: 4, name: 'Destete', time: 'Día 14 - 21', count: `${destetesPendientes} Camadas`, route: '/destetes', active: true },
     { n: 5, name: 'Recría & Engorde', time: 'Día 21 - 90', count: `${repos.recria + repos.engorde} Gazapos`, route: '/animales', active: true },
     { n: 6, name: 'Selección / Venta', time: '> 90 días', count: `${ventasMes} Salidas mes`, route: '/ventas', active: false },
   ];
