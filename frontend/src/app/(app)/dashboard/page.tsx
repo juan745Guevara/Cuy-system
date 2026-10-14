@@ -1,6 +1,4 @@
-﻿import View from '@/views/Dashboard';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Dashboard';
 
 export default function Page() {
   return <View />;

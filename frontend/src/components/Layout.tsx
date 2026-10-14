@@ -717,7 +717,8 @@ const Layout = ({ children }) => {
           flex: 1,
           padding: '1.75rem 2rem 2.5rem',
           background: `
-            radial-gradient(800px 400px at 100% 0%, rgba(122,18,22,0.05), transparent 60%),
+            radial-gradient(900px 460px at 100% -5%, rgba(122,18,22,0.06), transparent 62%),
+            radial-gradient(700px 420px at -10% 105%, rgba(122,18,22,0.045), transparent 60%),
             ${theme.cream}
           `,
           overflow: 'auto',
@@ -725,6 +726,11 @@ const Layout = ({ children }) => {
           minHeight: '100vh',
         }}
       >
+        <div
+          key={pathname}
+          className="fz-page-enter"
+          style={{ maxWidth: 1360, width: '100%', margin: '0 auto' }}
+        >
         {backTarget &&
           !HUB_PATHS.includes(pathname) &&
           !(superadmin && SUPERADMIN_ROOT_PATHS.includes(pathname)) && (
@@ -767,6 +773,7 @@ const Layout = ({ children }) => {
           </div>
         )}
         {children}
+        </div>
       </main>
     </div>
   );

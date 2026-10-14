@@ -1,6 +1,4 @@
-﻿import View from '@/views/Jaulas';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Jaulas';
 
 export default function Page() {
   return <View />;

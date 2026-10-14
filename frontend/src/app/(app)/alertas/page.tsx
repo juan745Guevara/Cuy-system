@@ -1,6 +1,4 @@
-﻿import View from '@/views/Alertas';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Alertas';
 
 export default function Page() {
   return <View />;

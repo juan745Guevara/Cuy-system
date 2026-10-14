@@ -1,6 +1,4 @@
-﻿import View from '@/views/Sanidad';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Sanidad';
 
 export default function Page() {
   return <View />;
