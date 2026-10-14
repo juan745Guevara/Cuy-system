@@ -12,8 +12,8 @@
   --fz-border: #e0d3bf;
   --fz-ink: #2c181a;
   --fz-muted: #7a6358;
-  --fz-font-display: 'Fraunces', 'Libre Baskerville', Georgia, serif;
-  --fz-font-body: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --fz-font-display: var(--font-display), 'Libre Baskerville', Georgia, serif;
+  --fz-font-body: var(--font-body), 'Segoe UI', system-ui, sans-serif;
 }
 
 html,

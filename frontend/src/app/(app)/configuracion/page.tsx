@@ -1,6 +1,4 @@
-﻿import View from '@/views/ConfiguracionHub';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/ConfiguracionHub';
 
 export default function Page() {
   return <View />;

@@ -1,6 +1,4 @@
-﻿import View from '@/views/Pesajes';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Pesajes';
 
 export default function Page() {
   return <View />;

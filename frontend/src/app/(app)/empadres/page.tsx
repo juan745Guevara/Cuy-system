@@ -1,6 +1,4 @@
-﻿import View from '@/views/Empadres';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Empadres';
 
 export default function Page() {
   return <View />;
