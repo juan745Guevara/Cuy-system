@@ -139,7 +139,7 @@ const Jaulas = () => {
           submitLabel={modal.mode === 'editar' ? 'Guardar' : 'Crear jaula'}
         >
           <ModalSection title="Datos de la jaula">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: '0.75rem' }}>
               <div>
                 <label style={fieldLabel}>Código</label>
                 <input
@@ -221,7 +221,7 @@ const Jaulas = () => {
       )}
 
       <div style={s.tableWrap}>
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Código</th>
@@ -261,7 +261,7 @@ const Jaulas = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

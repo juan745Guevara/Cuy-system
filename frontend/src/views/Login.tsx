@@ -53,7 +53,7 @@ const Login = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        padding: '1.5rem',
+        padding: 'clamp(1rem, 4vw, 1.5rem)',
         background: `
           radial-gradient(ellipse 70% 55% at 15% 15%, rgba(163,58,62,0.16), transparent 55%),
           radial-gradient(ellipse 60% 45% at 85% 85%, rgba(122,18,22,0.12), transparent 50%),
@@ -67,7 +67,7 @@ const Login = () => {
         style={{
           width: '100%',
           maxWidth: 430,
-          padding: '2.4rem 2.1rem 2.1rem',
+          padding: 'clamp(1.6rem, 5vw, 2.4rem) clamp(1.25rem, 5vw, 2.1rem) clamp(1.4rem, 5vw, 2.1rem)',
           background: 'rgba(255,252,250,0.92)',
           borderRadius: theme.radiusLg,
           border: `1px solid ${theme.border}`,

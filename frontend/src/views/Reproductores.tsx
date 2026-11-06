@@ -144,7 +144,7 @@ const Reproductores = () => {
           onChange={(e) => setForm({ ...form, fecha_nacimiento: e.target.value })}
         />
         <input
-          style={{ ...s.input, minWidth: 180 }}
+          style={{ ...s.input, minWidth: 'min(180px, 100%)' }}
           placeholder="Particularidad"
           value={form.particularidad}
           onChange={(e) => setForm({ ...form, particularidad: e.target.value })}
@@ -154,7 +154,7 @@ const Reproductores = () => {
         </button>
       </form>
 
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>Código</th>
@@ -177,7 +177,7 @@ const Reproductores = () => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
 
       {detalle && (
         <div style={s.card}>
@@ -191,7 +191,7 @@ const Reproductores = () => {
               : '—'}{' '}
             · Promedio camada: {detalle.indicadores?.promedio_camada ?? '—'}
           </p>
-          <table style={s.table}>
+          <div style={s.tableScroll}><table style={s.table}>
             <thead>
               <tr>
                 <th style={s.th}>Fecha</th>
@@ -219,7 +219,7 @@ const Reproductores = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
     </div>

@@ -238,7 +238,7 @@ const Pesajes = () => {
               Guardar pesos
             </button>
           </div>
-          <table style={s.table}>
+          <div style={s.tableScroll}><table style={s.table}>
             <thead>
               <tr>
                 <th style={s.th}>Código</th>
@@ -264,7 +264,7 @@ const Pesajes = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </form>
       )}
 
@@ -327,7 +327,7 @@ const Pesajes = () => {
             </div>
           )}
           {historial.length > 0 && (
-            <table style={s.table}>
+            <div style={s.tableScroll}><table style={s.table}>
               <thead>
                 <tr>
                   <th style={s.th}>Fecha</th>
@@ -344,10 +344,10 @@ const Pesajes = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
           {promedio.length > 0 && (
-            <table style={s.table}>
+            <div style={s.tableScroll}><table style={s.table}>
               <thead>
                 <tr>
                   <th style={s.th}>Fecha</th>
@@ -364,7 +364,7 @@ const Pesajes = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
       )}

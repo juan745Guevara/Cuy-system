@@ -201,7 +201,7 @@ const Granjas = () => {
       )}
 
       <div style={s.tableWrap}>
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Nombre</th>
@@ -231,7 +231,7 @@ const Granjas = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
     </div>

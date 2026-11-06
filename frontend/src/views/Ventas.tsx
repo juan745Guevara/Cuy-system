@@ -289,7 +289,7 @@ const Ventas = () => {
         )}
       </div>
 
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>Fecha</th>
@@ -318,7 +318,7 @@ const Ventas = () => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 };

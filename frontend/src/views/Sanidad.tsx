@@ -211,7 +211,7 @@ const Sanidad = () => {
             ))}
           </select>
         </div>
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Producto</th>
@@ -238,11 +238,11 @@ const Sanidad = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       <h3>Historial</h3>
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>Tipo</th>
@@ -263,7 +263,7 @@ const Sanidad = () => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 };

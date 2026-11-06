@@ -423,7 +423,7 @@ const Usuarios = () => {
           submitLabel="Crear usuario"
         >
           <ModalSection step={1} title="Datos de acceso">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '0.75rem' }}>
               <div>
                 <label style={fieldLabel}>Nombre</label>
                 <input
@@ -533,7 +533,7 @@ const Usuarios = () => {
       )}
 
       <div style={s.tableWrap}>
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Nombre</th>
@@ -577,7 +577,7 @@ const Usuarios = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

@@ -130,3 +130,43 @@ button:not(:disabled):active {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ===================== Responsivo ===================== */
+img,
+svg,
+video {
+  max-width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Tablas: el contenedor (page.tableScroll) desplaza en horizontal; los encabezados no se parten */
+@media (max-width: 1023px) {
+  .fz-main th {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Evita el zoom automático de iOS al enfocar campos (< 16px) */
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Campos de filtros y formularios ocupan el ancho disponible */
+  .fz-main form input:not([type='checkbox']):not([type='radio']),
+  .fz-main form select,
+  .fz-main form textarea {
+    max-width: 100%;
+  }
+
+  .fz-main th,
+  .fz-main td {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}

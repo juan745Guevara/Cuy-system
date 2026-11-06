@@ -67,7 +67,7 @@ const Auditoria = () => {
           onChange={(e) => setAnular({ ...anular, id: e.target.value })}
         />
         <input
-          style={{ ...s.input, minWidth: 220 }}
+          style={{ ...s.input, minWidth: 'min(220px, 100%)' }}
           required
           placeholder="Motivo anulación"
           value={anular.motivo}
@@ -90,7 +90,7 @@ const Auditoria = () => {
         </button>
       </div>
 
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>Fecha</th>
@@ -114,7 +114,7 @@ const Auditoria = () => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 };

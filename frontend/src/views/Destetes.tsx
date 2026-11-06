@@ -207,7 +207,7 @@ const Destetes = () => {
         </div>
       </form>
 
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>Fecha</th>
@@ -235,7 +235,7 @@ const Destetes = () => {
             );
           })}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 };

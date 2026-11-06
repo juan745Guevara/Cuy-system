@@ -193,7 +193,7 @@ const EventosHub = () => {
         }}
       >
         <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 260, position: 'relative' }}>
+          <div style={{ flex: 1, minWidth: 'min(260px, 100%)', position: 'relative' }}>
             <span
               style={{
                 position: 'absolute',
@@ -324,7 +324,7 @@ const EventosHub = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))',
           gap: '1.25rem',
         }}
       >

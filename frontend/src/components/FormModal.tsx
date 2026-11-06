@@ -63,7 +63,7 @@ export function FormModal({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '1rem',
+        padding: 'clamp(0.5rem, 3vw, 1rem)',
         fontFamily: theme.fontBody,
       }}
     >
@@ -79,7 +79,7 @@ export function FormModal({
           boxShadow: '0 24px 48px rgba(30, 20, 18, 0.22)',
           width: '100%',
           maxWidth: 580,
-          maxHeight: 'min(90vh, 720px)',
+          maxHeight: 'min(92dvh, 720px)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -90,7 +90,7 @@ export function FormModal({
         <header
           style={{
             flexShrink: 0,
-            padding: '1.25rem 1.5rem 1rem',
+            padding: 'clamp(1rem, 4vw, 1.25rem) clamp(1rem, 4vw, 1.5rem) 1rem',
             borderBottom: `1px solid ${theme.border}`,
             background: `linear-gradient(180deg, ${theme.creamSoft} 0%, ${theme.cream} 100%)`,
           }}
@@ -132,7 +132,7 @@ export function FormModal({
           </div>
         </header>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.1rem 1.5rem 0.5rem', scrollbarWidth: 'thin' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.1rem clamp(1rem, 4vw, 1.5rem) 0.5rem', scrollbarWidth: 'thin' }}>
           {error && <div style={{ ...s.error, marginBottom: '0.85rem' }}>{error}</div>}
           {children}
         </div>
@@ -145,7 +145,7 @@ export function FormModal({
             justifyContent: 'space-between',
             gap: '1rem',
             flexWrap: 'wrap',
-            padding: '1rem 1.5rem',
+            padding: '1rem clamp(1rem, 4vw, 1.5rem)',
             borderTop: `1px solid ${theme.border}`,
             background: theme.creamDeep,
           }}

@@ -414,7 +414,7 @@ const Animales = () => {
               onChange={(e) => setForm({ ...form, fecha_nacimiento: e.target.value })}
             />
             <input
-              style={{ ...s.input, minWidth: 220 }}
+              style={{ ...s.input, minWidth: 'min(220px, 100%)' }}
               placeholder="Particularidad (opcional)"
               value={form.particularidad}
               onChange={(e) => setForm({ ...form, particularidad: e.target.value })}
@@ -466,7 +466,7 @@ const Animales = () => {
           {detalle.estado === 'activo' && (
             <div style={s.row}>
               <input
-                style={{ ...s.input, minWidth: 260 }}
+                style={{ ...s.input, minWidth: 'min(260px, 100%)' }}
                 placeholder="Nueva particularidad"
                 value={partTexto}
                 onChange={(e) => setPartTexto(e.target.value)}
@@ -493,7 +493,7 @@ const Animales = () => {
               onChange={(e) => setBajaFecha(e.target.value)}
             />
             <input
-              style={{ ...s.input, minWidth: 240 }}
+              style={{ ...s.input, minWidth: 'min(240px, 100%)' }}
               placeholder="Motivo de baja"
               value={bajaMotivo}
               onChange={(e) => setBajaMotivo(e.target.value)}
@@ -508,7 +508,7 @@ const Animales = () => {
         </div>
       )}
 
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>CÃ³digo</th>
@@ -585,7 +585,7 @@ const Animales = () => {
             ))
           )}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 };

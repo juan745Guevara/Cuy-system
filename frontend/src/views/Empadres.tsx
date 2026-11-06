@@ -132,15 +132,15 @@ const Empadres = () => {
       {ok && <div style={s.ok}>{ok}</div>}
 
       <div style={{ ...s.card, display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ flex: 1, minWidth: 'min(200px, 100%)' }}>
           <div style={{ fontWeight: 700, color: step >= 1 ? '#4F0C10' : '#7A6358' }}>Paso 1: Selección</div>
           <div style={{ fontSize: '0.9rem', color: '#7A6358' }}>Reproductoras/reproductores + fechas</div>
         </div>
-        <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ flex: 1, minWidth: 'min(200px, 100%)' }}>
           <div style={{ fontWeight: 700, color: step >= 2 ? '#4F0C10' : '#7A6358' }}>Paso 2: Confirmación</div>
           <div style={{ fontSize: '0.9rem', color: '#7A6358' }}>Revisar datos antes de registrar</div>
         </div>
-        <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ flex: 1, minWidth: 'min(200px, 100%)' }}>
           <div style={{ fontWeight: 700, color: step >= 3 ? '#4F0C10' : '#7A6358' }}>Paso 3: Resultados</div>
           <div style={{ fontSize: '0.9rem', color: '#7A6358' }}>Resumen del registro</div>
         </div>
@@ -254,7 +254,7 @@ const Empadres = () => {
               onChange={(e) => setForm({ ...form, peso_despues: e.target.value })}
             />
             <input
-              style={{ ...s.input, minWidth: 200 }}
+              style={{ ...s.input, minWidth: 'min(200px, 100%)' }}
               placeholder="Notas"
               value={form.notas}
               onChange={(e) => setForm({ ...form, notas: e.target.value })}

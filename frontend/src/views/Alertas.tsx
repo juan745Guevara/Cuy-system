@@ -147,7 +147,7 @@ const Alertas = () => {
         </select>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '1rem' }}>
         {ESTADOS.map((estado) => (
           <div key={estado.key}>
             <h3 style={{ margin: '0 0 0.5rem', color: theme.maroonDeep }}>

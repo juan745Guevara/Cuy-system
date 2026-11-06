@@ -42,7 +42,7 @@ export const page: Record<string, CSSProperties> = {
   title: {
     margin: '0 0 0.35rem',
     color: theme.maroonDeep,
-    fontSize: '2rem',
+    fontSize: 'clamp(1.5rem, 1.1rem + 1.6vw, 2rem)',
     fontFamily: theme.fontDisplay,
     fontWeight: 700,
     letterSpacing: '-0.025em',
@@ -66,7 +66,7 @@ export const page: Record<string, CSSProperties> = {
     padding: '0.66rem 0.95rem',
     border: `1px solid ${theme.border}`,
     borderRadius: theme.radiusSm,
-    minWidth: 160,
+    minWidth: 'min(160px, 100%)',
     minHeight: 42,
     background: theme.white,
     color: theme.ink,
@@ -79,7 +79,7 @@ export const page: Record<string, CSSProperties> = {
     padding: '0.66rem 0.95rem',
     border: `1px solid ${theme.border}`,
     borderRadius: theme.radiusSm,
-    minWidth: 140,
+    minWidth: 'min(140px, 100%)',
     minHeight: 42,
     background: theme.white,
     color: theme.ink,
@@ -165,6 +165,12 @@ export const page: Record<string, CSSProperties> = {
     boxShadow: theme.shadowSoft,
     background: theme.creamSoft,
   },
+  /** Contenedor con scroll horizontal para tablas anchas en pantallas pequeñas. */
+  tableScroll: {
+    width: '100%',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
+  },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
@@ -192,7 +198,7 @@ export const page: Record<string, CSSProperties> = {
   card: {
     background: `linear-gradient(180deg, ${theme.white} 0%, ${theme.creamSoft} 100%)`,
     border: `1px solid ${theme.border}`,
-    padding: '1.3rem 1.4rem',
+    padding: 'clamp(1rem, 3vw, 1.3rem) clamp(1rem, 3vw, 1.4rem)',
     marginBottom: '1.15rem',
     borderRadius: theme.radiusLg,
     boxShadow: theme.shadowSoft,

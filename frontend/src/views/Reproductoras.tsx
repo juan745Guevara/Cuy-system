@@ -207,7 +207,7 @@ const Reproductoras = () => {
           onChange={(e) => setForm({ ...form, fecha_nacimiento: e.target.value })}
         />
         <input
-          style={{ ...s.input, minWidth: 180 }}
+          style={{ ...s.input, minWidth: 'min(180px, 100%)' }}
           placeholder="Particularidad"
           value={form.particularidad}
           onChange={(e) => setForm({ ...form, particularidad: e.target.value })}
@@ -219,7 +219,7 @@ const Reproductoras = () => {
 
       <div style={s.card}>
         <h3 style={{ marginTop: 0 }}>Hembras activas</h3>
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Código</th>
@@ -240,7 +240,7 @@ const Reproductoras = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {ficha && (

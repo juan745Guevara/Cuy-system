@@ -161,7 +161,7 @@ const BusquedaGlobal = () => {
         }}
       >
         <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 280, position: 'relative' }}>
+          <div style={{ flex: 1, minWidth: 'min(280px, 100%)', position: 'relative' }}>
             <span
               style={{
                 position: 'absolute',
@@ -297,7 +297,7 @@ const BusquedaGlobal = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
               gap: '1rem',
             }}
           >
@@ -379,7 +379,7 @@ const BusquedaGlobal = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))',
               gap: '1rem',
             }}
           >
@@ -446,7 +446,7 @@ const BusquedaGlobal = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
               gap: '1rem',
             }}
           >
@@ -492,7 +492,7 @@ const BusquedaGlobal = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
               gap: '1rem',
             }}
           >

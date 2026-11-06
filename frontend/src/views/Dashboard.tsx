@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 /** Estilos locales del Dashboard Operativo 2.0 (mockup UNAS v2.0) */
 const gridKpi = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(225px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(225px, 100%), 1fr))',
   gap: '1.1rem',
   marginBottom: '1.6rem',
 };
@@ -544,7 +544,7 @@ const Dashboard = () => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(148px, 100%), 1fr))',
                   gap: '0.75rem',
                 }}
               >
@@ -559,7 +559,7 @@ const Dashboard = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
               gap: '1.1rem',
               marginBottom: '1.75rem',
             }}

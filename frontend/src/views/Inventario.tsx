@@ -98,7 +98,7 @@ const Inventario = () => {
         lookup[`${rz}||${ct}`] = r.cantidad ?? r.n ?? 0;
       });
       return (
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Raza \\ Categoría</th>
@@ -121,7 +121,7 @@ const Inventario = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       );
     }
 
@@ -129,7 +129,7 @@ const Inventario = () => {
       const razas = Object.keys(matriz);
       const cats = [...new Set(razas.flatMap((rz) => Object.keys(matriz[rz] || {})))];
       return (
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Raza \\ Categoría</th>
@@ -152,7 +152,7 @@ const Inventario = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       );
     }
     return null;
@@ -193,7 +193,7 @@ const Inventario = () => {
               {renderMatriz()}
             </>
           ) : (
-            <table style={s.table}>
+            <div style={s.tableScroll}><table style={s.table}>
               <thead>
                 <tr>
                   <th style={s.th}>Categoría</th>
@@ -210,7 +210,7 @@ const Inventario = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
       )}
@@ -278,7 +278,7 @@ const Inventario = () => {
           <h3 style={{ marginTop: 0 }}>
             Consolidado institucional {consolidado.mes}/{consolidado.anio}
           </h3>
-          <table style={s.table}>
+          <div style={s.tableScroll}><table style={s.table}>
             <thead>
               <tr>
                 <th style={s.th}>Granja</th>
@@ -301,7 +301,7 @@ const Inventario = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
           {consolidado.total && (
             <p>
               Total: pob {consolidado.total.poblacion} · nac {consolidado.total.nacimientos} · mort{' '}
