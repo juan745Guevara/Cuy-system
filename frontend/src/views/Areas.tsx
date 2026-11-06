@@ -166,7 +166,7 @@ const Areas = () => {
             {jaulasDisponibles.length === 0 ? (
               <span style={{ fontSize: '0.9rem' }}>No hay jaulas libres. Créelas en la pantalla Jaulas.</span>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(160px, 100%), 1fr))', gap: '0.5rem' }}>
                 {jaulasDisponibles.map((j) => (
                   <CheckOption
                     key={j.id}
@@ -182,7 +182,7 @@ const Areas = () => {
       )}
 
       <div style={s.tableWrap}>
-        <table style={s.table}>
+        <div style={s.tableScroll}><table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Área</th>
@@ -247,7 +247,7 @@ const Areas = () => {
               );
             })}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

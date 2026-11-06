@@ -11,6 +11,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "ts-node --project tsconfig.scripts.json scripts/db/migrate.ts",
     "db:seed": "ts-node --project tsconfig.scripts.json scripts/db/seed.ts",
+    "db:backup": "ts-node --project tsconfig.scripts.json scripts/db/backup.ts",
+    "db:restore": "ts-node --project tsconfig.scripts.json scripts/db/backup.ts restore",
     "db:studio": "prisma studio"
   },
   "dependencies": {

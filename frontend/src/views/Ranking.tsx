@@ -109,7 +109,7 @@ const Ranking = () => {
         </form>
       )}
 
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>#</th>
@@ -145,7 +145,7 @@ const Ranking = () => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 };

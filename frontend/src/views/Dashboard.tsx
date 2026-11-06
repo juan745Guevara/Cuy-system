@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 /** Estilos locales del Dashboard Operativo 2.0 (mockup UNAS v2.0) */
 const gridKpi = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(225px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(225px, 100%), 1fr))',
   gap: '1.1rem',
   marginBottom: '1.6rem',
 };
@@ -334,8 +334,8 @@ const Dashboard = () => {
   const pipeline = [
     { n: 1, name: 'Empadre / Monta', time: 'Día 0 - 30', count: `${repos.hembrasRepro} Hembras`, route: '/empadres', active: true },
     { n: 2, name: 'Gestación', time: '68 días prom.', count: `${partosProyectados} Partos prox.`, route: '/alertas', active: true },
-    { n: 3, name: 'Parto & Lactancia', time: 'Día 0 - 14', count: `${nacimientosMes} Nacimientos`, route: '/births', active: true },
-    { n: 4, name: 'Destete', time: 'Día 14 - 21', count: `${destetesPendientes} Camadas`, route: '/weanings', active: true },
+    { n: 3, name: 'Parto & Lactancia', time: 'Día 0 - 14', count: `${nacimientosMes} Nacimientos`, route: '/partos', active: true },
+    { n: 4, name: 'Destete', time: 'Día 14 - 21', count: `${destetesPendientes} Camadas`, route: '/destetes', active: true },
     { n: 5, name: 'Recría & Engorde', time: 'Día 21 - 90', count: `${repos.recria + repos.engorde} Gazapos`, route: '/animales', active: true },
     { n: 6, name: 'Selección / Venta', time: '> 90 días', count: `${ventasMes} Salidas mes`, route: '/ventas', active: false },
   ];
@@ -544,7 +544,7 @@ const Dashboard = () => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(148px, 100%), 1fr))',
                   gap: '0.75rem',
                 }}
               >
@@ -559,7 +559,7 @@ const Dashboard = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
               gap: '1.1rem',
               marginBottom: '1.75rem',
             }}

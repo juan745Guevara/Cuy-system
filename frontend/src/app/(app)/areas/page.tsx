@@ -1,6 +1,4 @@
-﻿import View from '@/views/Areas';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Areas';
 
 export default function Page() {
   return <View />;

@@ -1,4 +1,7 @@
-import { InventoryRepositoryPort } from '../../domain/ports/inventory.repository.port';
+import {
+  InventoryRepositoryPort,
+  NewInventoryCount,
+} from '../../domain/ports/inventory.repository.port';
 import { Injectable } from '@nestjs/common';
 import { CuyesDepsService } from '../../application/cuyes-deps.service';
 
@@ -154,6 +157,79 @@ export class InventoryRepository extends InventoryRepositoryPort {
        ORDER BY e.nombre, g.nombre`,
       [farmIds, year, month],
     );
+    return rows;
+  }
+
+  /* ---------------- Conteo físico por jaula (CU-06) ---------------- */
+
+  async findActiveCage(farmId: number, jaulaId: number) {
+    const { rows } = await this.db.query(
+      `SELECT id, codigo FROM recintos WHERE id = $1 AND id_granja = $2 AND activa = true`,
+      [jaulaId, farmId],
+    );
+    return rows[0] || null;
+  }
+
+  async countRegisteredBySex(farmId: number, jaulaId: number) {
+    const { rows } = await this.db.query(
+      `SELECT COUNT(*) FILTER (WHERE sexo = 'M')::int AS machos,
+              COUNT(*) FILTER (WHERE sexo = 'H')::int AS hembras
+         FROM animales
+        WHERE id_granja = $1 AND id_jaula = $2 AND estado = 'activo'`,
+      [farmId, jaulaId],
+    );
+    return { machos: rows[0]?.machos ?? 0, hembras: rows[0]?.hembras ?? 0 };
+  }
+
+  async insertCount(d: NewInventoryCount) {
+    const [p1, p2, p3] = d.pesos;
+    const { rows } = await this.db.query(
+      `INSERT INTO conteos_inventario
+         (id_granja, id_jaula, fecha, machos_contados, hembras_contadas,
+          machos_sistema, hembras_sistema, peso_muestra1, peso_muestra2, peso_muestra3,
+          observaciones, created_by)
+       VALUES ($1, $2, $3::date, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING *`,
+      [
+        d.farmId, d.jaulaId, d.fecha, d.machosContados, d.hembrasContadas,
+        d.machosSistema, d.hembrasSistema, p1, p2, p3, d.observaciones, d.userId,
+      ],
+    );
+    return rows[0];
+  }
+
+  /** Lista conteos con la diferencia y el peso promedio calculados (no se almacenan). */
+  async listCounts(farmId: number, filters: { desde?: string; hasta?: string; jaulaId?: number }) {
+    const params: unknown[] = [farmId];
+    let sql = `
+      SELECT c.*, j.codigo AS jaula, a.nombre AS area, u.nombre AS registrado_por,
+             (c.machos_contados + c.hembras_contadas) AS total_contado,
+             (c.machos_sistema + c.hembras_sistema) AS total_sistema,
+             (c.machos_contados + c.hembras_contadas)
+               - (c.machos_sistema + c.hembras_sistema) AS diferencia,
+             ROUND(
+               (COALESCE(c.peso_muestra1, 0) + COALESCE(c.peso_muestra2, 0) + COALESCE(c.peso_muestra3, 0))
+               / NULLIF((c.peso_muestra1 IS NOT NULL)::int + (c.peso_muestra2 IS NOT NULL)::int
+                        + (c.peso_muestra3 IS NOT NULL)::int, 0), 2) AS peso_promedio
+        FROM conteos_inventario c
+        JOIN recintos j ON j.id = c.id_jaula
+        LEFT JOIN areas a ON a.id = j.id_area
+        LEFT JOIN usuarios u ON u.id = c.created_by
+       WHERE c.id_granja = $1`;
+    if (filters.desde) {
+      params.push(filters.desde);
+      sql += ` AND c.fecha >= $${params.length}::date`;
+    }
+    if (filters.hasta) {
+      params.push(filters.hasta);
+      sql += ` AND c.fecha <= $${params.length}::date`;
+    }
+    if (filters.jaulaId) {
+      params.push(filters.jaulaId);
+      sql += ` AND c.id_jaula = $${params.length}`;
+    }
+    sql += ' ORDER BY c.fecha DESC, c.id DESC LIMIT 200';
+    const { rows } = await this.db.query(sql, params);
     return rows;
   }
 }

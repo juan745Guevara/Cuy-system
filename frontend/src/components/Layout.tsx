@@ -201,6 +201,8 @@ const SUBPAGE_HUB = {
   '/granjas': '/configuracion',
 };
 
+const MOBILE_QUERY = '(max-width: 767px)';
+
 const Layout = ({ children }) => {
   const { user, granjas, granjaActiva, seleccionarGranja, logout } = useAuth();
   const navigate = useNavigate();
@@ -232,7 +234,44 @@ const Layout = ({ children }) => {
       .catch(() => setNavBadges({ alertasVencidas: 0 }));
   }, [granjaActiva, superadmin]);
 
-  const rail = collapsed;
+  // Móvil (< 768px): la barra lateral se convierte en un cajón off-canvas con barra superior.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches,
+  );
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_QUERY);
+    const onChange = () => {
+      setIsMobile(mq.matches);
+      if (!mq.matches) setMobileOpen(false);
+    };
+    onChange();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // Cerrar el cajón al navegar.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  // Con el cajón abierto: bloquear scroll del fondo y cerrar con Esc.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [mobileOpen]);
+
+  const rail = collapsed && !isMobile;
   const showLabel = !rail;
 
   const [farmHover, setFarmHover] = useState(false);
@@ -280,14 +319,137 @@ const Layout = ({ children }) => {
     <div
       style={{
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         minHeight: '100vh',
         fontFamily: theme.fontBody,
         color: theme.ink,
         background: theme.cream,
       }}
     >
-      {/* Sidebar con colapso a rail de iconos */}
+      {/* Barra superior (solo móvil) */}
+      {isMobile && (
+        <header
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.65rem',
+            padding: '0.55rem 0.75rem',
+            paddingTop: 'max(0.55rem, env(safe-area-inset-top))',
+            background: `linear-gradient(90deg, ${theme.maroonDeep} 0%, ${theme.maroon} 100%)`,
+            color: theme.creamSoft,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menú"
+            aria-controls="fz-sidebar"
+            aria-expanded={mobileOpen}
+            style={{
+              position: 'relative',
+              width: 44,
+              height: 44,
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(245,239,227,0.18)',
+              borderRadius: theme.radiusSm,
+              color: theme.creamSoft,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <line x1="4" y1="7" x2="20" y2="7" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="17" x2="20" y2="17" />
+            </svg>
+            {navBadges.alertasVencidas > 0 && (
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  width: 9,
+                  height: 9,
+                  borderRadius: '50%',
+                  background: '#FF6B35',
+                  boxShadow: `0 0 0 2px ${theme.maroon}`,
+                }}
+              />
+            )}
+          </button>
+          <img
+            src="/logo-fz.png?v=3"
+            alt=""
+            style={{
+              width: 34,
+              height: 34,
+              flexShrink: 0,
+              objectFit: 'contain',
+              background: theme.cream,
+              borderRadius: '50%',
+              padding: 2,
+            }}
+          />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontFamily: theme.fontDisplay,
+                fontWeight: 700,
+                fontSize: '1rem',
+                lineHeight: 1.15,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              Control Animales
+            </div>
+            {!superadmin && granja && (
+              <div
+                style={{
+                  fontSize: '0.74rem',
+                  opacity: 0.8,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {granja.nombre}
+              </div>
+            )}
+          </div>
+        </header>
+      )}
+
+      {/* Fondo oscuro del cajón (solo móvil) */}
+      {isMobile && (
+        <div
+          aria-hidden
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 55,
+            background: 'rgba(30, 20, 18, 0.5)',
+            opacity: mobileOpen ? 1 : 0,
+            pointerEvents: mobileOpen ? 'auto' : 'none',
+            transition: 'opacity 0.24s ease',
+          }}
+        />
+      )}
+
+      {/* Sidebar con colapso a rail de iconos (escritorio) / cajón off-canvas (móvil) */}
       <nav
+        id="fz-sidebar"
         aria-label="Menú principal"
         style={{
           width: rail ? 76 : 268,
@@ -297,13 +459,28 @@ const Layout = ({ children }) => {
           color: theme.creamSoft,
           display: 'flex',
           flexDirection: 'column',
-          height: '100vh',
-          position: 'sticky',
-          top: 0,
           borderRight: `1px solid ${theme.maroonDeep}`,
           boxShadow: '4px 0 22px rgba(0,0,0,0.18)',
-          transition: 'width 0.24s cubic-bezier(0.25, 1, 0.4, 1)',
           overflow: 'hidden',
+          ...(isMobile
+            ? {
+                position: 'fixed',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                zIndex: 60,
+                maxWidth: '85vw',
+                paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+                transform: mobileOpen ? 'none' : 'translateX(-100%)',
+                visibility: mobileOpen ? 'visible' : 'hidden',
+                transition: `transform 0.26s cubic-bezier(0.25, 1, 0.4, 1), visibility 0s linear ${mobileOpen ? '0s' : '0.26s'}`,
+              }
+            : {
+                height: '100vh',
+                position: 'sticky',
+                top: 0,
+                transition: 'width 0.24s cubic-bezier(0.25, 1, 0.4, 1)',
+              }),
         }}
       >
         {/* Header institucional */}
@@ -348,9 +525,37 @@ const Layout = ({ children }) => {
               </div>
             </div>
           )}
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Cerrar menú"
+              style={{
+                marginLeft: 'auto',
+                width: 40,
+                height: 40,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(245,239,227,0.18)',
+                borderRadius: '50%',
+                color: theme.creamSoft,
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
 
-        {/* Botón colapsar / expandir */}
+        {/* Botón colapsar / expandir (solo escritorio) */}
+        {!isMobile && (
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
@@ -389,6 +594,7 @@ const Layout = ({ children }) => {
             </svg>
           )}
         </button>
+        )}
 
         {/* Tarjeta de Granja Activa */}
         {!superadmin && granja && (
@@ -713,18 +919,25 @@ const Layout = ({ children }) => {
 
       {/* Área de Contenido Principal */}
       <main
+        className="fz-main"
         style={{
           flex: 1,
-          padding: '1.75rem 2rem 2.5rem',
+          padding: isMobile ? '1rem 1rem 2rem' : 'clamp(1.25rem, 2.5vw, 1.75rem) clamp(1.25rem, 3vw, 2rem) 2.5rem',
           background: `
-            radial-gradient(800px 400px at 100% 0%, rgba(122,18,22,0.05), transparent 60%),
+            radial-gradient(900px 460px at 100% -5%, rgba(122,18,22,0.06), transparent 62%),
+            radial-gradient(700px 420px at -10% 105%, rgba(122,18,22,0.045), transparent 60%),
             ${theme.cream}
           `,
           overflow: 'auto',
           minWidth: 0,
-          minHeight: '100vh',
+          minHeight: isMobile ? 0 : '100vh',
         }}
       >
+        <div
+          key={pathname}
+          className="fz-page-enter"
+          style={{ maxWidth: 1360, width: '100%', margin: '0 auto' }}
+        >
         {backTarget &&
           !HUB_PATHS.includes(pathname) &&
           !(superadmin && SUPERADMIN_ROOT_PATHS.includes(pathname)) && (
@@ -767,6 +980,7 @@ const Layout = ({ children }) => {
           </div>
         )}
         {children}
+        </div>
       </main>
     </div>
   );

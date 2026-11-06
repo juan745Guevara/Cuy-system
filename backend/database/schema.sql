@@ -340,3 +340,72 @@ DO $$ BEGIN
   ALTER TABLE ventas ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'registrada';
 EXCEPTION WHEN others THEN NULL;
 END $$;
+
+-- Conteo físico de inventario por jaula (CU-06: toma y conciliación de inventario).
+-- Guarda lo contado y una foto de lo que el sistema tenía registrado en ese momento;
+-- la diferencia y el peso promedio se calculan al consultar (no se almacenan datos derivados).
+CREATE TABLE IF NOT EXISTS conteos_inventario (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id),
+  id_jaula INTEGER NOT NULL REFERENCES recintos(id),
+  fecha DATE NOT NULL,
+  machos_contados INTEGER NOT NULL CHECK (machos_contados >= 0),
+  hembras_contadas INTEGER NOT NULL CHECK (hembras_contadas >= 0),
+  machos_sistema INTEGER NOT NULL CHECK (machos_sistema >= 0),
+  hembras_sistema INTEGER NOT NULL CHECK (hembras_sistema >= 0),
+  peso_muestra1 NUMERIC(10,2) CHECK (peso_muestra1 > 0),
+  peso_muestra2 NUMERIC(10,2) CHECK (peso_muestra2 > 0),
+  peso_muestra3 NUMERIC(10,2) CHECK (peso_muestra3 > 0),
+  observaciones TEXT,
+  created_by INTEGER REFERENCES usuarios(id),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_conteos_granja_fecha ON conteos_inventario(id_granja, fecha);
+
+-- Columnas que el código creaba en tiempo de ejecución; se declaran aquí para que este
+-- archivo sea la descripción completa del esquema.
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS entidad VARCHAR(80);
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_entidad INTEGER;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_granja INTEGER;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS antes JSONB;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS despues JSONB;
+ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false;
+ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT;
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false;
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT;
+
+-- Claves foráneas que faltaban. Se crean NOT VALID (no fallan si existen datos huérfanos
+-- antiguos) y luego se intenta validarlas; los registros nuevos siempre se controlan.
+-- alertas_descarte.id_referencia no lleva FK: apunta a registros de distinto tipo (empadre o parto).
+DO $$ BEGIN
+  ALTER TABLE destetes ADD CONSTRAINT destetes_id_jaula_m_fkey
+    FOREIGN KEY (id_jaula_m) REFERENCES recintos(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE destetes ADD CONSTRAINT destetes_id_jaula_h_fkey
+    FOREIGN KEY (id_jaula_h) REFERENCES recintos(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE alertas_descarte ADD CONSTRAINT alertas_descarte_id_animal_fkey
+    FOREIGN KEY (id_animal) REFERENCES animales(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE audit_log ADD CONSTRAINT audit_log_id_granja_fkey
+    FOREIGN KEY (id_granja) REFERENCES granjas(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$
+DECLARE c TEXT;
+BEGIN
+  FOREACH c IN ARRAY ARRAY['destetes.destetes_id_jaula_m_fkey', 'destetes.destetes_id_jaula_h_fkey',
+                           'alertas_descarte.alertas_descarte_id_animal_fkey', 'audit_log.audit_log_id_granja_fkey'] LOOP
+    BEGIN
+      EXECUTE format('ALTER TABLE %I VALIDATE CONSTRAINT %I', split_part(c, '.', 1), split_part(c, '.', 2));
+    EXCEPTION WHEN foreign_key_violation THEN
+      RAISE NOTICE 'Constraint % queda sin validar: hay datos antiguos huérfanos', c;
+    END;
+  END LOOP;
+END $$;
+
+-- Ventas: búsqueda del comprobante para impedir su reutilización (CU-03).
+CREATE INDEX IF NOT EXISTS idx_ventas_comprobante
+  ON ventas (UPPER(TRIM(serie)), UPPER(TRIM(numero)));

@@ -1,6 +1,4 @@
-﻿import View from '@/views/Ranking';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Ranking';
 
 export default function Page() {
   return <View />;

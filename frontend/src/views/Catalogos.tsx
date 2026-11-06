@@ -95,7 +95,7 @@ const Catalogos = () => {
       {error && <div style={s.error}>{error}</div>}
       {ok && <div style={s.ok}>{ok}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: '1.5rem' }}>
         <div style={s.card}>
           <h3 style={{ marginTop: 0 }}>Razas</h3>
           <form onSubmit={addRaza} style={s.row}>

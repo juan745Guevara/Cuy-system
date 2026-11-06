@@ -1,6 +1,4 @@
-﻿import View from '@/views/Destetes';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Destetes';
 
 export default function Page() {
   return <View />;

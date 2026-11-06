@@ -9,7 +9,10 @@ out/
 .DS_Store
 *.log
 
-# Artefactos de generación de la entrega
-docs/entrega_01/.build/
-docs/entrega_01/img/
-docs/entrega_01/tools/plantuml.jar
+# Artefactos de generación de las entregas
+docs/entregable_final/**/.build/
+docs/entregable_final/**/img/
+docs/entregable_final/**/tools/plantuml.jar
+
+# Copias de seguridad de la base de datos (npm run db:backup)
+backend/backups/

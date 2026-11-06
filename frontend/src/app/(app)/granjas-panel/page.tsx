@@ -1,6 +1,4 @@
-﻿import View from '@/views/GranjasHub';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/GranjasHub';
 
 export default function Page() {
   return <View />;

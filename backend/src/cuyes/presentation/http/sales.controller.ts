@@ -38,10 +38,18 @@ export class SalesController {
   @Post('discards')
   @UseGuards(RolesGuard)
   @Roles('superadmin', 'admin', 'encargado', 'auxiliar')
-  @ApiOperation({ summary: 'Vender animales de descarte' })
+  @ApiOperation({ summary: 'Vender animales de descarte con un comprobante de la caja UNAS' })
   @ApiJsonBody(
-    { fecha: 'date', id_animales: 'integer[]', comprador: 'string', precio: 'number' },
-    ['fecha', 'id_animales'],
+    {
+      fecha: 'date',
+      id_animales: 'integer[]',
+      comprador: 'string',
+      precio: 'number',
+      tipo_comprobante: 'string',
+      serie: 'string',
+      numero: 'string',
+    },
+    ['fecha', 'id_animales', 'tipo_comprobante', 'serie', 'numero'],
   )
   async sellDiscards(
     @FarmId() farmId: number,
@@ -56,7 +64,7 @@ export class SalesController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles('superadmin', 'admin', 'encargado', 'auxiliar')
-  @ApiOperation({ summary: 'Registrar venta (individual o por lote)' })
+  @ApiOperation({ summary: 'Registrar venta (individual o por lote) con comprobante de la caja UNAS' })
   @ApiJsonBody(
     {
       fecha: 'date',
@@ -66,8 +74,12 @@ export class SalesController {
       categoria: 'string',
       comprador: 'string',
       precio: 'number',
+      tipo_comprobante: 'string',
+      serie: 'string',
+      numero: 'string',
+      observaciones: 'string',
     },
-    ['fecha', 'cantidad'],
+    ['fecha', 'cantidad', 'tipo_comprobante', 'serie', 'numero'],
   )
   async create(
     @FarmId() farmId: number,

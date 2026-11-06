@@ -1,7 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { ok } from '../../shared/kernel/service-result.kernel';
+import { ok, fail, fromError } from '../../shared/kernel/service-result.kernel';
 import { InventoryRepositoryPort } from '../domain/ports/inventory.repository.port';
 import { UserFarm } from '../../shared/auth/auth-user.types';
+import { CuyesDepsService } from './cuyes-deps.service';
+import { isValidDateStr, esFechaFutura } from '../../shared/utils/helpers';
+
+/** Entero >= 0 o null si el valor no es válido. */
+function conteoValido(v: unknown): number | null {
+  const n = Number(v);
+  return v !== '' && v != null && Number.isInteger(n) && n >= 0 ? n : null;
+}
 
 function endOfMonth(year: number, month: number) {
   return new Date(year, month, 0).toISOString().slice(0, 10);
@@ -13,7 +21,105 @@ function startOfMonth(year: number, month: number) {
 
 @Injectable()
 export class InventoryService {
-  constructor(private readonly repository: InventoryRepositoryPort) {}
+  constructor(
+    private readonly repository: InventoryRepositoryPort,
+    private readonly cuyesDeps: CuyesDepsService,
+  ) {}
+
+  private get audit() {
+    return this.cuyesDeps.toDeps().audit;
+  }
+
+  /**
+   * CU-06 — Registra el conteo físico de una jaula y lo concilia con lo registrado.
+   * Guarda lo contado junto a una foto de lo que el sistema tenía en ese momento;
+   * si faltan animales (diferencia negativa) exige observaciones.
+   */
+  async registerCount({
+    farmId,
+    userId,
+    body,
+  }: {
+    farmId: number;
+    userId: number;
+    body: Record<string, unknown>;
+  }) {
+    const { fecha, id_jaula, machos_contados, hembras_contadas, observaciones } = body || {};
+
+    if (!isValidDateStr(fecha)) return fail('Invalid date', 400, { campo: 'fecha' });
+    if (esFechaFutura(fecha)) return fail('date cannot be in the future', 400, { campo: 'fecha' });
+
+    const jaulaId = Number(id_jaula);
+    const jaula = Number.isInteger(jaulaId) && jaulaId > 0
+      ? await this.repository.findActiveCage(farmId, jaulaId)
+      : null;
+    if (!jaula) return fail('Cage not found in this farm', 404, { campo: 'id_jaula' });
+
+    const machos = conteoValido(machos_contados);
+    if (machos === null) {
+      return fail('machos_contados must be an integer >= 0', 400, { campo: 'machos_contados' });
+    }
+    const hembras = conteoValido(hembras_contadas);
+    if (hembras === null) {
+      return fail('hembras_contadas must be an integer >= 0', 400, { campo: 'hembras_contadas' });
+    }
+
+    const pesos = [body?.peso_muestra1, body?.peso_muestra2, body?.peso_muestra3].map((p) =>
+      p === undefined || p === null || p === '' ? null : Number(p),
+    ) as [number | null, number | null, number | null];
+    const pesoInvalido = pesos.findIndex((p) => p !== null && !(Number.isFinite(p) && p > 0));
+    if (pesoInvalido > -1) {
+      return fail('sample weight must be greater than zero', 400, {
+        campo: `peso_muestra${pesoInvalido + 1}`,
+      });
+    }
+
+    const sistema = await this.repository.countRegisteredBySex(farmId, jaulaId);
+    const diferencia = machos + hembras - (sistema.machos + sistema.hembras);
+    const obs = typeof observaciones === 'string' && observaciones.trim() ? observaciones.trim() : null;
+    if (diferencia < 0 && !obs) {
+      return fail('observaciones are required when animals are missing', 400, {
+        campo: 'observaciones',
+        diferencia,
+      });
+    }
+
+    try {
+      const row = await this.repository.insertCount({
+        farmId,
+        userId,
+        jaulaId,
+        fecha: String(fecha),
+        machosContados: machos,
+        hembrasContadas: hembras,
+        machosSistema: sistema.machos,
+        hembrasSistema: sistema.hembras,
+        pesos,
+        observaciones: obs,
+      });
+      await this.audit.write({
+        userId,
+        farmId,
+        accion: 'crear',
+        entidad: 'conteo_inventario',
+        idEntidad: row.id,
+        despues: row,
+        detalle: `Physical count of cage ${jaula.codigo}: difference ${diferencia}`,
+      });
+      return ok({ ...row, diferencia }, 201);
+    } catch (err) {
+      return fromError(err);
+    }
+  }
+
+  async listCounts({ farmId, query }: { farmId: number; query: Record<string, string> }) {
+    const filters = {
+      desde: isValidDateStr(query?.desde) ? query.desde : undefined,
+      hasta: isValidDateStr(query?.hasta) ? query.hasta : undefined,
+      jaulaId: Number(query?.id_jaula) > 0 ? Number(query.id_jaula) : undefined,
+    };
+    return ok(await this.repository.listCounts(farmId, filters));
+  }
 
   async getPopulation({
     farmId,

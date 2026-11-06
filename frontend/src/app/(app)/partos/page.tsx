@@ -1,6 +1,4 @@
-﻿import View from '@/views/Partos';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Partos';
 
 export default function Page() {
   return <View />;

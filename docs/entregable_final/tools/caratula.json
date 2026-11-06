@@ -1,0 +1,22 @@
+{
+  "_comentario": "Datos de la carátula del documento final. Edita este archivo y ejecuta: node tools/build.mjs",
+  "institucion": "UNIVERSIDAD NACIONAL AGRARIA DE LA SELVA",
+  "facultad": "FACULTAD DE INGENIERÍA EN INFORMÁTICA Y SISTEMAS",
+  "departamento": "Escuela Profesional de Ingeniería de Sistemas",
+  "institucion_guia": "Laboratorio de crianza de cuyes — Facultad de Zootecnia (UNAS)",
+  "titulo": "SISTEMA DE GESTIÓN Y TRAZABILIDAD DEL CICLO PRODUCTIVO DE CUYES",
+  "subtitulo": "Documento de Diseño Detallado de Software",
+  "titulo_documento": "Entregables 1 y 2: modelo del dominio, diseño de aplicación y diseño de datos",
+  "autores": [
+    "Dávila Isidro, Cristopher Leandro",
+    "Guevara Cuchilla, Juan Alfredo",
+    "Díaz Guzmán, Nicole Geraldine",
+    "Vasquez Serafin, Nicol Angely",
+    "Lopez Gonzales, Lourdes Xiomara"
+  ],
+  "docente": "Acevedo Aliaga, Alberto Lucio",
+  "curso": "Diseño Detallado de Software",
+  "semestre": "2026-II",
+  "lugar": "Tingo María — Perú",
+  "fecha": "Noviembre de 2026"
+}

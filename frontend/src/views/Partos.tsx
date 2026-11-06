@@ -202,7 +202,7 @@ const Partos = () => {
         </div>
       </form>
 
-      <table style={s.table}>
+      <div style={s.tableScroll}><table style={s.table}>
         <thead>
           <tr>
             <th style={s.th}>Fecha</th>
@@ -234,7 +234,7 @@ const Partos = () => {
             );
           })}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 };

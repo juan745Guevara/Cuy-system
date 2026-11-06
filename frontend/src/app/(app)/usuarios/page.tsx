@@ -1,6 +1,4 @@
-﻿import View from '@/views/Usuarios';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Usuarios';
 
 export default function Page() {
   return <View />;

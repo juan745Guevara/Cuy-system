@@ -98,7 +98,7 @@ const SeleccionGranja = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.5rem',
+        padding: 'clamp(1rem, 4vw, 1.5rem)',
         background: `
           radial-gradient(ellipse 65% 50% at 20% 20%, rgba(163,58,62,0.12), transparent 55%),
           linear-gradient(165deg, #F8F2E8 0%, ${theme.creamDeep} 100%)
@@ -110,7 +110,7 @@ const SeleccionGranja = () => {
         onSubmit={handleContinue}
         style={{
           background: 'rgba(255,252,250,0.95)',
-          padding: '2.1rem',
+          padding: 'clamp(1.25rem, 5vw, 2.1rem)',
           width: '100%',
           maxWidth: 460,
           boxShadow: theme.shadow,

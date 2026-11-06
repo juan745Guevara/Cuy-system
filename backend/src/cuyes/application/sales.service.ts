@@ -5,6 +5,29 @@ import { CuyesDepsService } from './cuyes-deps.service';
 
 import { isValidDateStr, esFechaFutura } from '../../shared/utils/helpers';
 
+type Comprobante = { tipo: string; serie: string; numero: string };
+
+/**
+ * CU-03: toda venta se respalda con el comprobante emitido por la caja UNAS.
+ * Devuelve el comprobante normalizado o el campo que falta.
+ */
+function leerComprobante(body: Record<string, unknown>): { comprobante?: Comprobante; campo?: string } {
+  const limpio = (v: unknown) => (v == null ? '' : String(v).trim());
+  const tipo = limpio(body?.tipo_comprobante);
+  const serie = limpio(body?.serie).toUpperCase();
+  const numero = limpio(body?.numero);
+  if (!tipo) return { campo: 'tipo_comprobante' };
+  if (!serie) return { campo: 'serie' };
+  if (!numero) return { campo: 'numero' };
+  return { comprobante: { tipo, serie, numero } };
+}
+
+const comprobanteDuplicado = (c: Comprobante, previa: { id: number; fecha: unknown; granja: string }) =>
+  fail(`receipt ${c.serie}-${c.numero} was already used in sale #${previa.id}`, 409, {
+    campo: 'numero',
+    venta_previa: previa,
+  });
+
 @Injectable()
 export class SalesService {
   constructor(
@@ -33,9 +56,6 @@ export class SalesService {
       cantidad,
       comprador,
       precio,
-      tipo_comprobante,
-      serie,
-      numero,
       observaciones,
     } = body || {};
     if (!fecha || !cantidad) return fail('date and quantity are required');
@@ -47,15 +67,9 @@ export class SalesService {
     if (!Number.isFinite(cant) || cant <= 0) {
       return fail('quantity must be greater than zero', 400, { campo: 'cantidad' });
     }
-    if (tipo_comprobante && !serie) {
-      return fail('serie is required when tipo_comprobante is set', 400, {
-        campo: 'serie',
-      });
-    }
-    if (tipo_comprobante && !numero) {
-      return fail('numero is required when tipo_comprobante is set', 400, {
-        campo: 'numero',
-      });
+    const { comprobante, campo } = leerComprobante(body);
+    if (!comprobante) {
+      return fail(`${campo} is required (receipt issued by the UNAS cashier)`, 400, { campo });
     }
 
     if (!id_animal) {
@@ -73,7 +87,7 @@ export class SalesService {
     }
 
     try {
-      const row = await this.repository.create({
+      const result = await this.repository.create({
         farmId,
         userId,
         data: {
@@ -84,12 +98,21 @@ export class SalesService {
           cantidad: cant,
           comprador,
           precio,
-          tipo_comprobante,
-          serie,
-          numero,
+          tipo_comprobante: comprobante.tipo,
+          serie: comprobante.serie,
+          numero: comprobante.numero,
           observaciones,
         },
       });
+      if (result.error === 'COMPROBANTE_DUPLICADO') {
+        return comprobanteDuplicado(comprobante, result.venta_previa);
+      }
+      if (result.error === 'ANIMAL_NO_DISPONIBLE') {
+        return fail('the animal is no longer active (sold, dead or discarded)', 409, {
+          campo: 'id_animal',
+        });
+      }
+      const row = result.venta;
       await this.audit.write({
         userId,
         farmId,
@@ -99,7 +122,7 @@ export class SalesService {
         despues: row,
         detalle: `Sale of ${cant} ${
           categoria || (id_animal ? `animal ${id_animal}` : 'animals')
-        }${tipo_comprobante ? ` - ${tipo_comprobante} ${serie}-${numero}` : ''}`,
+        } - ${comprobante.tipo} ${comprobante.serie}-${comprobante.numero}`,
       });
       return ok(row, 201);
     } catch (err) {
@@ -129,6 +152,10 @@ export class SalesService {
     if (esFechaFutura(fecha)) {
       return fail('date cannot be in the future', 400, { campo: 'fecha' });
     }
+    const { comprobante, campo } = leerComprobante(body);
+    if (!comprobante) {
+      return fail(`${campo} is required (receipt issued by the UNAS cashier)`, 400, { campo });
+    }
     const ids = [...new Set((id_animales as number[]).map(Number).filter((n) => Number.isFinite(n)))];
 
     try {
@@ -139,7 +166,11 @@ export class SalesService {
         comprador: comprador ? String(comprador) : undefined,
         precio: precio != null ? Number(precio) : undefined,
         ids,
+        comprobante,
       });
+      if (result.error === 'COMPROBANTE_DUPLICADO') {
+        return comprobanteDuplicado(comprobante, result.venta_previa);
+      }
       if (result.error) {
         return fail(result.error, 400, { animales: result.animales });
       }
@@ -151,7 +182,7 @@ export class SalesService {
         entidad: 'venta',
         idEntidad: ventas[0]?.id,
         despues: ventas,
-        detalle: `Bulk sale of ${ventas.length} discards`,
+        detalle: `Bulk sale of ${ventas.length} discards - ${comprobante.tipo} ${comprobante.serie}-${comprobante.numero}`,
       });
       return ok({ registradas: ventas.length, ventas }, 201);
     } catch (err) {

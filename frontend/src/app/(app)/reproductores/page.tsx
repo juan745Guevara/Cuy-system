@@ -1,6 +1,4 @@
-﻿import View from '@/views/Reproductores';
-
-export const dynamic = 'force-dynamic';
+import View from '@/views/Reproductores';
 
 export default function Page() {
   return <View />;

@@ -391,7 +391,7 @@ const Movimientos = () => {
               Ver historial
             </button>
           </div>
-          <table style={s.table}>
+          <div style={s.tableScroll}><table style={s.table}>
             <thead>
               <tr>
                 <th style={s.th}>Fecha</th>
@@ -417,7 +417,7 @@ const Movimientos = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
 
           <h3>Ocupación de jaula en una fecha</h3>
           <div style={s.row}>
@@ -461,7 +461,7 @@ const Movimientos = () => {
           )}
 
           <h3>Últimos de la granja</h3>
-          <table style={s.table}>
+          <div style={s.tableScroll}><table style={s.table}>
             <thead>
               <tr>
                 <th style={s.th}>Fecha</th>
@@ -482,7 +482,7 @@ const Movimientos = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
 

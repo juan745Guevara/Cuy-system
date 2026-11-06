@@ -34,17 +34,6 @@ export class AuditRepository extends AuditRepositoryPort {
     });
   }
 
-  ensureMortalityVoidColumns() {
-    return Promise.all([
-      this.prisma.$executeRawUnsafe(
-        `ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false`,
-      ),
-      this.prisma.$executeRawUnsafe(
-        `ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT`,
-      ),
-    ]);
-  }
-
   async voidMortality(id: number, farmId: number, motivo: string) {
     const result = await this.prisma.mortalidad.updateMany({
       where: { id, id_granja: farmId },
@@ -62,16 +51,6 @@ export class AuditRepository extends AuditRepositoryPort {
     });
   }
 
-  ensureSalesVoidColumns() {
-    return Promise.all([
-      this.prisma.$executeRawUnsafe(
-        `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false`,
-      ),
-      this.prisma.$executeRawUnsafe(
-        `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT`,
-      ),
-    ]);
-  }
 
   async voidSale(id: number, farmId: number, motivo: string) {
     const result = await this.prisma.venta.updateMany({

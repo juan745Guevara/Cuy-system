@@ -54,15 +54,22 @@ export class MortalityRepository extends MortalityRepositoryPort {
         ],
       );
       if (data.id_animal) {
-        await client.query(
+        // CU-07 (FA-7.1): solo un animal que sigue en la población (activo o marcado
+        // para descarte) puede darse de baja por muerte; evita una doble baja.
+        const baja = await client.query(
           `UPDATE animales SET estado = 'baja_muerte', fecha_baja = $1::date,
              motivo_baja = COALESCE($2, 'Mortalidad'), updated_at = NOW()
-           WHERE id = $3 AND id_granja = $4`,
+           WHERE id = $3 AND id_granja = $4 AND estado IN ('activo', 'descarte')
+           RETURNING id`,
           [data.fecha, data.causa || null, data.id_animal, farmId],
         );
+        if (!baja.rows.length) {
+          await client.query('ROLLBACK');
+          return { error: 'ANIMAL_NO_DISPONIBLE' };
+        }
       }
       await client.query('COMMIT');
-      return rows[0];
+      return { registro: rows[0] };
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;

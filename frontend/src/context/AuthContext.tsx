@@ -6,9 +6,10 @@ import React, {
   useContext,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react';
-import api from '@/lib/api';
+import api, { clearApiCache } from '@/lib/api';
 import type {
   AuthContextValue,
   AuthUser,
@@ -96,15 +97,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const { data } = await api.post<LoginResponse>('/auth/login', {
-      email,
-      password,
-    });
-    applySession(data);
-    setLoading(false);
-    return data;
-  };
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { data } = await api.post<LoginResponse>('/auth/login', {
+        email,
+        password,
+      });
+      applySession(data);
+      setLoading(false);
+      return data;
+    },
+    [applySession],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -116,26 +120,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setGranjas([]);
     setGranjaActiva(null);
+    clearApiCache();
     localStorage.removeItem('token');
     localStorage.removeItem('farmId');
     localStorage.removeItem('speciesId');
   }, []);
 
-  const seleccionarGranja = (id: number | null) => {
-    const farm = granjas.find((g) => Number(g.id) === Number(id));
-    setGranjaActiva(id);
-    if (id == null) {
-      localStorage.removeItem('farmId');
-      localStorage.removeItem('speciesId');
-    } else {
-      localStorage.setItem('farmId', String(id));
-      if (farm?.id_especie) {
-        localStorage.setItem('speciesId', String(farm.id_especie));
-      } else {
+  const seleccionarGranja = useCallback(
+    (id: number | null) => {
+      const farm = granjas.find((g) => Number(g.id) === Number(id));
+      setGranjaActiva(id);
+      clearApiCache();
+      if (id == null) {
+        localStorage.removeItem('farmId');
         localStorage.removeItem('speciesId');
+      } else {
+        localStorage.setItem('farmId', String(id));
+        if (farm?.id_especie) {
+          localStorage.setItem('speciesId', String(farm.id_especie));
+        } else {
+          localStorage.removeItem('speciesId');
+        }
       }
-    }
-  };
+    },
+    [granjas],
+  );
 
   useEffect(() => {
     if (!token) return undefined;
@@ -157,16 +166,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [token, logout]);
 
-  const value: AuthContextValue = {
-    user,
-    token,
-    granjas,
-    granjaActiva,
-    loading,
-    login,
-    logout,
-    seleccionarGranja,
-  };
+  const value: AuthContextValue = useMemo(
+    () => ({
+      user,
+      token,
+      granjas,
+      granjaActiva,
+      loading,
+      login,
+      logout,
+      seleccionarGranja,
+    }),
+    [user, token, granjas, granjaActiva, loading, login, logout, seleccionarGranja],
+  );
 
   return (
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
