@@ -12,7 +12,7 @@ entregable_final/
 ├── secciones/               ← texto del documento (versión resumida de la Entrega 1, referencias y anexos)
 ├── entrega_01/              ← Entrega 1 tal como se entregó (archivo histórico; no se edita)
 ├── entrega_02/              ← Entrega 2: ENTREGA_02.md (fuente de la sección 4)
-└── tools/                   ← build.mjs, caratula.json, make_reference.py (formato), diccionario.mjs
+└── tools/                   ← build.mjs, caratula.json, make_reference.py (formato), diccionario.mjs, anexo-api.mjs
 ```
 
 ## Cómo generar el Word
@@ -58,3 +58,4 @@ Si el Word está abierto, el script no puede sobrescribirlo: ciérrelo o use `no
 - Las líneas que empiezan con `>` (notas internas y `Fuente:`) no pasan al documento final.
 - Evitar referencias como "§9": en el documento final esa sección es otra (4.1.6). Mejor citar por nombre.
 - El diccionario de datos (4.4.2) se genera desde la base de datos real: con PostgreSQL migrado (`npm run db:migrate` en `backend/`), ejecutar `node tools/diccionario.mjs`. Reescribe solo el bloque entre `<!-- diccionario:inicio -->` y `<!-- diccionario:fin -->`; las descripciones de cada atributo están en ese script.
+- El Anexo A (API REST) se genera desde el OpenAPI del backend: con `npm run dev` corriendo en `backend/`, ejecutar `node tools/anexo-api.mjs`. Reescribe solo el bloque entre `<!-- api:inicio -->` y `<!-- api:fin -->` de `secciones/06-anexos.md`.

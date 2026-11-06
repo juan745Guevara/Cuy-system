@@ -28,6 +28,32 @@ export class SalesRepository extends SalesRepositoryPort {
     return rows[0].n as number;
   }
 
+  /**
+   * CU-03 (FA-3.3): un comprobante de la caja UNAS solo respalda una operación de venta.
+   * Bloquea el comprobante durante la transacción (evita que dos ventas simultáneas lo usen)
+   * y devuelve la venta previa no anulada que ya lo utilizó, si existe.
+   * Los comprobantes son únicos en toda la institución, por eso no se filtra por granja.
+   */
+  private async comprobanteEnUso(
+    client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+    c: { tipo: string; serie: string; numero: string },
+  ) {
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+      `venta|${c.tipo}|${c.serie}|${c.numero}`.toUpperCase(),
+    ]);
+    const { rows } = await client.query(
+      `SELECT v.id, v.fecha, g.nombre AS granja
+         FROM ventas v JOIN granjas g ON g.id = v.id_granja
+        WHERE UPPER(TRIM(v.tipo_comprobante)) = UPPER($1)
+          AND UPPER(TRIM(v.serie)) = UPPER($2)
+          AND UPPER(TRIM(v.numero)) = UPPER($3)
+          AND v.anulado IS NOT TRUE
+        LIMIT 1`,
+      [c.tipo, c.serie, c.numero],
+    );
+    return rows[0] || null;
+  }
+
   async create(params: {
     farmId: number;
     userId: number;
@@ -37,6 +63,15 @@ export class SalesRepository extends SalesRepositoryPort {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
+      const previa = await this.comprobanteEnUso(client, {
+        tipo: String(data.tipo_comprobante),
+        serie: String(data.serie),
+        numero: String(data.numero),
+      });
+      if (previa) {
+        await client.query('ROLLBACK');
+        return { error: 'COMPROBANTE_DUPLICADO', venta_previa: previa };
+      }
       const { rows } = await client.query(
         `INSERT INTO ventas
           (id_granja, id_animal, fecha, clasificacion, categoria, cantidad, comprador, precio,
@@ -59,15 +94,22 @@ export class SalesRepository extends SalesRepositoryPort {
         ],
       );
       if (data.id_animal) {
-        await client.query(
+        // CU-03 (FA-3.4): solo se vende un animal que sigue activo; si otro usuario
+        // lo dio de baja o lo vendió mientras tanto, la venta completa se revierte.
+        const baja = await client.query(
           `UPDATE animales SET estado = 'baja_venta', fecha_baja = $1::date,
              motivo_baja = 'Venta', updated_at = NOW()
-           WHERE id = $2 AND id_granja = $3`,
+           WHERE id = $2 AND id_granja = $3 AND estado = 'activo'
+           RETURNING id`,
           [data.fecha, data.id_animal, farmId],
         );
+        if (!baja.rows.length) {
+          await client.query('ROLLBACK');
+          return { error: 'ANIMAL_NO_DISPONIBLE' };
+        }
       }
       await client.query('COMMIT');
-      return rows[0];
+      return { venta: rows[0] };
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -98,11 +140,17 @@ export class SalesRepository extends SalesRepositoryPort {
     comprador?: string;
     precio?: number;
     ids: number[];
+    comprobante: { tipo: string; serie: string; numero: string };
   }) {
-    const { farmId, userId, fecha, comprador, precio, ids } = params;
+    const { farmId, userId, fecha, comprador, precio, ids, comprobante } = params;
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
+      const previa = await this.comprobanteEnUso(client, comprobante);
+      if (previa) {
+        await client.query('ROLLBACK');
+        return { error: 'COMPROBANTE_DUPLICADO', venta_previa: previa };
+      }
       const { rows: animales } = await client.query(
         `SELECT id, codigo, estado FROM animales
          WHERE id_granja = $1 AND id = ANY($2::int[])`,
@@ -122,9 +170,13 @@ export class SalesRepository extends SalesRepositoryPort {
       for (const a of animales as any[]) {
         const { rows } = await client.query(
           `INSERT INTO ventas
-            (id_granja, id_animal, fecha, clasificacion, cantidad, comprador, precio, created_by)
-           VALUES ($1,$2,$3::date,'descarte',1,$4,$5,$6) RETURNING *`,
-          [farmId, a.id, fecha, comprador || null, precio || null, userId],
+            (id_granja, id_animal, fecha, clasificacion, cantidad, comprador, precio,
+             tipo_comprobante, serie, numero, created_by)
+           VALUES ($1,$2,$3::date,'descarte',1,$4,$5,$6,$7,$8,$9) RETURNING *`,
+          [
+            farmId, a.id, fecha, comprador || null, precio || null,
+            comprobante.tipo, comprobante.serie, comprobante.numero, userId,
+          ],
         );
         await client.query(
           `UPDATE animales SET estado='baja_venta', fecha_baja=$2::date,

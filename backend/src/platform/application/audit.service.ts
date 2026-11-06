@@ -15,7 +15,6 @@ export class AuditService {
   }
 
   async list(farmId: number, query: Record<string, string>) {
-    await this.audit.ensureSchema();
     const rows = await this.repository.list(farmId, {
       entidad: query.entidad,
       idEntidad: query.id_entidad ? Number(query.id_entidad) : null,
@@ -34,7 +33,6 @@ export class AuditService {
     id: number;
     body: Record<string, unknown>;
   }) {
-    await this.audit.ensureSchema();
     const { motivo } = body || {};
     if (!(String(motivo || '')).trim()) {
       return fail('void reason is required');
@@ -43,7 +41,6 @@ export class AuditService {
     if (!before) return fail('Record not found', 404);
     if ((before as any).anulado) return fail('Already voided', 409);
 
-    await this.repository.ensureMortalityVoidColumns();
     const row = await this.repository.voidMortality(
       id,
       farmId,
@@ -73,7 +70,6 @@ export class AuditService {
     id: number;
     body: Record<string, unknown>;
   }) {
-    await this.audit.ensureSchema();
     const { motivo } = body || {};
     if (!(String(motivo || '')).trim()) {
       return fail('void reason is required');
@@ -81,7 +77,6 @@ export class AuditService {
     const before = await this.repository.findSale(id, farmId);
     if (!before) return fail('Record not found', 404);
 
-    await this.repository.ensureSalesVoidColumns();
     if ((before as any).anulado) return fail('Already voided', 409);
 
     const row = await this.repository.voidSale(id, farmId, String(motivo).trim());

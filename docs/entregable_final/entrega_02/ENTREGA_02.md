@@ -46,7 +46,7 @@ Todas las tablas operativas llevan la columna `id_granja`. El backend filtra cad
 
 ### 1.3. Gestión del esquema
 
-El esquema se define en un único archivo SQL (`backend/database/schema.sql`) escrito de forma **idempotente**: usa `CREATE TABLE IF NOT EXISTS` y `ADD COLUMN IF NOT EXISTS`, por lo que puede ejecutarse varias veces sin error. Así, instalar el sistema o actualizarlo a una versión nueva es el mismo comando (`npm run db:migrate`). El archivo `schema.prisma` refleja ese esquema para que el código acceda a las tablas con tipos verificados, y `npm run db:seed` carga los datos iniciales (usuarios base, la especie *cuyes*, sus razas y categorías).
+El esquema se define en un único archivo SQL (`backend/database/schema.sql`) escrito de forma **idempotente**: usa `CREATE TABLE IF NOT EXISTS` y `ADD COLUMN IF NOT EXISTS`, por lo que puede ejecutarse varias veces sin error. Así, instalar el sistema o actualizarlo a una versión nueva es el mismo comando (`npm run db:migrate`). El archivo `schema.prisma` refleja ese esquema para que el código acceda a las tablas con tipos verificados, y `npm run db:seed` carga los datos iniciales (usuarios base, la especie *cuyes*, sus razas y categorías). La aplicación no modifica el esquema mientras funciona: toda estructura (tablas, columnas, índices y claves foráneas) se declara únicamente en ese archivo.
 
 ## 2. Ciclo de vida de los datos
 
@@ -330,7 +330,7 @@ entity destetes {
   * fecha_destete : DATE
   destetados_m, destetados_h, muertos : INT
   peso_promedio : NUMERIC
-  id_jaula_m, id_jaula_h : INT
+  id_jaula_m, id_jaula_h : INT <<FK>>
   peso_m1..m3, peso_h1..h3 : NUMERIC
 }
 
@@ -346,6 +346,7 @@ animales ||--o{ partos : madre
 empadres |o--o{ partos
 partos |o--o{ animales : crías
 partos ||--o{ destetes
+recintos |o--o{ destetes : recría
 @enduml
 ```
 
@@ -480,6 +481,9 @@ entity granjas {
 entity usuarios {
   * id : SERIAL <<PK>>
 }
+entity animales {
+  * id : SERIAL <<PK>>
+}
 entity alerta_config {
   * id : SERIAL <<PK>>
   --
@@ -509,7 +513,7 @@ entity alertas_descarte {
   --
   * id_granja : INT <<FK>>
   * tipo : VARCHAR(50)
-  id_animal : INT
+  id_animal : INT <<FK>>
   id_referencia : INT
   motivo : TEXT
 }
@@ -531,6 +535,7 @@ granjas ||--o{ alerta_config
 granjas ||--o{ peso_rangos
 granjas ||--o| ranking_config
 granjas ||--o{ alertas_descarte
+animales |o--o{ alertas_descarte
 usuarios |o--o{ alertas_descarte
 usuarios |o--o{ peso_rangos
 usuarios |o--o{ audit_log
@@ -568,7 +573,12 @@ La base de datos —no solo la aplicación— impide datos inconsistentes median
 | `UNIQUE` | `email`; código de animal por granja; nombre de área por granja; código de jaula por área; raza y categoría por especie; hembra por empadre | Evita duplicados que en Excel eran frecuentes. |
 | `CHECK` | Rol, sexo (M/H), estado del animal, resultado de empadre, tipo de tratamiento y de movimiento; cantidades y pesos mayores que cero | Solo se aceptan valores del dominio. |
 
-Tres referencias se guardan sin clave foránea porque apuntan a registros de distinto tipo o se agregaron después: `destetes.id_jaula_m`, `destetes.id_jaula_h` y `alertas_descarte.id_animal`/`id_referencia`. La aplicación valida esos valores; añadirles clave foránea queda como mejora prevista (ver *Riesgos y mejoras previstas*).
+Las claves foráneas que se agregaron después de crear el esquema (jaulas de recría del destete, animal de una alerta ocultada y granja de la bitácora) se declaran `NOT VALID` y luego se validan: así la actualización no falla si existieran datos antiguos inconsistentes, y los registros nuevos siempre se controlan. La única referencia sin clave foránea es `alertas_descarte.id_referencia`, de forma intencional, porque puede apuntar a un empadre o a un parto.
+
+Dos reglas de negocio requieren más que una restricción declarativa y se garantizan dentro de la transacción:
+
+- **Comprobante único:** antes de registrar una venta se bloquea el comprobante (`pg_advisory_xact_lock`) y se verifica que ninguna venta no anulada lo haya usado. No puede ser un índice `UNIQUE`, porque una venta de descartes guarda una fila por animal con el mismo comprobante.
+- **Una sola baja por animal:** la venta y la mortalidad solo cambian el estado de un animal que sigue en la población; si otro usuario ya lo dio de baja, la operación se revierte.
 
 ## 4. Normalización
 
@@ -862,8 +872,8 @@ Unicidad compuesta: (`id_empadre`, `id_hembra`).
 | `created_by` | INTEGER | Sí | FK → usuarios | — | Usuario que creó el registro. |
 | `created_at` | TIMESTAMP | Sí | — | Defecto: fecha y hora actual | Fecha y hora de creación. |
 | `peso_promedio` | NUMERIC(10,2) | Sí | — | — | Peso promedio de la camada (g). |
-| `id_jaula_m` | INTEGER | Sí | — | — | Jaula de recría de los machos. |
-| `id_jaula_h` | INTEGER | Sí | — | — | Jaula de recría de las hembras. |
+| `id_jaula_m` | INTEGER | Sí | FK → recintos | — | Jaula de recría de los machos. |
+| `id_jaula_h` | INTEGER | Sí | FK → recintos | — | Jaula de recría de las hembras. |
 
 #### Eventos y salidas
 
@@ -1033,7 +1043,7 @@ Unicidad compuesta: (`id_granja`, `categoria`).
 | `id` | SERIAL | No | PK | — | Identificador interno autoincremental. |
 | `id_granja` | INTEGER | No | FK → granjas | — | Granja a la que pertenece el registro. |
 | `tipo` | VARCHAR(50) | No | — | — | Tipo de alerta ocultada. |
-| `id_animal` | INTEGER | Sí | — | — | Animal al que se refería la alerta. |
+| `id_animal` | INTEGER | Sí | FK → animales | — | Animal al que se refería la alerta. |
 | `id_referencia` | INTEGER | Sí | — | — | Registro que originó la alerta (empadre, parto…). |
 | `motivo` | TEXT | Sí | — | — | Por qué se ocultó. |
 | `created_by` | INTEGER | Sí | FK → usuarios | — | Usuario que creó el registro. |
@@ -1050,7 +1060,7 @@ Unicidad compuesta: (`id_granja`, `categoria`).
 | `created_at` | TIMESTAMP | Sí | — | Defecto: fecha y hora actual | Fecha y hora de creación. |
 | `entidad` | VARCHAR(80) | Sí | — | — | Tipo de registro afectado. |
 | `id_entidad` | INTEGER | Sí | — | — | Identificador del registro afectado. |
-| `id_granja` | INTEGER | Sí | — | — | Granja donde ocurrió. |
+| `id_granja` | INTEGER | Sí | FK → granjas | — | Granja donde ocurrió. |
 | `antes` | JSONB | Sí | — | — | Copia del registro antes del cambio (JSONB). |
 | `despues` | JSONB | Sí | — | — | Copia del registro después del cambio (JSONB). |
 
@@ -1109,29 +1119,31 @@ Incluso en el escenario de expansión, la base no supera los 0,5 GB en cinco añ
 
 ### 8.1. Política de respaldo
 
-El proyecto aún no automatiza las copias de seguridad; se propone la siguiente política, aplicable con las herramientas estándar de PostgreSQL:
+El respaldo está implementado en el backend con el comando `npm run db:backup`, que usa la herramienta estándar de PostgreSQL. Cada ejecución genera una copia, la verifica y aplica la política de retención:
 
-| Aspecto | Política propuesta |
+| Aspecto | Política implementada |
 |--------------------|----------------------------------------------------------|
-| Herramienta | `pg_dump` en formato comprimido (`-Fc`), que permite restaurar tablas por separado. |
-| Frecuencia | Copia diaria automática (23:00) y copia manual antes de cada actualización del sistema. |
-| Retención | 7 copias diarias, 4 semanales y 12 mensuales. |
-| Ubicación | Fuera del servidor de la base de datos (unidad de red o almacenamiento institucional de la UNAS). |
-| Verificación | Restauración de prueba mensual en una base aparte. |
+| Herramienta | `pg_dump` en formato comprimido (`-Fc`), que permite restaurar la base completa o tablas por separado. |
+| Verificación | Tras cada copia se comprueba que el archivo no esté vacío y que `pg_restore` pueda leer su contenido; si falla, el comando termina con error. |
+| Retención | Se conserva la copia más reciente de cada uno de los últimos 7 días, 4 semanas y 12 meses; las demás se eliminan. Configurable con `BACKUP_KEEP_DAILY`, `BACKUP_KEEP_WEEKLY` y `BACKUP_KEEP_MONTHLY`. |
+| Ubicación | Carpeta definida en `BACKUP_DIR`; en producción debe apuntar fuera del servidor de la base de datos (unidad de red o almacenamiento institucional de la UNAS). |
+| Seguridad | La contraseña de la base se pasa por variable de entorno, no en la línea de comandos; las copias no se suben al repositorio. |
+| Frecuencia | Diaria a las 23:00, programada en el servidor (tabla siguiente), y manual antes de cada actualización del sistema. |
 | Objetivos | Pérdida máxima de datos (RPO): 24 horas. Tiempo máximo de recuperación (RTO): 2 horas. |
 
-Ejemplo de copia y restauración:
+| Sistema del servidor | Programación diaria |
+|----------------------|----------------------------------------------------------|
+| Windows | `schtasks /create /tn CuySystemRespaldo /sc daily /st 23:00 /tr "cmd /c cd /d <ruta>\backend && npm run db:backup"` |
+| Linux | Línea de `crontab`: `0 23 * * * cd <ruta>/backend && npm run db:backup` |
 
-```text
-pg_dump -Fc -d cuy_system -f cuy_system_2026-11-06.dump
-pg_restore -d cuy_system_restaurada cuy_system_2026-11-06.dump
-```
+La restauración se hace con `npm run db:restore -- <archivo> --yes`; sin `--yes` el comando se niega a ejecutar, porque reemplaza los datos actuales. El procedimiento completo se probó restaurando una copia en una base temporal (25 tablas recuperadas).
 
 ### 8.2. Recuperación
 
 - **Error de un usuario** (por ejemplo, una venta mal registrada): se anula con motivo o se reactiva el registro; no se restaura la base.
 - **Consulta de un valor anterior:** la bitácora conserva el antes y el después de cada cambio.
-- **Pérdida de la base o del servidor:** se instala PostgreSQL, se ejecuta `npm run db:migrate` para crear el esquema y se restaura la última copia con `pg_restore`.
+- **Pérdida de la base o del servidor:** se instala PostgreSQL, se ejecuta `npm run db:migrate` para crear el esquema y se restaura la última copia con `npm run db:restore`.
+- **Prueba periódica:** una vez al mes se restaura la última copia en una base aparte para confirmar que sirve.
 
 ### 8.3. Protección de datos
 
@@ -1171,7 +1183,7 @@ Se elige el **modelo relacional en PostgreSQL**, usando `JSONB` solo para la bit
 
 | Riesgo | Mejora prevista |
 |------------------------------|--------------------------------------------------|
-| No hay copias de seguridad automáticas | Programar la política de respaldo propuesta. |
+| El respaldo depende de que se programe en el servidor | Incluir la tarea programada en la instalación (por ejemplo, en el empaquetado con Docker). |
 | El esquema se actualiza con un único archivo | Pasar a migraciones versionadas para registrar cada cambio. |
-| Algunas referencias sin clave foránea | Agregar `FOREIGN KEY` a `destetes.id_jaula_m`/`id_jaula_h` y a `alertas_descarte`. |
+| `alertas_descarte.id_referencia` no tiene clave foránea | Es intencional (apunta a empadres o partos); la aplicación valida el valor. |
 | `audit_log` crece más que el resto | Archivar los años cerrados si supera el umbral definido. |

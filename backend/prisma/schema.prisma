@@ -133,6 +133,8 @@ model Recinto {
   movimientos_destino Movimiento[]       @relation("MovDestinoRecinto")
   tratamientos        Tratamiento[]
   conteos_inventario  ConteoInventario[]
+  destetes_machos     Destete[]          @relation("DesteteJaulaM")
+  destetes_hembras    Destete[]          @relation("DesteteJaulaH")
 
   @@unique([id_area, codigo])
   @@map("recintos")
@@ -199,6 +201,7 @@ model Animal {
   movimientos      Movimiento[]
   pesajes          Pesaje[]
   tratamientos     Tratamiento[]
+  alertas_ocultas  AlertaDescarte[]
 
   @@unique([id_granja, codigo_norm])
   @@index([codigo_norm], map: "idx_animales_codigo_norm")
@@ -306,6 +309,8 @@ model Destete {
   created_at    DateTime? @default(now()) @db.Timestamp(6)
 
   parto   Parto    @relation(fields: [id_parto], references: [id], onDelete: Cascade)
+  jaula_m Recinto? @relation("DesteteJaulaM", fields: [id_jaula_m], references: [id])
+  jaula_h Recinto? @relation("DesteteJaulaH", fields: [id_jaula_h], references: [id])
   creador Usuario? @relation("DesteteCreatedBy", fields: [created_by], references: [id])
 
   @@map("destetes")
@@ -494,6 +499,7 @@ model AlertaDescarte {
   created_at    DateTime? @default(now()) @db.Timestamp(6)
 
   granja  Granja   @relation(fields: [id_granja], references: [id])
+  animal  Animal?  @relation(fields: [id_animal], references: [id])
   creador Usuario? @relation("AlertaCreatedBy", fields: [created_by], references: [id])
 
   @@map("alertas_descarte")

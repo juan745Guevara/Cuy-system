@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import 'dotenv/config';
 
-function resolveDatabaseUrl(): string {
+export function resolveDatabaseUrl(): string {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
 
   const user = encodeURIComponent(process.env.DB_USER || 'postgres');

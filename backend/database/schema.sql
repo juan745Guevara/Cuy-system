@@ -373,3 +373,39 @@ ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false;
 ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT;
 ALTER TABLE ventas ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false;
 ALTER TABLE ventas ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT;
+
+-- Claves foráneas que faltaban. Se crean NOT VALID (no fallan si existen datos huérfanos
+-- antiguos) y luego se intenta validarlas; los registros nuevos siempre se controlan.
+-- alertas_descarte.id_referencia no lleva FK: apunta a registros de distinto tipo (empadre o parto).
+DO $$ BEGIN
+  ALTER TABLE destetes ADD CONSTRAINT destetes_id_jaula_m_fkey
+    FOREIGN KEY (id_jaula_m) REFERENCES recintos(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE destetes ADD CONSTRAINT destetes_id_jaula_h_fkey
+    FOREIGN KEY (id_jaula_h) REFERENCES recintos(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE alertas_descarte ADD CONSTRAINT alertas_descarte_id_animal_fkey
+    FOREIGN KEY (id_animal) REFERENCES animales(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  ALTER TABLE audit_log ADD CONSTRAINT audit_log_id_granja_fkey
+    FOREIGN KEY (id_granja) REFERENCES granjas(id) NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$
+DECLARE c TEXT;
+BEGIN
+  FOREACH c IN ARRAY ARRAY['destetes.destetes_id_jaula_m_fkey', 'destetes.destetes_id_jaula_h_fkey',
+                           'alertas_descarte.alertas_descarte_id_animal_fkey', 'audit_log.audit_log_id_granja_fkey'] LOOP
+    BEGIN
+      EXECUTE format('ALTER TABLE %I VALIDATE CONSTRAINT %I', split_part(c, '.', 1), split_part(c, '.', 2));
+    EXCEPTION WHEN foreign_key_violation THEN
+      RAISE NOTICE 'Constraint % queda sin validar: hay datos antiguos huérfanos', c;
+    END;
+  END LOOP;
+END $$;
+
+-- Ventas: búsqueda del comprobante para impedir su reutilización (CU-03).
+CREATE INDEX IF NOT EXISTS idx_ventas_comprobante
+  ON ventas (UPPER(TRIM(serie)), UPPER(TRIM(numero)));

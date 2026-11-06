@@ -347,9 +347,9 @@ Los atributos de cada concepto figuran en los diagramas; la tabla resume su sign
 | CU-01 | Registrar nacimiento y generar camada | Encargado | Registrar el parto y dar de alta a cada cría vinculada a sus progenitores. |
 | CU-02 | Registrar empadre y seguimiento | Encargado | Formar el lote macho–hembras y proyectar el parto a 67 días. |
 | CU-03 | Gestionar y registrar venta | Encargado / Cliente | Vender con stock verificado, comprobante externo y baja del inventario. |
-| CU-04 | Registrar destete y traslado | Encargado | Pasar las crías a recría validando la capacidad de la jaula. |
+| CU-04 | Registrar destete | Encargado | Pasar las crías a recría y a la jaula de su sexo. |
 | CU-05 | Registrar atención sanitaria | Encargado / Zootecnista | Registrar tratamientos preventivos o curativos. |
-| CU-06 | Conciliar inventario físico | Encargado / Auditor | Contrastar el conteo en jaulas con las existencias del sistema. |
+| CU-06 | Conciliar inventario físico | Encargado / Supervisor | Contrastar el conteo en jaulas con las existencias del sistema. |
 | CU-07 | Registrar descarte o mortalidad | Encargado | Dar de baja definitiva a un animal de la población activa. |
 
 ```plantuml {caption="Diagrama general de casos de uso y actores"}
@@ -429,7 +429,7 @@ rectangle "Módulo de Reproducción y Crianza" {
   usecase "CU-01 Registrar nacimiento\ny generar camada" as UC01
   usecase "CU-04 Registrar destete\nde gazapos" as UC04
   usecase "CU-02.1 Seleccionar\nreproductor de reemplazo" as UC02_1
-  usecase "Validar capacidad\nde jaula" as UC_CAP
+  usecase "Validar edad (≥ 3 meses)\ny partos (< 6)" as UC_REGLAS
   usecase "Proyectar fecha\nparto (67 días)" as UC_PROY
 }
 
@@ -439,8 +439,7 @@ EN --> UC04
 EN --> UC02_1
 
 UC02 ..> UC_PROY : <<include>>
-UC02 ..> UC_CAP : <<include>>
-UC04 ..> UC_CAP : <<include>>
+UC02 ..> UC_REGLAS : <<include>>
 UC01 ..> UC02 : <<extend>>\n(cierra empadre)
 UC04 ..> UC01 : <<extend>>\n(desteta camada)
 @enduml
@@ -510,7 +509,6 @@ actor "Administrador /\nZootecnista" as AD
 
 rectangle "Sanidad, ubicación e información" {
   usecase "CU-05 Registrar atención\nsanitaria" as UC05
-  usecase "Programar alerta\nsanitaria" as UC_ALERT
   usecase "Registrar pesaje\nmuestral o individual" as UC_PESO
   usecase "Reubicar animales\nentre jaulas" as UC_MOV
   usecase "Validar sobrecupo\nen jaula destino" as UC_SOBRE
@@ -528,158 +526,165 @@ AD --> UC05
 AD --> UC06
 AD --> UC09
 
-UC05 ..> UC_ALERT : <<extend>>
 UC_MOV ..> UC_SOBRE : <<include>>
 UC06 ..> UC_DISC : <<include>>
 UC09 ..> UC_EXP : <<extend>>
 @enduml
 ```
 
-Las especificaciones siguen un mismo formato: actor, condiciones previas y posteriores, flujo principal y flujos alternativos. Todas las operaciones exigen sesión iniciada y quedan registradas en la bitácora de auditoría, por lo que esas condiciones no se repiten en cada caso.
+Las especificaciones describen el comportamiento implementado y siguen un mismo formato: actor, condiciones previas y posteriores, flujo principal y flujos alternativos. Todas las operaciones exigen sesión iniciada, se limitan a la granja activa, se ejecutan en una transacción y quedan registradas en la bitácora de auditoría; por eso esas condiciones no se repiten en cada caso.
 
 ### CU-01. Registrar nacimiento y generar camada
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Jaula de maternidad activa; madre registrada (opcionalmente vinculada a un empadre). |
-| Postcondiciones | Parto y camada registrados; cada cría dada de alta como `CUY` activo con su filiación; población de la jaula actualizada. |
+| Actor | Encargado del área de cuyes (también admin y auxiliar) |
+| Precondiciones | La madre es una hembra activa de la granja; opcionalmente pertenece a un empadre. |
+| Postcondiciones | Parto registrado; si viene de un empadre, la hembra queda con resultado *preñez*; la madre pasa a la categoría reproductora; cada cría viva se da de alta como animal activo, categoría gazapo, con la raza y la jaula de la madre y vinculada al parto (genealogía); los pesos al nacer quedan como primer pesaje. |
 
 **Flujo principal**
 
-1. El encargado abre *Registrar parto* y elige la jaula y la madre; el sistema carga raza y macho del empadre.
-2. Ingresa fecha, crías vivas por sexo, muertas y pesos al nacer; el sistema verifica que vivos + muertos = total.
-3. Confirma los códigos de las crías; el sistema valida que no existan.
-4. Guarda; el sistema registra parto, camada y crías en una sola transacción y muestra la confirmación.
+1. El encargado abre *Registrar parto* y elige la madre y, si corresponde, el empadre.
+2. Ingresa la fecha, las crías vivas por sexo, las muertas y hasta tres pesos por sexo.
+3. Guarda; el sistema genera el código de cada cría (código de la madre + número de parto + sexo y número, por ejemplo `U101-P35-M1`), registra todo en una sola transacción y muestra la camada con su peso promedio.
 
 **Flujos alternativos**
 
-- **FA-1.1** Balance de crías inconsistente: se resalta el error y no se permite guardar.
-- **FA-1.2** Fecha futura o anterior al empadre: se rechaza (400).
-- **FA-1.3** Código de cría duplicado: se rechaza (409) y se propone el siguiente correlativo.
-- **FA-1.4** Jaula sin espacio: se advierte el sobrecupo y se pide confirmación.
+- **FA-1.1** Fecha inválida o futura: se rechaza indicando el campo (400).
+- **FA-1.2** No se indicó ninguna cría viva ni muerta: se rechaza.
+- **FA-1.3** La madre no existe, no es hembra o no está activa: se rechaza.
 
 ### CU-02. Registrar empadre y seguimiento reproductivo
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Macho reproductor activo; hembras activas sin empadre abierto; jaula con capacidad. |
-| Postcondiciones | Empadre en curso con fecha probable de parto; hembras vinculadas; alerta de parto programada. |
+| Actor | Encargado del área de cuyes (también admin y auxiliar) |
+| Precondiciones | Macho y hembras activos de la granja. |
+| Postcondiciones | Empadre registrado con sus hembras en estado *abierto*. El panel muestra la alerta de parto próximo a los 67 días, la de preñez sin confirmar a los 30 días y la de hembra disponible para un nuevo empadre (plazos configurables). |
 
 **Flujo principal**
 
-1. Abre *Nuevo empadre* y elige jaula y raza; el sistema muestra la capacidad.
-2. Elige el macho; el sistema verifica que no esté en otro empadre activo.
-3. Elige las hembras; el sistema verifica que no estén gestando y la relación hembras/macho.
-4. Indica la fecha de inicio; el sistema calcula el parto probable (+67 días).
-5. Guarda; el sistema registra el empadre, las hembras y la ubicación de los animales.
+1. Abre *Nuevo empadre* y elige la jaula, el macho reproductor y las hembras.
+2. Indica la fecha de inicio y, al cierre, cuántas hembras quedaron preñadas.
+3. Guarda; el sistema valida las reglas zootécnicas de cada hembra y registra el empadre.
+4. Durante la gestación registra el resultado de cada hembra (preñez, vacía, aborto o muerte) y cierra el empadre indicando la jaula de retorno del macho.
 
 **Flujos alternativos**
 
-- **FA-2.1** Macho en otro empadre activo: se rechaza la selección.
-- **FA-2.2** Hembra en otro empadre activo: se excluye y se notifica.
-- **FA-2.3** Hembras exceden la capacidad de la jaula: se bloquea hasta ajustar.
+- **FA-2.1** Fecha inválida o futura: se rechaza (400).
+- **FA-2.2** Hembra con menos de 3 meses de edad: se rechaza indicando la hembra.
+- **FA-2.3** Hembra con 6 partos: se rechaza y se indica que debe descartarse.
+- **FA-2.4** Fecha anterior al último parto de la hembra: se rechaza.
+- **FA-2.5** Macho o hembra inexistente, de otro sexo o inactivo: se rechaza.
 
 ### CU-03. Gestionar y registrar venta de cuyes
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
 | Actores | Encargado del área de cuyes (principal); Cliente y Caja UNAS (externos) |
-| Precondiciones | Solicitud del cliente; existen animales activos aptos para la venta. |
-| Postcondiciones | Venta registrada con serie y número de comprobante; animales en estado `baja_venta` y fuera de su jaula; inventario actualizado. |
+| Precondiciones | Solicitud del cliente; existen animales activos (o marcados como descarte) para vender. |
+| Postcondiciones | Venta registrada con tipo, serie y número de comprobante; los animales vendidos quedan en estado `baja_venta` con fecha y motivo; el inventario los descuenta. |
 
 **Flujo principal**
 
-1. El cliente solicita cuyes (cantidad, sexo, destino); el encargado consulta la disponibilidad por jaula, raza, sexo y peso.
-2. Acuerdan ejemplares y precio; el cliente paga en la caja de la UNAS y vuelve con el comprobante.
-3. El encargado verifica el comprobante (importe, sello, fecha).
-4. Registra la venta con serie, número, cliente, peso y precio; el sistema valida campos, unicidad del comprobante y disponibilidad.
-5. Confirma; el sistema registra la venta y da de baja a los animales en la misma transacción. Se entregan los cuyes.
+1. El cliente solicita cuyes; el encargado consulta la disponibilidad por categoría o elige el animal.
+2. Acuerdan cantidad y precio; el cliente paga en la caja de la UNAS y vuelve con el comprobante.
+3. El encargado verifica el comprobante (importe, sello y fecha).
+4. Registra la venta individual o por lote —o la venta agrupada de descartes— con el tipo, la serie y el número del comprobante.
+5. El sistema valida los datos, la población disponible, que el comprobante no se haya usado antes y que el animal siga activo; registra la venta y la baja en la misma transacción. Se entregan los cuyes.
 
 **Flujos alternativos**
 
-- **FA-3.1** Sin stock: se informa al cliente y no se registra venta.
-- **FA-3.2** Comprobante con enmiendas o importe menor: se rechaza hasta su rectificación en caja.
-- **FA-3.3** Comprobante ya usado: el sistema impide guardar (409).
-- **FA-3.4** Animal dado de baja o trasladado durante el pago: se avisa y se elige otro equivalente.
+- **FA-3.1** La cantidad supera la población disponible de la categoría: se rechaza indicando cuántos hay.
+- **FA-3.2** Falta el tipo, la serie o el número del comprobante: se rechaza indicando el dato (400).
+- **FA-3.3** El comprobante ya se usó en otra venta no anulada (de cualquier granja): se rechaza (409) indicando la venta previa.
+- **FA-3.4** El animal fue vendido, murió o se descartó mientras tanto: se rechaza (409) y se elige otro.
+- **FA-3.5** En la venta de descartes, algún animal no está marcado como descarte: se rechaza toda la operación.
+- **FA-3.6** Venta registrada por error: un admin, supervisor o encargado la anula con motivo; el comprobante vuelve a quedar disponible.
 
-### CU-04. Registrar destete y movimiento entre jaulas
+### CU-04. Registrar destete
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Camada con crías en lactancia; jaula de recría activa. |
-| Postcondiciones | Destete registrado con edad y peso; crías trasladadas (movimiento registrado) y conteos de ambas jaulas actualizados. |
+| Actor | Encargado del área de cuyes (también admin y auxiliar) |
+| Precondiciones | Existe el parto con crías vivas. |
+| Postcondiciones | Destete registrado; las crías pasan a la categoría recría y a la jaula de recría de su sexo; los pesos quedan como pesaje; las crías muertas antes del destete se dan de baja. |
 
 **Flujo principal**
 
-1. Elige la camada; el sistema muestra las crías con su fecha de nacimiento.
-2. Indica la jaula de recría (por sexo); el sistema muestra ocupación y capacidad.
-3. Ingresa fecha y pesos; el sistema calcula la edad y valida fecha y rangos de peso.
-4. Procesa; el sistema registra destete, movimientos y nueva etapa en una transacción.
+1. Elige el parto (camada) a destetar; el panel lo sugiere con la alerta de destete pendiente (14 días, configurable).
+2. Indica la fecha, los destetados por sexo, los muertos, los pesos y la jaula de recría de machos y de hembras.
+3. Guarda; el sistema actualiza la categoría y la jaula de cada cría en una transacción.
 
 **Flujos alternativos**
 
-- **FA-4.1** La jaula superaría su capacidad: se pide elegir otra o confirmar (409 `requiere_confirmacion`).
-- **FA-4.2** Peso fuera de rango (menos de 150 g o más de 600 g): se pide confirmar el valor.
+- **FA-4.1** Fecha inválida, futura o anterior al parto: se rechaza (400).
+- **FA-4.2** Destetados más muertos superan las crías nacidas vivas: se rechaza.
+- **FA-4.3** El parto no existe en la granja: se rechaza (404).
 
 ### CU-05. Registrar atención y tratamiento sanitario
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes / Zootecnista |
-| Precondiciones | Animales activos (o jaula/área para tratamientos colectivos). |
-| Postcondiciones | Tratamiento registrado en el historial; alerta programada si requiere seguimiento. |
+| Actor | Encargado del área de cuyes, supervisor o zootecnista |
+| Precondiciones | El destino del tratamiento existe: un animal, varios animales, una jaula o un área. |
+| Postcondiciones | Tratamiento registrado *en curso* con su fecha de término (inicio + duración); al finalizar se cierra con una observación. Queda en el historial clínico de cada animal. |
 
 **Flujo principal**
 
-1. Elige el animal, la jaula o el área; el sistema muestra el historial previo.
-2. Indica tipo (preventivo o curativo), diagnóstico, producto, dosis, vía, inicio y duración.
-3. Guarda; el sistema calcula la fecha de término y registra el tratamiento en curso.
+1. Elige el destino del tratamiento (animal, varios animales, jaula o área); el sistema obtiene los animales involucrados.
+2. Indica tipo (preventivo o curativo), producto, dosis, vía, diagnóstico, responsable, fecha de inicio y duración en días.
+3. Guarda; el sistema calcula la fecha de término y lo lista entre los tratamientos en curso.
+4. Al terminar, registra el cierre con su motivo.
 
 **Flujos alternativos**
 
-- **FA-5.1** Animal dado de baja: no se permite el registro.
-- **FA-5.2** Fechas inconsistentes: se impide guardar hasta corregirlas.
+- **FA-5.1** Falta producto, fecha de inicio o duración, o el tipo no es preventivo ni curativo: se rechaza.
+- **FA-5.2** Fecha de inicio futura o duración menor o igual a cero: se rechaza (400).
 
 ### CU-06. Realizar toma y conciliación de inventario físico
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes / Auditor |
-| Precondiciones | Jaulas registradas. |
-| Postcondiciones | Conteo registrado con peso promedio muestral y diferencia (físico − sistema). |
+| Actor | Encargado del área de cuyes o supervisor |
+| Precondiciones | La jaula está activa en la granja. |
+| Postcondiciones | Conteo registrado junto con lo que el sistema tenía en ese momento; la diferencia y el peso promedio de la muestra se calculan al consultar. |
 
 **Flujo principal**
 
-1. Elige la jaula e ingresa machos y hembras contados; el sistema obtiene la cantidad registrada.
-2. Ingresa tres pesos de muestra; el sistema calcula el promedio y la diferencia.
-3. Añade observaciones si hay diferencia y guarda; la ingeniera revisa el consolidado mensual.
+1. Elige la fecha y la jaula; el sistema muestra los machos y las hembras registrados en ella.
+2. Ingresa los machos y las hembras contados y, opcionalmente, tres pesos de muestra; el sistema muestra la diferencia en el momento.
+3. Guarda; el conteo aparece en el historial con la diferencia resaltada.
 
 **Flujos alternativos**
 
-- **FA-6.1** Diferencia negativa: las observaciones son obligatorias (fuga, muerte no reportada, error de conteo).
-- **FA-6.2** Peso menor o igual a cero: se rechaza.
+- **FA-6.1** Faltan animales (diferencia negativa): las observaciones son obligatorias.
+- **FA-6.2** Conteo no entero o negativo, o peso menor o igual a cero: se rechaza indicando el campo.
+- **FA-6.3** Fecha futura o jaula de otra granja: se rechaza (400 / 404).
 
 ### CU-07. Registrar descarte zootécnico o mortalidad
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Animal activo. |
-| Postcondiciones | Baja registrada; animal en estado `baja_muerte` o `descarte` y fuera del inventario activo. |
+| Actor | Encargado del área de cuyes (mortalidad); admin, supervisor o encargado (descarte desde el ranking) |
+| Precondiciones | El animal sigue en la población (activo o marcado como descarte). |
+| Postcondiciones | Mortalidad: registro con causa y animal en `baja_muerte`. Descarte: animal en estado `descarte`, listo para la venta de descartes (CU-03). |
 
-**Flujo principal**
+**Flujo principal (mortalidad)**
 
-1. Elige el tipo de baja y busca el animal por código; el sistema carga su jaula, raza, etapa e historial reproductivo.
-2. Para mortalidad ingresa fecha y causa; para descarte, motivo y destino.
-3. Confirma; el sistema registra la baja y actualiza el estado del animal en una transacción.
+1. Registra la fecha, la causa y el animal, o la cantidad y categoría si es un lote.
+2. El sistema registra la mortalidad y da de baja al animal en la misma transacción.
+
+**Flujo principal (descarte)**
+
+1. Desde el ranking de reproductores, marca un animal como *descarte* (fin de vida productiva, por ejemplo al llegar a 6 partos).
+2. El sistema cambia su estado, deja una nota y lo muestra en la lista de descartes para la venta.
 
 **Flujos alternativos**
 
-- **FA-7.1** Animal ya dado de baja: se bloquea la acción.
-- **FA-7.2** Hembra en un empadre activo: se pide retirarla del lote antes del descarte.
+- **FA-7.1** El animal ya fue vendido o murió: se rechaza (409) para evitar una doble baja.
+- **FA-7.2** La cantidad de un lote supera la población de la categoría: se rechaza indicando cuántos hay.
+- **FA-7.3** Mortalidad registrada por error: se anula con motivo.
 
 ## Glosario de términos del negocio
 
@@ -707,7 +712,7 @@ Las especificaciones siguen un mismo formato: actor, condiciones previas y poste
 | Venta | Salida comercial respaldada por el comprobante de la caja UNAS (serie y número). |
 | Inventario | Población activa calculada a partir de los eventos registrados. |
 | Trazabilidad | Capacidad de reconstruir la vida completa de un cuy: genealogía, jaulas, pesajes, sanidad y salida. |
-| Alerta | Aviso de un plazo próximo o vencido (parto, destete, pesaje, tratamiento). |
+| Alerta | Aviso de un plazo próximo o vencido: parto próximo, destete pendiente, preñez sin confirmar o hembra disponible para empadre (plazos configurables). |
 
 | Término técnico | Definición |
 |----------------|----------------------------------------------------------|

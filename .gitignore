@@ -13,3 +13,6 @@ out/
 docs/entregable_final/**/.build/
 docs/entregable_final/**/img/
 docs/entregable_final/**/tools/plantuml.jar
+
+# Copias de seguridad de la base de datos (npm run db:backup)
+backend/backups/

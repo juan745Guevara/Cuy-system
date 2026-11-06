@@ -52,7 +52,7 @@ export class MortalityService {
     }
 
     try {
-      const row = await this.repository.create({
+      const result = await this.repository.create({
         farmId,
         userId,
         data: {
@@ -65,6 +65,12 @@ export class MortalityService {
           id_jaula,
         },
       });
+      if (result.error === 'ANIMAL_NO_DISPONIBLE') {
+        return fail('the animal is no longer in the population (sold or already dead)', 409, {
+          campo: 'id_animal',
+        });
+      }
+      const row = result.registro;
       await this.audit.write({
         userId,
         farmId,

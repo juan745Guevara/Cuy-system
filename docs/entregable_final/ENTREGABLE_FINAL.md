@@ -50,9 +50,9 @@ Todo animal entra al nacer y pasa por lactancia (15 días), destete, recría y e
 |-------------|----------------------------------|----------------------------------------|
 | Identificación y genealogía | Códigos con grafías variables; genealogía reconstruida a mano. | Código normalizado y único por granja; pedigrí de tres generaciones en la ficha del animal. |
 | Empadre y gestación | Fecha probable de parto calculada a mano. | Parto proyectado a 67 días y alertas en el panel. |
-| Tope de 6 partos | Celda pintada de rojo "si se recuerda". | Conteo automático de partos y descarte sugerido. |
-| Destete y aforo | Días contados a mano; sobrecupo inadvertido. | Alerta a los 15 días y validación de capacidad con confirmación explícita. |
-| Sanidad | Fechas de desparasitación de memoria. | Historial clínico por animal, jaula o área y alertas de tratamientos. |
+| Tope de 6 partos | Celda pintada de rojo "si se recuerda". | Conteo automático de partos: una hembra con 6 partos no puede volver a empadrarse y se marca para descarte. |
+| Destete y aforo | Días contados a mano; sobrecupo inadvertido. | Alerta de destete pendiente (14 días, configurable) y validación de capacidad al reubicar animales, con confirmación explícita. |
+| Sanidad | Fechas de desparasitación de memoria. | Historial clínico por animal, jaula o área y lista de tratamientos en curso con su fecha de término. |
 | Ventas | Recibo revisado a ojo; inventario descontado a fin de mes. | Serie y número obligatorios, sin duplicados, y baja del inventario en la misma transacción. |
 | Inventario y reportes | Informe mensual con hasta 5 días de demora; el conteo en pozas no se contrasta con los registros. | Inventario calculado al momento, conteo físico por jaula con la diferencia frente a lo registrado y exportación a Excel con las plantillas oficiales. |
 
@@ -131,164 +131,172 @@ Los atributos de cada concepto figuran en los diagramas; la tabla resume su sign
 | CU-01 | Registrar nacimiento y generar camada | Encargado | Registrar el parto y dar de alta a cada cría vinculada a sus progenitores. |
 | CU-02 | Registrar empadre y seguimiento | Encargado | Formar el lote macho–hembras y proyectar el parto a 67 días. |
 | CU-03 | Gestionar y registrar venta | Encargado / Cliente | Vender con stock verificado, comprobante externo y baja del inventario. |
-| CU-04 | Registrar destete y traslado | Encargado | Pasar las crías a recría validando la capacidad de la jaula. |
+| CU-04 | Registrar destete | Encargado | Pasar las crías a recría y a la jaula de su sexo. |
 | CU-05 | Registrar atención sanitaria | Encargado / Zootecnista | Registrar tratamientos preventivos o curativos. |
-| CU-06 | Conciliar inventario físico | Encargado / Auditor | Contrastar el conteo en jaulas con las existencias del sistema. |
+| CU-06 | Conciliar inventario físico | Encargado / Supervisor | Contrastar el conteo en jaulas con las existencias del sistema. |
 | CU-07 | Registrar descarte o mortalidad | Encargado | Dar de baja definitiva a un animal de la población activa. |
 
 ![Figura 9. Diagrama general de casos de uso y actores](img/f0d325dff93a.png){ width=3.54in }
 
-![Figura 10. Casos de uso del ciclo productivo y reproductivo](img/89da8a2646fc.png){ width=6.2in }
+![Figura 10. Casos de uso del ciclo productivo y reproductivo](img/c4e4aa11e037.png){ width=6.2in }
 
 ![Figura 11. Casos de uso de ventas y salidas definitivas](img/08e00dbf0cd3.png){ width=6.2in }
 
-![Figura 12. Casos de uso de sanidad, jaulas, inventario y reportes](img/d94b6fd61a7f.png){ width=6.2in }
+![Figura 12. Casos de uso de sanidad, jaulas, inventario y reportes](img/84c69c55410e.png){ width=6.2in }
 
-Las especificaciones siguen un mismo formato: actor, condiciones previas y posteriores, flujo principal y flujos alternativos. Todas las operaciones exigen sesión iniciada y quedan registradas en la bitácora de auditoría, por lo que esas condiciones no se repiten en cada caso.
+Las especificaciones describen el comportamiento implementado y siguen un mismo formato: actor, condiciones previas y posteriores, flujo principal y flujos alternativos. Todas las operaciones exigen sesión iniciada, se limitan a la granja activa, se ejecutan en una transacción y quedan registradas en la bitácora de auditoría; por eso esas condiciones no se repiten en cada caso.
 
 ### CU-01. Registrar nacimiento y generar camada
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Jaula de maternidad activa; madre registrada (opcionalmente vinculada a un empadre). |
-| Postcondiciones | Parto y camada registrados; cada cría dada de alta como `CUY` activo con su filiación; población de la jaula actualizada. |
+| Actor | Encargado del área de cuyes (también admin y auxiliar) |
+| Precondiciones | La madre es una hembra activa de la granja; opcionalmente pertenece a un empadre. |
+| Postcondiciones | Parto registrado; si viene de un empadre, la hembra queda con resultado *preñez*; la madre pasa a la categoría reproductora; cada cría viva se da de alta como animal activo, categoría gazapo, con la raza y la jaula de la madre y vinculada al parto (genealogía); los pesos al nacer quedan como primer pesaje. |
 
 **Flujo principal**
 
-1. El encargado abre *Registrar parto* y elige la jaula y la madre; el sistema carga raza y macho del empadre.
-2. Ingresa fecha, crías vivas por sexo, muertas y pesos al nacer; el sistema verifica que vivos + muertos = total.
-3. Confirma los códigos de las crías; el sistema valida que no existan.
-4. Guarda; el sistema registra parto, camada y crías en una sola transacción y muestra la confirmación.
+1. El encargado abre *Registrar parto* y elige la madre y, si corresponde, el empadre.
+2. Ingresa la fecha, las crías vivas por sexo, las muertas y hasta tres pesos por sexo.
+3. Guarda; el sistema genera el código de cada cría (código de la madre + número de parto + sexo y número, por ejemplo `U101-P35-M1`), registra todo en una sola transacción y muestra la camada con su peso promedio.
 
 **Flujos alternativos**
 
-- **FA-1.1** Balance de crías inconsistente: se resalta el error y no se permite guardar.
-- **FA-1.2** Fecha futura o anterior al empadre: se rechaza (400).
-- **FA-1.3** Código de cría duplicado: se rechaza (409) y se propone el siguiente correlativo.
-- **FA-1.4** Jaula sin espacio: se advierte el sobrecupo y se pide confirmación.
+- **FA-1.1** Fecha inválida o futura: se rechaza indicando el campo (400).
+- **FA-1.2** No se indicó ninguna cría viva ni muerta: se rechaza.
+- **FA-1.3** La madre no existe, no es hembra o no está activa: se rechaza.
 
 ### CU-02. Registrar empadre y seguimiento reproductivo
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Macho reproductor activo; hembras activas sin empadre abierto; jaula con capacidad. |
-| Postcondiciones | Empadre en curso con fecha probable de parto; hembras vinculadas; alerta de parto programada. |
+| Actor | Encargado del área de cuyes (también admin y auxiliar) |
+| Precondiciones | Macho y hembras activos de la granja. |
+| Postcondiciones | Empadre registrado con sus hembras en estado *abierto*. El panel muestra la alerta de parto próximo a los 67 días, la de preñez sin confirmar a los 30 días y la de hembra disponible para un nuevo empadre (plazos configurables). |
 
 **Flujo principal**
 
-1. Abre *Nuevo empadre* y elige jaula y raza; el sistema muestra la capacidad.
-2. Elige el macho; el sistema verifica que no esté en otro empadre activo.
-3. Elige las hembras; el sistema verifica que no estén gestando y la relación hembras/macho.
-4. Indica la fecha de inicio; el sistema calcula el parto probable (+67 días).
-5. Guarda; el sistema registra el empadre, las hembras y la ubicación de los animales.
+1. Abre *Nuevo empadre* y elige la jaula, el macho reproductor y las hembras.
+2. Indica la fecha de inicio y, al cierre, cuántas hembras quedaron preñadas.
+3. Guarda; el sistema valida las reglas zootécnicas de cada hembra y registra el empadre.
+4. Durante la gestación registra el resultado de cada hembra (preñez, vacía, aborto o muerte) y cierra el empadre indicando la jaula de retorno del macho.
 
 **Flujos alternativos**
 
-- **FA-2.1** Macho en otro empadre activo: se rechaza la selección.
-- **FA-2.2** Hembra en otro empadre activo: se excluye y se notifica.
-- **FA-2.3** Hembras exceden la capacidad de la jaula: se bloquea hasta ajustar.
+- **FA-2.1** Fecha inválida o futura: se rechaza (400).
+- **FA-2.2** Hembra con menos de 3 meses de edad: se rechaza indicando la hembra.
+- **FA-2.3** Hembra con 6 partos: se rechaza y se indica que debe descartarse.
+- **FA-2.4** Fecha anterior al último parto de la hembra: se rechaza.
+- **FA-2.5** Macho o hembra inexistente, de otro sexo o inactivo: se rechaza.
 
 ### CU-03. Gestionar y registrar venta de cuyes
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
 | Actores | Encargado del área de cuyes (principal); Cliente y Caja UNAS (externos) |
-| Precondiciones | Solicitud del cliente; existen animales activos aptos para la venta. |
-| Postcondiciones | Venta registrada con serie y número de comprobante; animales en estado `baja_venta` y fuera de su jaula; inventario actualizado. |
+| Precondiciones | Solicitud del cliente; existen animales activos (o marcados como descarte) para vender. |
+| Postcondiciones | Venta registrada con tipo, serie y número de comprobante; los animales vendidos quedan en estado `baja_venta` con fecha y motivo; el inventario los descuenta. |
 
 **Flujo principal**
 
-1. El cliente solicita cuyes (cantidad, sexo, destino); el encargado consulta la disponibilidad por jaula, raza, sexo y peso.
-2. Acuerdan ejemplares y precio; el cliente paga en la caja de la UNAS y vuelve con el comprobante.
-3. El encargado verifica el comprobante (importe, sello, fecha).
-4. Registra la venta con serie, número, cliente, peso y precio; el sistema valida campos, unicidad del comprobante y disponibilidad.
-5. Confirma; el sistema registra la venta y da de baja a los animales en la misma transacción. Se entregan los cuyes.
+1. El cliente solicita cuyes; el encargado consulta la disponibilidad por categoría o elige el animal.
+2. Acuerdan cantidad y precio; el cliente paga en la caja de la UNAS y vuelve con el comprobante.
+3. El encargado verifica el comprobante (importe, sello y fecha).
+4. Registra la venta individual o por lote —o la venta agrupada de descartes— con el tipo, la serie y el número del comprobante.
+5. El sistema valida los datos, la población disponible, que el comprobante no se haya usado antes y que el animal siga activo; registra la venta y la baja en la misma transacción. Se entregan los cuyes.
 
 **Flujos alternativos**
 
-- **FA-3.1** Sin stock: se informa al cliente y no se registra venta.
-- **FA-3.2** Comprobante con enmiendas o importe menor: se rechaza hasta su rectificación en caja.
-- **FA-3.3** Comprobante ya usado: el sistema impide guardar (409).
-- **FA-3.4** Animal dado de baja o trasladado durante el pago: se avisa y se elige otro equivalente.
+- **FA-3.1** La cantidad supera la población disponible de la categoría: se rechaza indicando cuántos hay.
+- **FA-3.2** Falta el tipo, la serie o el número del comprobante: se rechaza indicando el dato (400).
+- **FA-3.3** El comprobante ya se usó en otra venta no anulada (de cualquier granja): se rechaza (409) indicando la venta previa.
+- **FA-3.4** El animal fue vendido, murió o se descartó mientras tanto: se rechaza (409) y se elige otro.
+- **FA-3.5** En la venta de descartes, algún animal no está marcado como descarte: se rechaza toda la operación.
+- **FA-3.6** Venta registrada por error: un admin, supervisor o encargado la anula con motivo; el comprobante vuelve a quedar disponible.
 
-### CU-04. Registrar destete y movimiento entre jaulas
+### CU-04. Registrar destete
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Camada con crías en lactancia; jaula de recría activa. |
-| Postcondiciones | Destete registrado con edad y peso; crías trasladadas (movimiento registrado) y conteos de ambas jaulas actualizados. |
+| Actor | Encargado del área de cuyes (también admin y auxiliar) |
+| Precondiciones | Existe el parto con crías vivas. |
+| Postcondiciones | Destete registrado; las crías pasan a la categoría recría y a la jaula de recría de su sexo; los pesos quedan como pesaje; las crías muertas antes del destete se dan de baja. |
 
 **Flujo principal**
 
-1. Elige la camada; el sistema muestra las crías con su fecha de nacimiento.
-2. Indica la jaula de recría (por sexo); el sistema muestra ocupación y capacidad.
-3. Ingresa fecha y pesos; el sistema calcula la edad y valida fecha y rangos de peso.
-4. Procesa; el sistema registra destete, movimientos y nueva etapa en una transacción.
+1. Elige el parto (camada) a destetar; el panel lo sugiere con la alerta de destete pendiente (14 días, configurable).
+2. Indica la fecha, los destetados por sexo, los muertos, los pesos y la jaula de recría de machos y de hembras.
+3. Guarda; el sistema actualiza la categoría y la jaula de cada cría en una transacción.
 
 **Flujos alternativos**
 
-- **FA-4.1** La jaula superaría su capacidad: se pide elegir otra o confirmar (409 `requiere_confirmacion`).
-- **FA-4.2** Peso fuera de rango (menos de 150 g o más de 600 g): se pide confirmar el valor.
+- **FA-4.1** Fecha inválida, futura o anterior al parto: se rechaza (400).
+- **FA-4.2** Destetados más muertos superan las crías nacidas vivas: se rechaza.
+- **FA-4.3** El parto no existe en la granja: se rechaza (404).
 
 ### CU-05. Registrar atención y tratamiento sanitario
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes / Zootecnista |
-| Precondiciones | Animales activos (o jaula/área para tratamientos colectivos). |
-| Postcondiciones | Tratamiento registrado en el historial; alerta programada si requiere seguimiento. |
+| Actor | Encargado del área de cuyes, supervisor o zootecnista |
+| Precondiciones | El destino del tratamiento existe: un animal, varios animales, una jaula o un área. |
+| Postcondiciones | Tratamiento registrado *en curso* con su fecha de término (inicio + duración); al finalizar se cierra con una observación. Queda en el historial clínico de cada animal. |
 
 **Flujo principal**
 
-1. Elige el animal, la jaula o el área; el sistema muestra el historial previo.
-2. Indica tipo (preventivo o curativo), diagnóstico, producto, dosis, vía, inicio y duración.
-3. Guarda; el sistema calcula la fecha de término y registra el tratamiento en curso.
+1. Elige el destino del tratamiento (animal, varios animales, jaula o área); el sistema obtiene los animales involucrados.
+2. Indica tipo (preventivo o curativo), producto, dosis, vía, diagnóstico, responsable, fecha de inicio y duración en días.
+3. Guarda; el sistema calcula la fecha de término y lo lista entre los tratamientos en curso.
+4. Al terminar, registra el cierre con su motivo.
 
 **Flujos alternativos**
 
-- **FA-5.1** Animal dado de baja: no se permite el registro.
-- **FA-5.2** Fechas inconsistentes: se impide guardar hasta corregirlas.
+- **FA-5.1** Falta producto, fecha de inicio o duración, o el tipo no es preventivo ni curativo: se rechaza.
+- **FA-5.2** Fecha de inicio futura o duración menor o igual a cero: se rechaza (400).
 
 ### CU-06. Realizar toma y conciliación de inventario físico
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes / Auditor |
-| Precondiciones | Jaulas registradas. |
-| Postcondiciones | Conteo registrado con peso promedio muestral y diferencia (físico − sistema). |
+| Actor | Encargado del área de cuyes o supervisor |
+| Precondiciones | La jaula está activa en la granja. |
+| Postcondiciones | Conteo registrado junto con lo que el sistema tenía en ese momento; la diferencia y el peso promedio de la muestra se calculan al consultar. |
 
 **Flujo principal**
 
-1. Elige la jaula e ingresa machos y hembras contados; el sistema obtiene la cantidad registrada.
-2. Ingresa tres pesos de muestra; el sistema calcula el promedio y la diferencia.
-3. Añade observaciones si hay diferencia y guarda; la ingeniera revisa el consolidado mensual.
+1. Elige la fecha y la jaula; el sistema muestra los machos y las hembras registrados en ella.
+2. Ingresa los machos y las hembras contados y, opcionalmente, tres pesos de muestra; el sistema muestra la diferencia en el momento.
+3. Guarda; el conteo aparece en el historial con la diferencia resaltada.
 
 **Flujos alternativos**
 
-- **FA-6.1** Diferencia negativa: las observaciones son obligatorias (fuga, muerte no reportada, error de conteo).
-- **FA-6.2** Peso menor o igual a cero: se rechaza.
+- **FA-6.1** Faltan animales (diferencia negativa): las observaciones son obligatorias.
+- **FA-6.2** Conteo no entero o negativo, o peso menor o igual a cero: se rechaza indicando el campo.
+- **FA-6.3** Fecha futura o jaula de otra granja: se rechaza (400 / 404).
 
 ### CU-07. Registrar descarte zootécnico o mortalidad
 
 | Elemento | Detalle |
 |--------------|--------------------------------------------------------|
-| Actor | Encargado del área de cuyes |
-| Precondiciones | Animal activo. |
-| Postcondiciones | Baja registrada; animal en estado `baja_muerte` o `descarte` y fuera del inventario activo. |
+| Actor | Encargado del área de cuyes (mortalidad); admin, supervisor o encargado (descarte desde el ranking) |
+| Precondiciones | El animal sigue en la población (activo o marcado como descarte). |
+| Postcondiciones | Mortalidad: registro con causa y animal en `baja_muerte`. Descarte: animal en estado `descarte`, listo para la venta de descartes (CU-03). |
 
-**Flujo principal**
+**Flujo principal (mortalidad)**
 
-1. Elige el tipo de baja y busca el animal por código; el sistema carga su jaula, raza, etapa e historial reproductivo.
-2. Para mortalidad ingresa fecha y causa; para descarte, motivo y destino.
-3. Confirma; el sistema registra la baja y actualiza el estado del animal en una transacción.
+1. Registra la fecha, la causa y el animal, o la cantidad y categoría si es un lote.
+2. El sistema registra la mortalidad y da de baja al animal en la misma transacción.
+
+**Flujo principal (descarte)**
+
+1. Desde el ranking de reproductores, marca un animal como *descarte* (fin de vida productiva, por ejemplo al llegar a 6 partos).
+2. El sistema cambia su estado, deja una nota y lo muestra en la lista de descartes para la venta.
 
 **Flujos alternativos**
 
-- **FA-7.1** Animal ya dado de baja: se bloquea la acción.
-- **FA-7.2** Hembra en un empadre activo: se pide retirarla del lote antes del descarte.
+- **FA-7.1** El animal ya fue vendido o murió: se rechaza (409) para evitar una doble baja.
+- **FA-7.2** La cantidad de un lote supera la población de la categoría: se rechaza indicando cuántos hay.
+- **FA-7.3** Mortalidad registrada por error: se anula con motivo.
 
 ## Glosario de términos del negocio
 
@@ -316,7 +324,7 @@ Las especificaciones siguen un mismo formato: actor, condiciones previas y poste
 | Venta | Salida comercial respaldada por el comprobante de la caja UNAS (serie y número). |
 | Inventario | Población activa calculada a partir de los eventos registrados. |
 | Trazabilidad | Capacidad de reconstruir la vida completa de un cuy: genealogía, jaulas, pesajes, sanidad y salida. |
-| Alerta | Aviso de un plazo próximo o vencido (parto, destete, pesaje, tratamiento). |
+| Alerta | Aviso de un plazo próximo o vencido: parto próximo, destete pendiente, preñez sin confirmar o hembra disponible para empadre (plazos configurables). |
 
 | Término técnico | Definición |
 |----------------|----------------------------------------------------------|
@@ -469,7 +477,7 @@ Todas las tablas operativas llevan la columna `id_granja`. El backend filtra cad
 
 ### Gestión del esquema
 
-El esquema se define en un único archivo SQL (`backend/database/schema.sql`) escrito de forma **idempotente**: usa `CREATE TABLE IF NOT EXISTS` y `ADD COLUMN IF NOT EXISTS`, por lo que puede ejecutarse varias veces sin error. Así, instalar el sistema o actualizarlo a una versión nueva es el mismo comando (`npm run db:migrate`). El archivo `schema.prisma` refleja ese esquema para que el código acceda a las tablas con tipos verificados, y `npm run db:seed` carga los datos iniciales (usuarios base, la especie *cuyes*, sus razas y categorías).
+El esquema se define en un único archivo SQL (`backend/database/schema.sql`) escrito de forma **idempotente**: usa `CREATE TABLE IF NOT EXISTS` y `ADD COLUMN IF NOT EXISTS`, por lo que puede ejecutarse varias veces sin error. Así, instalar el sistema o actualizarlo a una versión nueva es el mismo comando (`npm run db:migrate`). El archivo `schema.prisma` refleja ese esquema para que el código acceda a las tablas con tipos verificados, y `npm run db:seed` carga los datos iniciales (usuarios base, la especie *cuyes*, sus razas y categorías). La aplicación no modifica el esquema mientras funciona: toda estructura (tablas, columnas, índices y claves foráneas) se declara únicamente en ese archivo.
 
 ### Ciclo de vida de los datos
 
@@ -545,9 +553,9 @@ Se elige el **modelo relacional en PostgreSQL**, usando `JSONB` solo para la bit
 
 | Riesgo | Mejora prevista |
 |------------------------------|--------------------------------------------------|
-| No hay copias de seguridad automáticas | Programar la política de respaldo propuesta. |
+| El respaldo depende de que se programe en el servidor | Incluir la tarea programada en la instalación (por ejemplo, en el empaquetado con Docker). |
 | El esquema se actualiza con un único archivo | Pasar a migraciones versionadas para registrar cada cambio. |
-| Algunas referencias sin clave foránea | Agregar `FOREIGN KEY` a `destetes.id_jaula_m`/`id_jaula_h` y a `alertas_descarte`. |
+| `alertas_descarte.id_referencia` no tiene clave foránea | Es intencional (apunta a empadres o partos); la aplicación valida el valor. |
 | `audit_log` crece más que el resto | Archivar los años cerrados si supera el umbral definido. |
 
 ## Modelo entidad-relación
@@ -558,11 +566,11 @@ El modelo físico tiene **25 tablas**. Para que sea legible se presenta en cuatr
 
 ![Figura 20. MER — Seguridad y estructura](img/ab64c84949b3.png){ width=6.2in }
 
-![Figura 21. MER — Animal y reproducción](img/fd3afeed862d.png){ width=5.08in }
+![Figura 21. MER — Animal y reproducción](img/cf0e6acb7eee.png){ width=4.45in }
 
 ![Figura 22. MER — Eventos y salidas](img/8a97df2ac1c7.png){ width=6.2in }
 
-![Figura 23. MER — Configuración y auditoría](img/88212f02659f.png){ width=6.2in }
+![Figura 23. MER — Configuración y auditoría](img/3c04353ad08a.png){ width=6.2in }
 
 ### Del modelo conceptual al modelo físico
 
@@ -594,7 +602,12 @@ La base de datos —no solo la aplicación— impide datos inconsistentes median
 | `UNIQUE` | `email`; código de animal por granja; nombre de área por granja; código de jaula por área; raza y categoría por especie; hembra por empadre | Evita duplicados que en Excel eran frecuentes. |
 | `CHECK` | Rol, sexo (M/H), estado del animal, resultado de empadre, tipo de tratamiento y de movimiento; cantidades y pesos mayores que cero | Solo se aceptan valores del dominio. |
 
-Tres referencias se guardan sin clave foránea porque apuntan a registros de distinto tipo o se agregaron después: `destetes.id_jaula_m`, `destetes.id_jaula_h` y `alertas_descarte.id_animal`/`id_referencia`. La aplicación valida esos valores; añadirles clave foránea queda como mejora prevista (ver *Riesgos y mejoras previstas*).
+Las claves foráneas que se agregaron después de crear el esquema (jaulas de recría del destete, animal de una alerta ocultada y granja de la bitácora) se declaran `NOT VALID` y luego se validan: así la actualización no falla si existieran datos antiguos inconsistentes, y los registros nuevos siempre se controlan. La única referencia sin clave foránea es `alertas_descarte.id_referencia`, de forma intencional, porque puede apuntar a un empadre o a un parto.
+
+Dos reglas de negocio requieren más que una restricción declarativa y se garantizan dentro de la transacción:
+
+- **Comprobante único:** antes de registrar una venta se bloquea el comprobante (`pg_advisory_xact_lock`) y se verifica que ninguna venta no anulada lo haya usado. No puede ser un índice `UNIQUE`, porque una venta de descartes guarda una fila por animal con el mismo comprobante.
+- **Una sola baja por animal:** la venta y la mortalidad solo cambian el estado de un animal que sigue en la población; si otro usuario ya lo dio de baja, la operación se revierte.
 
 ### Normalización
 
@@ -888,8 +901,8 @@ Unicidad compuesta: (`id_empadre`, `id_hembra`).
 | `created_by` | INTEGER | Sí | FK → usuarios | — | Usuario que creó el registro. |
 | `created_at` | TIMESTAMP | Sí | — | Defecto: fecha y hora actual | Fecha y hora de creación. |
 | `peso_promedio` | NUMERIC(10,2) | Sí | — | — | Peso promedio de la camada (g). |
-| `id_jaula_m` | INTEGER | Sí | — | — | Jaula de recría de los machos. |
-| `id_jaula_h` | INTEGER | Sí | — | — | Jaula de recría de las hembras. |
+| `id_jaula_m` | INTEGER | Sí | FK → recintos | — | Jaula de recría de los machos. |
+| `id_jaula_h` | INTEGER | Sí | FK → recintos | — | Jaula de recría de las hembras. |
 
 #### Eventos y salidas
 
@@ -1059,7 +1072,7 @@ Unicidad compuesta: (`id_granja`, `categoria`).
 | `id` | SERIAL | No | PK | — | Identificador interno autoincremental. |
 | `id_granja` | INTEGER | No | FK → granjas | — | Granja a la que pertenece el registro. |
 | `tipo` | VARCHAR(50) | No | — | — | Tipo de alerta ocultada. |
-| `id_animal` | INTEGER | Sí | — | — | Animal al que se refería la alerta. |
+| `id_animal` | INTEGER | Sí | FK → animales | — | Animal al que se refería la alerta. |
 | `id_referencia` | INTEGER | Sí | — | — | Registro que originó la alerta (empadre, parto…). |
 | `motivo` | TEXT | Sí | — | — | Por qué se ocultó. |
 | `created_by` | INTEGER | Sí | FK → usuarios | — | Usuario que creó el registro. |
@@ -1076,7 +1089,7 @@ Unicidad compuesta: (`id_granja`, `categoria`).
 | `created_at` | TIMESTAMP | Sí | — | Defecto: fecha y hora actual | Fecha y hora de creación. |
 | `entidad` | VARCHAR(80) | Sí | — | — | Tipo de registro afectado. |
 | `id_entidad` | INTEGER | Sí | — | — | Identificador del registro afectado. |
-| `id_granja` | INTEGER | Sí | — | — | Granja donde ocurrió. |
+| `id_granja` | INTEGER | Sí | FK → granjas | — | Granja donde ocurrió. |
 | `antes` | JSONB | Sí | — | — | Copia del registro antes del cambio (JSONB). |
 | `despues` | JSONB | Sí | — | — | Copia del registro después del cambio (JSONB). |
 
@@ -1135,29 +1148,31 @@ Incluso en el escenario de expansión, la base no supera los 0,5 GB en cinco añ
 
 ### Política de respaldo
 
-El proyecto aún no automatiza las copias de seguridad; se propone la siguiente política, aplicable con las herramientas estándar de PostgreSQL:
+El respaldo está implementado en el backend con el comando `npm run db:backup`, que usa la herramienta estándar de PostgreSQL. Cada ejecución genera una copia, la verifica y aplica la política de retención:
 
-| Aspecto | Política propuesta |
+| Aspecto | Política implementada |
 |--------------------|----------------------------------------------------------|
-| Herramienta | `pg_dump` en formato comprimido (`-Fc`), que permite restaurar tablas por separado. |
-| Frecuencia | Copia diaria automática (23:00) y copia manual antes de cada actualización del sistema. |
-| Retención | 7 copias diarias, 4 semanales y 12 mensuales. |
-| Ubicación | Fuera del servidor de la base de datos (unidad de red o almacenamiento institucional de la UNAS). |
-| Verificación | Restauración de prueba mensual en una base aparte. |
+| Herramienta | `pg_dump` en formato comprimido (`-Fc`), que permite restaurar la base completa o tablas por separado. |
+| Verificación | Tras cada copia se comprueba que el archivo no esté vacío y que `pg_restore` pueda leer su contenido; si falla, el comando termina con error. |
+| Retención | Se conserva la copia más reciente de cada uno de los últimos 7 días, 4 semanas y 12 meses; las demás se eliminan. Configurable con `BACKUP_KEEP_DAILY`, `BACKUP_KEEP_WEEKLY` y `BACKUP_KEEP_MONTHLY`. |
+| Ubicación | Carpeta definida en `BACKUP_DIR`; en producción debe apuntar fuera del servidor de la base de datos (unidad de red o almacenamiento institucional de la UNAS). |
+| Seguridad | La contraseña de la base se pasa por variable de entorno, no en la línea de comandos; las copias no se suben al repositorio. |
+| Frecuencia | Diaria a las 23:00, programada en el servidor (tabla siguiente), y manual antes de cada actualización del sistema. |
 | Objetivos | Pérdida máxima de datos (RPO): 24 horas. Tiempo máximo de recuperación (RTO): 2 horas. |
 
-Ejemplo de copia y restauración:
+| Sistema del servidor | Programación diaria |
+|----------------------|----------------------------------------------------------|
+| Windows | `schtasks /create /tn CuySystemRespaldo /sc daily /st 23:00 /tr "cmd /c cd /d <ruta>\backend && npm run db:backup"` |
+| Linux | Línea de `crontab`: `0 23 * * * cd <ruta>/backend && npm run db:backup` |
 
-```text
-pg_dump -Fc -d cuy_system -f cuy_system_2026-11-06.dump
-pg_restore -d cuy_system_restaurada cuy_system_2026-11-06.dump
-```
+La restauración se hace con `npm run db:restore -- <archivo> --yes`; sin `--yes` el comando se niega a ejecutar, porque reemplaza los datos actuales. El procedimiento completo se probó restaurando una copia en una base temporal (25 tablas recuperadas).
 
 ### Recuperación
 
 - **Error de un usuario** (por ejemplo, una venta mal registrada): se anula con motivo o se reactiva el registro; no se restaura la base.
 - **Consulta de un valor anterior:** la bitácora conserva el antes y el después de cada cambio.
-- **Pérdida de la base o del servidor:** se instala PostgreSQL, se ejecuta `npm run db:migrate` para crear el esquema y se restaura la última copia con `pg_restore`.
+- **Pérdida de la base o del servidor:** se instala PostgreSQL, se ejecuta `npm run db:migrate` para crear el esquema y se restaura la última copia con `npm run db:restore`.
+- **Prueba periódica:** una vez al mes se restaura la última copia en una base aparte para confirmar que sirve.
 
 ### Protección de datos
 
@@ -1199,121 +1214,234 @@ Sommerville, I. (2018). *Ingeniería del software* (10.ª ed.). Pearson.
 
 ## Anexo A. Especificación de la API REST {.unnumbered}
 
+Las tablas de este anexo se generan desde la especificación OpenAPI que publica el propio backend (`node tools/anexo-api.mjs`), por lo que coinciden con las rutas implementadas.
+
 ### Convenciones {.unnumbered}
 
 | Aspecto | Valor |
 |----------------|------------------------------------------|
 | URL base | `http://<servidor>:3001/api/v1` |
-| Formato | JSON (excepto los reportes, que devuelven `.xlsx`) |
-| Autenticación | `Authorization: Bearer <token JWT>` |
-| Granja activa | Header `x-farm-id: <id>` (obligatorio en rutas de granja) |
-| Especie | Header `x-species-id: <id>` (obligatorio en rutas de granja) |
-| Respuesta correcta | Código 200 o 201 con los datos |
-| Respuesta con error | Código 400, 401, 403, 404 o 409 con `{ "error": "mensaje", ...datos extra }` |
-| Confirmaciones | Un 409 con `requiere_confirmacion` indica que el usuario debe confirmar (por ejemplo, capacidad excedida); se reenvía la petición con `confirmar_*: true` |
-| Documentación | Swagger en `/api-docs` (entorno de desarrollo) |
+| Formato | JSON (los reportes devuelven `.xlsx`) |
+| Autenticación | `Authorization: Bearer <token JWT>` (todas las rutas salvo el inicio de sesión) |
+| Granja activa | Cabecera `x-farm-id` (obligatoria en rutas de granja) |
+| Especie | Cabecera `x-species-id` (obligatoria en rutas de granja) |
+| Respuesta correcta | 200 o 201 con los datos |
+| Respuesta con error | 400, 401, 403, 404 o 409 con `{ "error": "mensaje", "campo": "…" }`; `campo` indica qué dato corregir |
+| Confirmaciones | Un 409 con `requiere_confirmacion` pide confirmar una situación de riesgo (por ejemplo, sobrecupo); se reenvía con `confirmar_*: true` |
+| Documentación interactiva | Swagger en `/api-docs` (solo en desarrollo) |
+
+<!-- api:inicio -->
 
 ### Módulo Platform {.unnumbered}
 
-| Método | Ruta | Parámetros principales | Descripción |
-|--------|------------------------|--------------------------|------------------------------|
-| POST | `/auth/login` | body: `email`, `password` | Inicia sesión y devuelve token, usuario y granjas. |
-| POST | `/auth/logout` | — | Cierra sesión. |
-| GET | `/auth/me` | — | Usuario autenticado y sus granjas. |
-| GET | `/users` | — | Usuarios visibles para el rol actual. |
-| POST | `/users` | body: `nombre`, `email`, `password`, `rol`, `granja_ids[]`, `especie_ids[]` | Crea un usuario (reactiva si el correo estaba dado de baja). |
-| PATCH | `/users/:id` | body: `nombre`, `password`, `activo`, `granja_ids[]` | Edita o desactiva un usuario. |
-| GET | `/farms` | — | Granjas accesibles para el usuario. |
-| POST | `/farms` | body: `nombre`, `id_especie`, `ubicacion` | Crea una granja (solo superadmin). |
-| PATCH | `/farms/:id` | body: `nombre`, `ubicacion` | Edita una granja (solo superadmin). |
-| PATCH | `/farms/:id/deactivate` | path: `id` | Elimina una granja (borrado lógico). |
-| PUT | `/farms/:id/users` | body: `usuario_ids[]` | Reemplaza los usuarios asignados a la granja. |
-| GET | `/species` | — | Especies disponibles. |
-| GET | `/areas` | — | Áreas de la granja con sus jaulas. |
-| GET | `/areas/summary` | — | Ocupación por área. |
-| POST | `/areas` | body: `nombre`, `proposito`, `jaula_ids[]` | Crea un área y le asigna jaulas libres. |
-| PATCH | `/areas/:id` | body: `nombre`, `proposito`, `jaula_ids[]` | Edita un área y sus jaulas. |
-| PATCH | `/areas/:id/deactivate` | path: `id` | Elimina un área (sus jaulas quedan sin área). |
-| GET | `/recintos` | query: `id_area` | Jaulas de la granja. |
-| GET | `/recintos/occupancy` | — | Ocupación y sobrecupo de jaulas. |
-| GET | `/recintos/:id/animals` | path: `id` | Animales de una jaula. |
-| POST | `/recintos` | body: `codigo`, `capacidad_maxima`, `id_area` | Crea una jaula (el área es opcional). |
-| PATCH | `/recintos/:id` | body: `codigo`, `capacidad_maxima`, `id_area` | Edita una jaula (`id_area: null` la quita del área). |
-| PATCH | `/recintos/:id/deactivate` | path: `id` | Elimina una jaula vacía (borrado lógico). |
-| GET | `/animals` | query: filtros (estado, sexo, jaula, categoría…) | Lista animales. |
-| GET | `/animals/search/:codigo` | path: `codigo` | Busca un animal por código. |
-| POST | `/animals` | body: `codigo`, `sexo`, `id_jaula`, `id_raza`, `id_categoria`, `fecha_nacimiento`, `particularidad`, `confirmar_capacidad`, `confirmar_reuso` | Registra un animal. |
-| PATCH | `/animals/:id` | body: `estado`, `motivo_baja`, `fecha_baja`, `id_categoria`, `id_jaula`, `particularidad` | Edita o da de baja un animal. |
-| GET | `/weighings/ranges` | — | Rangos de peso por categoría. |
-| PUT | `/weighings/ranges` | body: rangos | Actualiza los rangos de peso. |
-| GET | `/weighings/average` | query | Peso promedio. |
-| GET | `/weighings/animal/:id_animal` | path: `id_animal` | Evolución de peso de un animal. |
-| POST | `/weighings` | body: `id_animal`, `fecha`, `peso_gramos`, `confirmar_fuera_rango` | Registra un pesaje individual. |
-| POST | `/weighings/batch` | body: `fecha`, `pesajes[{id_animal, peso_gramos}]` | Registra pesajes por lote. |
-| GET | `/treatments` | query | Historial de tratamientos. |
-| GET | `/treatments/in-progress` | query | Tratamientos en curso. |
-| POST | `/treatments` | body: `tipo`, `producto`, `dosis`, `via`, `fecha_inicio`, `duracion_dias`, `diagnostico`, `responsable`, `id_animal` / `ids_animales[]` / `id_jaula` / `id_area` | Registra un tratamiento. |
-| PATCH | `/treatments/:id/complete` | body: `motivo_cierre` | Finaliza un tratamiento. |
-| GET | `/mortality` | — | Registros de mortalidad. |
-| POST | `/mortality` | body: `fecha`, `cantidad`, `id_animal`, `clasificacion`, `categoria`, `causa`, `id_jaula` | Registra mortalidad individual o por lote. |
-| GET | `/audit` | query: filtros | Bitácora de auditoría. |
-| POST | `/audit/void/mortality/:id` | path: `id` | Anula un registro de mortalidad. |
-| POST | `/audit/void/sale/:id` | path: `id` | Anula una venta. |
+**Autenticación**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| POST | `/auth/login` | body: `email`\*, `password`\* | Iniciar sesión (devuelve token JWT, usuario y granjas) |
+| POST | `/auth/logout` | — | Cerrar sesión |
+| GET | `/auth/me` | — | Usuario autenticado y sus granjas |
+
+**Usuarios**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/users` | — | Listar usuarios visibles para el rol actual |
+| POST | `/users` | body: `nombre`\*, `email`\*, `password`\*, `rol`\*, `especie_ids`, `granja_ids` | Crear usuario |
+| PATCH | `/users/:id` | ruta: `id`; body: `nombre`, `password`, `activo`, `granja_ids` | Editar usuario |
+
+**Granjas**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/farms` | — | Granjas accesibles para el usuario |
+| POST | `/farms` | body: `nombre`\*, `id_especie`\*, `ubicacion` | Crear granja |
+| PATCH | `/farms/:id` | ruta: `id`; body: `nombre`\*, `ubicacion` | Editar granja |
+| PATCH | `/farms/:id/deactivate` | ruta: `id` | Eliminar granja (borrado lógico: queda inactiva) |
+| PUT | `/farms/:id/users` | ruta: `id`; body: `usuario_ids`\* | Reemplazar los usuarios asignados a la granja |
+
+**Especies**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/species` | — | Especies (módulos) disponibles para el usuario |
+
+**Áreas**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/areas` | — | Listar áreas de la granja |
+| POST | `/areas` | body: `nombre`\*, `proposito`, `jaula_ids` | Crear área |
+| PATCH | `/areas/:id` | ruta: `id`; body: `nombre`\*, `proposito`, `jaula_ids` | Editar área |
+| PATCH | `/areas/:id/deactivate` | ruta: `id` | Eliminar área (borrado lógico; sus jaulas quedan sin área) |
+| GET | `/areas/summary` | — | Resumen de ocupación por área |
+
+**Recintos (jaulas)**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/recintos` | — | Listar jaulas de la granja |
+| POST | `/recintos` | body: `codigo`\*, `id_area`, `capacidad_maxima` | Crear jaula |
+| PATCH | `/recintos/:id` | ruta: `id`; body: `codigo`, `id_area`, `capacidad_maxima` | Editar jaula |
+| GET | `/recintos/:id/animals` | ruta: `id` | Animales en una jaula |
+| PATCH | `/recintos/:id/deactivate` | ruta: `id` | Eliminar jaula (borrado lógico; debe estar vacía) |
+| GET | `/recintos/occupancy` | — | Ocupación de jaulas |
+
+**Animales**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/animals` | — | Listar animales (filtros por query string) |
+| POST | `/animals` | body: `codigo`\*, `sexo`\*, `id_jaula`\*, `id_raza`, `id_categoria`, `fecha_nacimiento`, `particularidad`, `confirmar_capacidad`, `confirmar_reuso` | Registrar animal |
+| PATCH | `/animals/:id` | ruta: `id`; body: `estado`, `motivo_baja`, `fecha_baja`, `id_categoria`, `id_jaula`, `particularidad` | Editar o dar de baja un animal |
+| GET | `/animals/search/:codigo` | ruta: `codigo` | Buscar animal por código |
+
+**Pesajes**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| POST | `/weighings` | body: `id_animal`\*, `fecha`\*, `peso_gramos`\*, `confirmar_fuera_rango` | Registrar pesaje individual |
+| GET | `/weighings/animal/:id_animal` | ruta: `id_animal` | Evolución de peso de un animal |
+| GET | `/weighings/average` | — | Peso promedio |
+| POST | `/weighings/batch` | body: `fecha`\*, `pesajes`\*, `confirmar_fuera_rango` | Registrar pesajes por lote |
+| GET | `/weighings/ranges` | — | Rangos de peso esperados por categoría |
+| PUT | `/weighings/ranges` | — | Actualizar rangos de peso |
+
+**Tratamientos**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/treatments` | — | Historial de tratamientos |
+| POST | `/treatments` | body: `tipo`, `producto`\*, `dosis`, `via`, `fecha_inicio`\*, `duracion_dias`\*, `diagnostico`, `responsable`, `id_animal`, `ids_animales`, `id_jaula`, `id_area` | Registrar tratamiento |
+| PATCH | `/treatments/:id/complete` | ruta: `id`; body: `motivo_cierre` | Finalizar tratamiento |
+| GET | `/treatments/in-progress` | — | Tratamientos en curso |
+
+**Mortalidad**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/mortality` | — | Listar registros de mortalidad |
+| POST | `/mortality` | body: `fecha`\*, `cantidad`\*, `id_animal`, `clasificacion`, `categoria`, `causa`, `id_jaula` | Registrar mortalidad (individual o por lote) |
+
+**Auditoría**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/audit` | — | Bitácora de auditoría de la granja |
+| POST | `/audit/void/mortality/:id` | ruta: `id`; body: `motivo`\* | Anular un registro de mortalidad |
+| POST | `/audit/void/sale/:id` | ruta: `id`; body: `motivo`\* | Anular una venta |
 
 ### Módulo Cuyes {.unnumbered}
 
-| Método | Ruta | Parámetros principales | Descripción |
-|--------|------------------------|--------------------------|------------------------------|
-| GET | `/cuyes/catalogs/breeds` | — | Lista razas. |
-| POST | `/cuyes/catalogs/breeds` | body: `nombre` | Crea una raza. |
-| PATCH | `/cuyes/catalogs/breeds/:id/deactivate` | path: `id` | Desactiva una raza. |
-| GET | `/cuyes/catalogs/categories` | — | Lista categorías. |
-| POST | `/cuyes/catalogs/categories` | body: `nombre`, `proposito_area` | Crea una categoría. |
-| PATCH | `/cuyes/catalogs/categories/:id/deactivate` | path: `id` | Desactiva una categoría. |
-| GET | `/cuyes/catalogs/transitions` | — | Transiciones de categoría permitidas. |
-| GET | `/cuyes/breedings` | — | Lista empadres. |
-| POST | `/cuyes/breedings` | body: `id_macho`, `hembras[]`, fecha | Crea un empadre. |
-| POST | `/cuyes/breedings/:id/close` | body: jaula de retorno del macho | Cierra el empadre. |
-| PATCH | `/cuyes/breedings/:id/females/:femaleId` | body: resultado | Registra el resultado de una hembra. |
-| POST | `/cuyes/breedings/breeding-females` | body: datos de la hembra | Registra una hembra reproductora. |
-| POST | `/cuyes/breedings/breeding-males` | body: datos del macho | Registra un macho reproductor. |
-| GET | `/cuyes/breedings/breeding-females/:id` | path: `id` | Perfil reproductivo de una hembra. |
-| GET | `/cuyes/breedings/breeding-males/:id` | path: `id` | Perfil reproductivo de un macho. |
-| GET | `/cuyes/breedings/cage/:id/females` | path: `id` | Hembras disponibles en una jaula. |
-| GET | `/cuyes/births` | — | Lista partos. |
-| POST | `/cuyes/births` | body: `id_hembra`, `id_empadre`, `fecha_parto`, `vivos_m`, `vivos_h`, `muertos`, `peso_m1..3`, `peso_h1..3` | Registra un parto. |
-| GET | `/cuyes/weanings` | — | Lista destetes. |
-| POST | `/cuyes/weanings` | body: `id_parto`, `fecha_destete`, `destetados_m`, `destetados_h`, `muertos`, pesos, `id_jaula_m`, `id_jaula_h` | Registra el destete de un parto. |
-| GET | `/cuyes/movements` | — | Movimientos recientes. |
-| GET | `/cuyes/movements/overcapacity` | — | Jaulas sobre su capacidad. |
-| GET | `/cuyes/movements/out-of-area` | — | Animales fuera del área que corresponde a su categoría. |
-| GET | `/cuyes/movements/destination-cages/:farm_id` | path: `farm_id` | Jaulas disponibles en otra granja. |
-| GET | `/cuyes/movements/animal/:id_animal` | path: `id_animal` | Historial de un animal. |
-| GET | `/cuyes/movements/cage/:cage_id` | query: `fecha` | Historial de una jaula. |
-| POST | `/cuyes/movements/relocate` | body: `fecha`, `id_jaula_destino`, `ids_animales[]` o `id_jaula_origen_completa`, `motivo`, `confirmar_capacidad`, `confirmar_area` | Reubica animales dentro de la granja. |
-| POST | `/cuyes/movements/transfer` | body: `fecha`, `id_granja_destino`, `id_jaula_destino`, `ids_animales[]`, `motivo`, `confirmar_capacidad` | Traslada animales a otra granja de la misma especie. |
-| GET | `/cuyes/sales` | query: filtros (fecha, cliente, raza) | Lista ventas realizadas en el criadero. |
-| POST | `/cuyes/sales` | body: `fecha`, `cuy_codigo`, `raza_id`, `sexo`, `peso`, `precio`, `comprobante_serie`, `comprobante_numero`, `cliente`, `observaciones` | Registra una venta individual asociada a comprobante externo y descuenta inventario. |
-| GET | `/cuyes/sales/discards` | — | Animales dados de baja o marcados para descarte comercial. |
-| POST | `/cuyes/sales/discards` | body: `fecha`, `id_animales[]`, `comprador`, `precio`, `comprobante_serie`, `comprobante_numero` | Registra la venta de lote de animales de descarte con comprobante. |
-| GET | `/cuyes/inventory/population` | query | Población actual. |
-| GET | `/cuyes/inventory/monthly-summary` | query: año, mes | Resumen mensual. |
-| GET | `/cuyes/inventory/by-area` | — | Inventario por área. |
-| GET | `/cuyes/inventory/by-category-area` | — | Inventario por categoría y área. |
-| GET | `/cuyes/inventory/consolidated` | — | Consolidado de todas las granjas del usuario. |
-| GET | `/cuyes/alerts` | — | Alertas activas (partos, destetes, pesajes…). |
-| GET | `/cuyes/alerts/config` | — | Plazos configurados. |
-| PUT | `/cuyes/alerts/config` | body: `items[]` | Guarda los plazos de alertas. |
-| POST | `/cuyes/alerts/discard` | body: `tipo`, `id_animal`, `id_referencia`, `motivo` | Descarta una alerta. |
-| GET | `/cuyes/ranking` | query | Ranking de reproductores. |
-| GET | `/cuyes/ranking/config` | — | Pesos de los criterios. |
-| PUT | `/cuyes/ranking/config` | body: `peso_partos`, `peso_camada`, `peso_destete`, `peso_mortalidad`, `peso_peso_nac`, `peso_peso_dest`, `peso_prenez_macho` | Actualiza los pesos de los criterios. |
-| POST | `/cuyes/ranking/:id_animal/mark` | body: `accion` (`descarte` o `reemplazo`) | Marca un reproductor. |
-| GET | `/cuyes/reports/females` | query | Excel de hembras reproductoras. |
-| GET | `/cuyes/reports/males` | — | Excel de machos reproductores. |
-| GET | `/cuyes/reports/monthly-inventory` | query: año, mes | Excel de inventario mensual. |
-| GET | `/cuyes/reports/animals` | query | Excel de animales. |
-| GET | `/cuyes/reports/consolidated` | query | Excel consolidado multigranja. |
+**Catálogos**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/catalogs/breeds` | — | Listar razas |
+| POST | `/cuyes/catalogs/breeds` | body: `nombre`\* | Crear raza |
+| PATCH | `/cuyes/catalogs/breeds/:id/deactivate` | ruta: `id` | Desactivar raza |
+| GET | `/cuyes/catalogs/categories` | — | Listar categorías |
+| POST | `/cuyes/catalogs/categories` | body: `nombre`\*, `proposito_area` | Crear categoría |
+| PATCH | `/cuyes/catalogs/categories/:id/deactivate` | ruta: `id` | Desactivar categoría |
+| GET | `/cuyes/catalogs/transitions` | — | Transiciones de categoría permitidas |
+
+**Empadres**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/breedings` | — | Listar empadres |
+| POST | `/cuyes/breedings` | body: `id_macho`, `hembras`\*, `id_jaula`, `fecha_empadre`\*, `peso_antes`, `peso_despues`, `cantidad_prenadas`, `notas` | Crear empadre |
+| POST | `/cuyes/breedings/:id/close` | ruta: `id`; body: `id_jaula_retorno`\* | Cerrar empadre y devolver el macho a una jaula |
+| PATCH | `/cuyes/breedings/:id/females/:femaleId` | ruta: `id`, `femaleId`; body: `resultado`\*, `fecha` | Registrar resultado de una hembra en el empadre |
+| POST | `/cuyes/breedings/breeding-females` | body: `codigo`\*, `id_jaula`\*, `id_raza`, `id_categoria`, `fecha_nacimiento`, `particularidad` | Registrar hembra reproductora |
+| GET | `/cuyes/breedings/breeding-females/:id` | ruta: `id` | Perfil reproductivo de una hembra |
+| POST | `/cuyes/breedings/breeding-males` | body: `codigo`\*, `id_jaula`\*, `id_raza`, `id_categoria`, `fecha_nacimiento`, `particularidad` | Registrar macho reproductor |
+| GET | `/cuyes/breedings/breeding-males/:id` | ruta: `id` | Perfil reproductivo de un macho |
+| GET | `/cuyes/breedings/cage/:id/females` | ruta: `id` | Hembras disponibles en una jaula |
+
+**Partos**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/births` | — | Listar partos |
+| POST | `/cuyes/births` | body: `id_hembra`\*, `id_empadre`, `fecha_parto`\*, `vivos_m`, `vivos_h`, `muertos`, `peso_m1`, `peso_m2`, `peso_m3`, `peso_h1`, `peso_h2`, `peso_h3` | Registrar parto |
+
+**Destetes**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/weanings` | — | Listar destetes |
+| POST | `/cuyes/weanings` | body: `id_parto`\*, `fecha_destete`\*, `destetados_m`, `destetados_h`, `muertos`, `peso_m1`, `peso_m2`, `peso_m3`, `peso_h1`, `peso_h2`, `peso_h3`, `id_jaula_m`, `id_jaula_h` | Registrar destete de un parto |
+
+**Movimientos**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/movements` | — | Listar movimientos |
+| GET | `/cuyes/movements/animal/:id_animal` | ruta: `id_animal` | Historial de movimientos de un animal |
+| GET | `/cuyes/movements/cage/:cage_id` | ruta: `cage_id` | Historial de movimientos de una jaula |
+| GET | `/cuyes/movements/destination-cages/:farm_id` | ruta: `farm_id` | Jaulas disponibles en otra granja (para traslados) |
+| GET | `/cuyes/movements/out-of-area` | — | Animales fuera del área que corresponde a su categoría |
+| GET | `/cuyes/movements/overcapacity` | — | Jaulas sobre su capacidad |
+| POST | `/cuyes/movements/relocate` | body: `fecha`\*, `id_jaula_destino`\*, `ids_animales`, `id_jaula_origen_completa`, `motivo`, `confirmar_capacidad`, `confirmar_area` | Reubicar animales dentro de la granja |
+| POST | `/cuyes/movements/transfer` | body: `fecha`\*, `id_granja_destino`\*, `id_jaula_destino`\*, `ids_animales`\*, `motivo`\*, `confirmar_capacidad` | Trasladar animales a otra granja de la misma especie |
+
+**Ventas**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/sales` | — | Listar ventas |
+| POST | `/cuyes/sales` | body: `fecha`\*, `cantidad`\*, `id_animal`, `clasificacion`, `categoria`, `comprador`, `precio`, `tipo_comprobante`\*, `serie`\*, `numero`\*, `observaciones` | Registrar venta (individual o por lote) con comprobante de la caja UNAS |
+| GET | `/cuyes/sales/discards` | — | Animales marcados para descarte (vendibles) |
+| POST | `/cuyes/sales/discards` | body: `fecha`\*, `id_animales`\*, `comprador`, `precio`, `tipo_comprobante`\*, `serie`\*, `numero`\* | Vender animales de descarte con un comprobante de la caja UNAS |
+
+**Inventario**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/inventory/by-area` | — | Inventario por área |
+| GET | `/cuyes/inventory/by-category-area` | — | Inventario por categoría y área |
+| GET | `/cuyes/inventory/consolidated` | — | Inventario consolidado de todas las granjas del usuario |
+| GET | `/cuyes/inventory/counts` | — | Conteos físicos de jaulas (filtros: desde, hasta, id_jaula) |
+| POST | `/cuyes/inventory/counts` | body: `fecha`\*, `id_jaula`\*, `machos_contados`\*, `hembras_contadas`\*, `peso_muestra1`, `peso_muestra2`, `peso_muestra3`, `observaciones` | Registrar conteo físico de una jaula y conciliarlo con el sistema |
+| GET | `/cuyes/inventory/monthly-summary` | — | Resumen mensual de inventario |
+| GET | `/cuyes/inventory/population` | — | Población actual |
+
+**Alertas**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/alerts` | — | Alertas activas de la granja |
+| GET | `/cuyes/alerts/config` | — | Configuración de plazos de alertas |
+| PUT | `/cuyes/alerts/config` | body: `items`\* | Guardar configuración de alertas |
+| POST | `/cuyes/alerts/discard` | body: `tipo`\*, `id_animal`, `id_referencia`, `motivo` | Descartar una alerta |
+
+**Ranking**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/ranking` | — | Ranking de reproductores |
+| POST | `/cuyes/ranking/:id_animal/mark` | ruta: `id_animal`; body: `accion`\* | Marcar un reproductor para descarte o reemplazo |
+| GET | `/cuyes/ranking/config` | — | Pesos de los criterios del ranking |
+| PUT | `/cuyes/ranking/config` | body: `peso_partos`, `peso_camada`, `peso_destete`, `peso_mortalidad`, `peso_peso_nac`, `peso_peso_dest`, `peso_prenez_macho` | Actualizar pesos de los criterios del ranking |
+
+**Reportes**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/reports/animals` | — | Exportar animales (Excel) |
+| GET | `/cuyes/reports/consolidated` | — | Exportar consolidado multigranja (Excel) |
+| GET | `/cuyes/reports/females` | — | Exportar hembras reproductoras (Excel) |
+| GET | `/cuyes/reports/males` | — | Exportar machos reproductores (Excel) |
+| GET | `/cuyes/reports/monthly-inventory` | — | Exportar inventario mensual (Excel) |
+
+**Procesos BPMN**
+
+| Método | Ruta | Parámetros (\* obligatorio) | Descripción |
+|----------|--------------------------|--------------------------|----------------------|
+| GET | `/cuyes/procesos/resumen` | — | Resumen por fase del flujo BPMN (Crianza → Reproducción → Ventas) |
+
+<!-- api:fin -->
 
 ## Anexo B. Puertos de repositorio e implementaciones {.unnumbered}
 

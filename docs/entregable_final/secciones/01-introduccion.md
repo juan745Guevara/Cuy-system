@@ -208,9 +208,9 @@ stop
 |-------------|----------------------------------|----------------------------------------|
 | Identificación y genealogía | Códigos con grafías variables; genealogía reconstruida a mano. | Código normalizado y único por granja; pedigrí de tres generaciones en la ficha del animal. |
 | Empadre y gestación | Fecha probable de parto calculada a mano. | Parto proyectado a 67 días y alertas en el panel. |
-| Tope de 6 partos | Celda pintada de rojo "si se recuerda". | Conteo automático de partos y descarte sugerido. |
-| Destete y aforo | Días contados a mano; sobrecupo inadvertido. | Alerta a los 15 días y validación de capacidad con confirmación explícita. |
-| Sanidad | Fechas de desparasitación de memoria. | Historial clínico por animal, jaula o área y alertas de tratamientos. |
+| Tope de 6 partos | Celda pintada de rojo "si se recuerda". | Conteo automático de partos: una hembra con 6 partos no puede volver a empadrarse y se marca para descarte. |
+| Destete y aforo | Días contados a mano; sobrecupo inadvertido. | Alerta de destete pendiente (14 días, configurable) y validación de capacidad al reubicar animales, con confirmación explícita. |
+| Sanidad | Fechas de desparasitación de memoria. | Historial clínico por animal, jaula o área y lista de tratamientos en curso con su fecha de término. |
 | Ventas | Recibo revisado a ojo; inventario descontado a fin de mes. | Serie y número obligatorios, sin duplicados, y baja del inventario en la misma transacción. |
 | Inventario y reportes | Informe mensual con hasta 5 días de demora; el conteo en pozas no se contrasta con los registros. | Inventario calculado al momento, conteo físico por jaula con la diferencia frente a lo registrado y exportación a Excel con las plantillas oficiales. |
 

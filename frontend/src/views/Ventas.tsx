@@ -6,6 +6,30 @@ import { page as s } from '@/lib/ui';
 import { clearDraft, loadDraft, saveDraft } from '@/lib/draftForm';
 
 const DRAFT_KEY = 'draft:ventas';
+
+const TIPOS_COMPROBANTE = [
+  ['boleta', 'Boleta'],
+  ['factura', 'Factura'],
+  ['recibo', 'Recibo'],
+  ['nota_venta', 'Nota de venta'],
+];
+
+/** Mensaje en español para los errores de venta que devuelve la API. */
+function mensajeVenta(err, porDefecto) {
+  const data = err.response?.data;
+  if (err.response?.status === 409 && data?.venta_previa) {
+    return `Ese comprobante ya se usó en la venta #${data.venta_previa.id}${
+      data.venta_previa.granja ? ` (${data.venta_previa.granja})` : ''
+    }. Verifique la serie y el número.`;
+  }
+  if (err.response?.status === 409 && data?.campo === 'id_animal') {
+    return 'El animal ya no está activo (fue vendido, murió o se descartó). Elija otro.';
+  }
+  if (['tipo_comprobante', 'serie', 'numero'].includes(data?.campo)) {
+    return 'Ingrese el tipo, la serie y el número del comprobante emitido por la caja UNAS.';
+  }
+  return data?.error || data?.message || porDefecto;
+}
 const emptyForm = () => ({
   id_animal: '',
   fecha: new Date().toISOString().slice(0, 10),
@@ -33,6 +57,9 @@ const Ventas = () => {
     fecha: new Date().toISOString().slice(0, 10),
     comprador: '',
     precio: '',
+    tipo_comprobante: '',
+    serie: '',
+    numero: '',
   });
   const [form, setForm] = useState(() => loadDraft(DRAFT_KEY) || emptyForm());
 
@@ -83,19 +110,26 @@ const Ventas = () => {
       setError('Seleccioná al menos un grupo de descartes');
       return;
     }
+    if (!dForm.tipo_comprobante || !dForm.serie.trim() || !dForm.numero.trim()) {
+      setError('Ingrese el tipo, la serie y el número del comprobante emitido por la caja UNAS.');
+      return;
+    }
     try {
       const r = await api.post('/cuyes/sales/discards', {
         fecha: dForm.fecha,
         comprador: dForm.comprador || null,
         precio: dForm.precio ? Number(dForm.precio) : null,
         id_animales: ids,
+        tipo_comprobante: dForm.tipo_comprobante,
+        serie: dForm.serie,
+        numero: dForm.numero,
       });
       setOk(`Venta agrupada registrada (${r.data.registradas} descartes)`);
+      setDForm((f) => ({ ...f, tipo_comprobante: '', serie: '', numero: '' }));
       loadDescartes();
       load();
     } catch (err) {
-      const data = err.response?.data;
-      setError(data?.error || 'No se pudieron vender los descartes');
+      setError(mensajeVenta(err, 'No se pudieron vender los descartes'));
     }
   };
 
@@ -117,17 +151,16 @@ const Ventas = () => {
         cantidad,
         comprador: form.comprador || null,
         precio: form.precio ? Number(form.precio) : null,
-        tipo_comprobante: form.tipo_comprobante || null,
-        serie: form.serie || null,
-        numero: form.numero || null,
+        tipo_comprobante: form.tipo_comprobante,
+        serie: form.serie,
+        numero: form.numero,
       });
       setOk('Venta registrada');
       clearDraft(DRAFT_KEY);
       setForm(emptyForm());
       load();
     } catch (err) {
-      const data = err.response?.data;
-      setError(data?.error || data?.message || 'No se pudo registrar (revise tope de población)');
+      setError(mensajeVenta(err, 'No se pudo registrar (revise tope de población)'));
     }
   };
 
@@ -206,24 +239,28 @@ const Ventas = () => {
         />
         <select
           style={s.select}
+          required
           value={form.tipo_comprobante}
           onChange={(e) => setForm({ ...form, tipo_comprobante: e.target.value })}
         >
-          <option value="">Comprobante (opc.)</option>
-          <option value="boleta">Boleta</option>
-          <option value="factura">Factura</option>
-          <option value="recibo">Recibo</option>
-          <option value="nota_venta">Nota de venta</option>
+          <option value="">Comprobante *</option>
+          {TIPOS_COMPROBANTE.map(([v, t]) => (
+            <option key={v} value={v}>
+              {t}
+            </option>
+          ))}
         </select>
         <input
           style={s.input}
-          placeholder="Serie"
+          placeholder="Serie *"
+          required
           value={form.serie}
           onChange={(e) => setForm({ ...form, serie: e.target.value })}
         />
         <input
           style={s.input}
-          placeholder="Número"
+          placeholder="Número *"
+          required
           value={form.numero}
           onChange={(e) => setForm({ ...form, numero: e.target.value })}
         />
@@ -258,6 +295,30 @@ const Ventas = () => {
                 placeholder="Precio"
                 value={dForm.precio}
                 onChange={(e) => setDForm({ ...dForm, precio: e.target.value })}
+              />
+              <select
+                style={s.select}
+                value={dForm.tipo_comprobante}
+                onChange={(e) => setDForm({ ...dForm, tipo_comprobante: e.target.value })}
+              >
+                <option value="">Comprobante *</option>
+                {TIPOS_COMPROBANTE.map(([v, t]) => (
+                  <option key={v} value={v}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <input
+                style={s.input}
+                placeholder="Serie *"
+                value={dForm.serie}
+                onChange={(e) => setDForm({ ...dForm, serie: e.target.value })}
+              />
+              <input
+                style={s.input}
+                placeholder="Número *"
+                value={dForm.numero}
+                onChange={(e) => setDForm({ ...dForm, numero: e.target.value })}
               />
               <button type="button" style={s.btn} onClick={sellDiscards}>
                 Vender seleccionados
