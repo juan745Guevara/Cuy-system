@@ -221,7 +221,7 @@ Documento consolidado que traduce cada historia de usuario en un requisito funci
 
 ## 3. Trazabilidad con los casos de uso de la Entrega 1
 
-Los 7 casos de uso y sus 19 flujos de falla (`FA`) de [entrega_01/06.md](entrega_01/06.md) quedan cubiertos por los siguientes requisitos:
+Los 7 casos de uso y sus 19 flujos de falla (`FA`) de [entrega_01/06.md](entregable_final/entrega_01/06.md) quedan cubiertos por los siguientes requisitos:
 
 | Caso de uso | Requisitos que lo cubren | Flujos de falla y requisito que los resuelve |
 |---|---|---|
@@ -275,9 +275,9 @@ Funcionalidades presentes en la Entrega 1 (casos de uso) que **no tienen histori
 
 | Funcionalidad | Documento donde aparece | Efecto |
 |---|---|---|
-| Serie y número de comprobante de pago en la venta | [entrega_01/06.md](entrega_01/06.md) (CU-03), [entrega_01/03.md](entrega_01/03.md) | FA-3.3 (duplicidad de comprobante) queda sin requisito que lo resuelva. |
-| Conciliación de inventario físico (conteo por jaula y diferencia contra sistema) | [entrega_01/06.md](entrega_01/06.md) (CU-06) | El CU-06 completo y sus FA-6.1/FA-6.2 no tienen historia ni requisito. |
-| Bloqueo de tratamientos sobre animales dados de baja | [entrega_01/06.md](entrega_01/06.md) (CU-05), FA-5.1 | Queda implícito en RF-10/RF-24, pero no está expresado como criterio de aceptación. |
+| Serie y número de comprobante de pago en la venta | [entrega_01/06.md](entregable_final/entrega_01/06.md) (CU-03), [entrega_01/03.md](entregable_final/entrega_01/03.md) | FA-3.3 (duplicidad de comprobante) queda sin requisito que lo resuelva. |
+| Conciliación de inventario físico (conteo por jaula y diferencia contra sistema) | [entrega_01/06.md](entregable_final/entrega_01/06.md) (CU-06) | El CU-06 completo y sus FA-6.1/FA-6.2 no tienen historia ni requisito. |
+| Bloqueo de tratamientos sobre animales dados de baja | [entrega_01/06.md](entregable_final/entrega_01/06.md) (CU-05), FA-5.1 | Queda implícito en RF-10/RF-24, pero no está expresado como criterio de aceptación. |
 
 > Decisión requerida: si estas funcionalidades corresponden, deben agregarse como historias nuevas (y este documento se actualiza con sus RF); si no, deben retirarse de los casos de uso de la Entrega 1 para que la documentación sea consistente.
 
@@ -285,7 +285,7 @@ Funcionalidades presentes en la Entrega 1 (casos de uso) que **no tienen histori
 
 ## 6. Fuera de alcance
 
-Listado consolidado de [vision.md](vision.md) §5, [modulos-futuros.md](modulos-futuros.md) §5 y [entrega_01/03.md](entrega_01/03.md) §3.2. **Ningún requisito funcional de este documento los cubre.**
+Listado consolidado de [vision.md](vision.md) §5, [modulos-futuros.md](modulos-futuros.md) §5 y [entrega_01/03.md](entregable_final/entrega_01/03.md) §3.2. **Ningún requisito funcional de este documento los cubre.**
 
 - Beneficio, faena y rendimiento de carcasa.
 - Reportes en PDF (el entregable oficial es Excel).
@@ -305,5 +305,5 @@ Listado consolidado de [vision.md](vision.md) §5, [modulos-futuros.md](modulos-
 - [backlog.md](backlog.md) — priorización en tres entregas
 - [actores.md](actores.md) — roles, alcance y matriz de permisos
 - [requisitos-no-funcionales.md](requisitos-no-funcionales.md) — requisitos RNF-01 a RNF-29
-- [entrega_01/06.md](entrega_01/06.md) — casos de uso y flujos de falla
+- [entrega_01/06.md](entregable_final/entrega_01/06.md) — casos de uso y flujos de falla
 - [validacion-historias.md](validacion-historias.md) — estado de implementación de cada HU
