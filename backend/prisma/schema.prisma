@@ -20,20 +20,21 @@ model Usuario {
   created_at    DateTime? @default(now()) @db.Timestamp(6)
   updated_at    DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
-  creador              Usuario?         @relation("UsuarioCreador", fields: [created_by], references: [id])
-  usuarios_creados     Usuario[]        @relation("UsuarioCreador")
+  creador              Usuario?           @relation("UsuarioCreador", fields: [created_by], references: [id])
+  usuarios_creados     Usuario[]          @relation("UsuarioCreador")
   granjas              UsuarioGranja[]
   audit_logs           AuditLog[]
-  animales_creados     Animal[]         @relation("AnimalCreatedBy")
-  empadres_creados     Empadre[]        @relation("EmpadreCreatedBy")
-  partos_creados       Parto[]          @relation("PartoCreatedBy")
-  destetes_creados     Destete[]        @relation("DesteteCreatedBy")
-  mortalidad_creados   Mortalidad[]     @relation("MortalidadCreatedBy")
-  ventas_creados       Venta[]          @relation("VentaCreatedBy")
-  movimientos_creados  Movimiento[]     @relation("MovimientoCreatedBy")
-  pesajes_creados      Pesaje[]         @relation("PesajeCreatedBy")
-  tratamientos_creados Tratamiento[]    @relation("TratamientoCreatedBy")
-  alertas_creados      AlertaDescarte[] @relation("AlertaCreatedBy")
+  animales_creados     Animal[]           @relation("AnimalCreatedBy")
+  empadres_creados     Empadre[]          @relation("EmpadreCreatedBy")
+  partos_creados       Parto[]            @relation("PartoCreatedBy")
+  destetes_creados     Destete[]          @relation("DesteteCreatedBy")
+  mortalidad_creados   Mortalidad[]       @relation("MortalidadCreatedBy")
+  ventas_creados       Venta[]            @relation("VentaCreatedBy")
+  movimientos_creados  Movimiento[]       @relation("MovimientoCreatedBy")
+  pesajes_creados      Pesaje[]           @relation("PesajeCreatedBy")
+  tratamientos_creados Tratamiento[]      @relation("TratamientoCreatedBy")
+  alertas_creados      AlertaDescarte[]   @relation("AlertaCreatedBy")
+  conteos_creados      ConteoInventario[] @relation("ConteoCreatedBy")
 
   @@map("usuarios")
 }
@@ -59,7 +60,7 @@ model Granja {
   created_at DateTime? @default(now()) @db.Timestamp(6)
   updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
-  especie             Especie          @relation(fields: [id_especie], references: [id])
+  especie             Especie            @relation(fields: [id_especie], references: [id])
   usuarios            UsuarioGranja[]
   areas               Area[]
   recintos            Recinto[]
@@ -68,14 +69,15 @@ model Granja {
   partos              Parto[]
   mortalidad          Mortalidad[]
   ventas              Venta[]
-  movimientos_origen  Movimiento[]     @relation("MovimientoOrigen")
-  movimientos_destino Movimiento[]     @relation("MovimientoDestino")
+  movimientos_origen  Movimiento[]       @relation("MovimientoOrigen")
+  movimientos_destino Movimiento[]       @relation("MovimientoDestino")
   pesajes             Pesaje[]
   tratamientos        Tratamiento[]
   alerta_config       AlertaConfig[]
   peso_rangos         PesoRango[]
   alertas_descarte    AlertaDescarte[]
   ranking_config      RankingConfig?
+  conteos_inventario  ConteoInventario[]
   audit_logs          AuditLog[]
 
   @@map("granjas")
@@ -122,14 +124,15 @@ model Recinto {
   created_at       DateTime? @default(now()) @db.Timestamp(6)
   updated_at       DateTime? @default(now()) @updatedAt @db.Timestamp(6)
 
-  granja              Granja        @relation(fields: [id_granja], references: [id], onDelete: Cascade)
-  area                Area?         @relation(fields: [id_area], references: [id], onDelete: SetNull)
+  granja              Granja             @relation(fields: [id_granja], references: [id], onDelete: Cascade)
+  area                Area?              @relation(fields: [id_area], references: [id], onDelete: SetNull)
   animales            Animal[]
   empadres            Empadre[]
   mortalidad          Mortalidad[]
-  movimientos_origen  Movimiento[]  @relation("MovOrigenRecinto")
-  movimientos_destino Movimiento[]  @relation("MovDestinoRecinto")
+  movimientos_origen  Movimiento[]       @relation("MovOrigenRecinto")
+  movimientos_destino Movimiento[]       @relation("MovDestinoRecinto")
   tratamientos        Tratamiento[]
+  conteos_inventario  ConteoInventario[]
 
   @@unique([id_area, codigo])
   @@map("recintos")
@@ -511,4 +514,30 @@ model RankingConfig {
   granja Granja @relation(fields: [id_granja], references: [id], onDelete: Cascade)
 
   @@map("ranking_config")
+}
+
+/// Conteo físico de una jaula (CU-06). `*_sistema` es la foto de lo registrado al momento del conteo;
+/// la diferencia y el peso promedio se derivan al consultar.
+model ConteoInventario {
+  id               Int       @id @default(autoincrement())
+  id_granja        Int
+  id_jaula         Int
+  fecha            DateTime  @db.Date
+  machos_contados  Int
+  hembras_contadas Int
+  machos_sistema   Int
+  hembras_sistema  Int
+  peso_muestra1    Decimal?  @db.Decimal(10, 2)
+  peso_muestra2    Decimal?  @db.Decimal(10, 2)
+  peso_muestra3    Decimal?  @db.Decimal(10, 2)
+  observaciones    String?
+  created_by       Int?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+
+  granja  Granja   @relation(fields: [id_granja], references: [id])
+  recinto Recinto  @relation(fields: [id_jaula], references: [id])
+  creador Usuario? @relation("ConteoCreatedBy", fields: [created_by], references: [id])
+
+  @@index([id_granja, fecha], map: "idx_conteos_granja_fecha")
+  @@map("conteos_inventario")
 }

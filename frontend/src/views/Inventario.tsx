@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { page as s } from '@/lib/ui';
+import ConteoInventario from './ConteoInventario';
 
 async function blobErrorMessage(err, fallback) {
   const data = err.response?.data;
@@ -183,6 +184,8 @@ const Inventario = () => {
           Actualizar
         </button>
       </div>
+
+      <ConteoInventario />
 
       {poblacion && (
         <div style={s.card}>

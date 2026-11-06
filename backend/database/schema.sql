@@ -340,3 +340,36 @@ DO $$ BEGIN
   ALTER TABLE ventas ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'registrada';
 EXCEPTION WHEN others THEN NULL;
 END $$;
+
+-- Conteo físico de inventario por jaula (CU-06: toma y conciliación de inventario).
+-- Guarda lo contado y una foto de lo que el sistema tenía registrado en ese momento;
+-- la diferencia y el peso promedio se calculan al consultar (no se almacenan datos derivados).
+CREATE TABLE IF NOT EXISTS conteos_inventario (
+  id SERIAL PRIMARY KEY,
+  id_granja INTEGER NOT NULL REFERENCES granjas(id),
+  id_jaula INTEGER NOT NULL REFERENCES recintos(id),
+  fecha DATE NOT NULL,
+  machos_contados INTEGER NOT NULL CHECK (machos_contados >= 0),
+  hembras_contadas INTEGER NOT NULL CHECK (hembras_contadas >= 0),
+  machos_sistema INTEGER NOT NULL CHECK (machos_sistema >= 0),
+  hembras_sistema INTEGER NOT NULL CHECK (hembras_sistema >= 0),
+  peso_muestra1 NUMERIC(10,2) CHECK (peso_muestra1 > 0),
+  peso_muestra2 NUMERIC(10,2) CHECK (peso_muestra2 > 0),
+  peso_muestra3 NUMERIC(10,2) CHECK (peso_muestra3 > 0),
+  observaciones TEXT,
+  created_by INTEGER REFERENCES usuarios(id),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_conteos_granja_fecha ON conteos_inventario(id_granja, fecha);
+
+-- Columnas que el código creaba en tiempo de ejecución; se declaran aquí para que este
+-- archivo sea la descripción completa del esquema.
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS entidad VARCHAR(80);
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_entidad INTEGER;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS id_granja INTEGER;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS antes JSONB;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS despues JSONB;
+ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false;
+ALTER TABLE mortalidad ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT;
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS anulado BOOLEAN DEFAULT false;
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS motivo_anulacion TEXT;
